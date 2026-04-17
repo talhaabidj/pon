@@ -3,13 +3,31 @@
  */
 const SAVE_KEY = 'pon.save.v1';
 
+import type { MachineState } from '../systems/MaintenanceSystem';
+
+export interface SaveSettings {
+  readonly masterVolume: number;
+  readonly mouseSensitivity: number;
+  readonly invertY: boolean;
+}
+
+export interface SaveFlags {
+  readonly hiddenMachineFound: boolean;
+  readonly ghostlineHintSeen: boolean;
+}
+
 export interface SaveData {
   readonly version: 1;
   readonly night: number;
   readonly money: number;
   readonly tokens: number;
+  readonly lifetimeMoney: number;
+  readonly lifetimeTokensUsed: number;
   readonly collectedItemIds: readonly string[];
   readonly shiftLog: readonly string[];
+  readonly machineStates: readonly MachineState[];
+  readonly settings: SaveSettings;
+  readonly flags: SaveFlags;
 }
 
 export const DEFAULT_SAVE_DATA: SaveData = {
@@ -17,8 +35,20 @@ export const DEFAULT_SAVE_DATA: SaveData = {
   night: 1,
   money: 0,
   tokens: 0,
+  lifetimeMoney: 0,
+  lifetimeTokensUsed: 0,
   collectedItemIds: [],
   shiftLog: [],
+  machineStates: [],
+  settings: {
+    masterVolume: 0.8,
+    mouseSensitivity: 1,
+    invertY: false,
+  },
+  flags: {
+    hiddenMachineFound: false,
+    ghostlineHintSeen: false,
+  },
 };
 
 export class SaveSystem {
@@ -29,7 +59,14 @@ export class SaveSystem {
     }
 
     try {
-      return { ...DEFAULT_SAVE_DATA, ...JSON.parse(raw), version: 1 };
+      const parsed = JSON.parse(raw) as Partial<SaveData>;
+      return {
+        ...DEFAULT_SAVE_DATA,
+        ...parsed,
+        version: 1,
+        settings: { ...DEFAULT_SAVE_DATA.settings, ...parsed.settings },
+        flags: { ...DEFAULT_SAVE_DATA.flags, ...parsed.flags },
+      };
     } catch {
       return DEFAULT_SAVE_DATA;
     }

@@ -5,7 +5,12 @@ import { SRGBColorSpace, WebGLRenderer } from 'three';
 import { BedroomScene } from '../scenes/BedroomScene';
 import { BootScene } from '../scenes/BootScene';
 import { DesktopScene } from '../scenes/DesktopScene';
+import { AlbumScene } from '../scenes/AlbumScene';
+import { EndScene } from '../scenes/EndScene';
+import { RevealScene } from '../scenes/RevealScene';
+import { ShopScene } from '../scenes/ShopScene';
 import { GAME_CONFIG } from './Config';
+import { GameSession } from './GameSession';
 import { Input } from './Input';
 import { SceneManager } from './SceneManager';
 import type { GameContext, SceneId, SceneTransitionPayload } from './Scene';
@@ -13,6 +18,7 @@ import type { GameContext, SceneId, SceneTransitionPayload } from './Scene';
 export class Game {
   private readonly renderer: WebGLRenderer;
   private readonly input: Input;
+  private readonly session: GameSession;
   private readonly sceneManager: SceneManager;
   private animationFrameId = 0;
   private lastFrameTime = 0;
@@ -31,11 +37,13 @@ export class Game {
     this.gameRoot.append(this.renderer.domElement);
 
     this.input = new Input(this.renderer.domElement);
+    this.session = new GameSession();
 
     const context: GameContext = {
       gameRoot: this.gameRoot,
       uiRoot: this.uiRoot,
       input: this.input,
+      session: this.session,
       switchScene: (sceneId: SceneId, payload?: SceneTransitionPayload) => {
         this.sceneManager.switchTo(sceneId, payload);
       },
@@ -46,6 +54,10 @@ export class Game {
     this.sceneManager.register(new BootScene());
     this.sceneManager.register(new DesktopScene());
     this.sceneManager.register(new BedroomScene());
+    this.sceneManager.register(new ShopScene());
+    this.sceneManager.register(new RevealScene());
+    this.sceneManager.register(new AlbumScene());
+    this.sceneManager.register(new EndScene());
 
     window.addEventListener('resize', this.handleResize);
     this.handleResize();

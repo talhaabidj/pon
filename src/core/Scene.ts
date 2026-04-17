@@ -2,6 +2,7 @@
  * Scene contract shared by the renderer loop, game shell, and scene modules.
  */
 import type { WebGLRenderer } from 'three';
+import type { GameSession } from './GameSession';
 import type { Input } from './Input';
 
 export type SceneId = 'boot' | 'desktop' | 'bedroom' | 'shop' | 'reveal' | 'album' | 'end';
@@ -12,6 +13,7 @@ export interface GameContext {
   readonly gameRoot: HTMLElement;
   readonly uiRoot: HTMLElement;
   readonly input: Input;
+  readonly session: GameSession;
   readonly switchScene: (sceneId: SceneId, payload?: SceneTransitionPayload) => void;
   readonly getSize: () => { width: number; height: number };
 }

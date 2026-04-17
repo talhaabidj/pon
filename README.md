@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Open the URL printed by Vite. The first playable shell starts at a fake desktop and transitions into a stub bedroom hub.
+Open the URL printed by Vite. The current playable slice starts at a fake desktop, moves into the bedroom hub, enters the shop, completes a task, converts wages to tokens, pulls a capsule, views the reveal, and closes the shift report.
 
 ## Scripts
 
@@ -34,7 +34,18 @@ npm run build
 
 ## Controls
 
-Milestone 1 uses mouse/touch UI only. Future milestones add WASD movement, mouse look, and interaction prompts.
+The current slice uses mouse/touch UI for the playable loop. Future polish adds WASD movement, mouse look, and direct 3D proximity prompts.
+
+## Current Playable Loop
+
+1. Start at the fake OS desktop.
+2. Click `Start Shift`.
+3. Use the bedroom PC, album, or shop door.
+4. In the shop, complete checklist tasks for wages.
+5. Convert wages to tokens at the counter.
+6. Pull from an unlocked machine.
+7. Continue from the reveal screen.
+8. End the shift and return to the bedroom.
 
 ## Vercel
 

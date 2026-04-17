@@ -8,12 +8,12 @@ The game fantasy is a cozy, quietly mysterious night-shift gacha shop loop: star
 
 ## Milestones
 
-1. Initialize the project, tooling, CI, docs, and a bootable DesktopScene to stub BedroomScene flow.
-2. Build the bedroom hub with PC UI, collection wall stub, and door transition.
-3. Build the shop floor with gacha machines, staff counter, HUD, basic tasks, wages, and tokens.
-4. Implement CapsuleSystem, RevealScene, AlbumScene, CollectionSystem, and end-of-night reporting.
-5. Add progression, hidden machine triggers, time-window rare items, richer task generation, and shift logs.
-6. Polish visuals, audio, performance, screenshots, packaging, GitHub release readiness, and Vercel deployment.
+1. Done: initialize the project, tooling, CI, docs, and a bootable DesktopScene to BedroomScene flow.
+2. Done: build the bedroom hub with PC UI, collection wall summary, settings, album access, and door transition.
+3. Done: build the shop floor with gacha machines, staff counter, HUD, generated tasks, wages, and tokens.
+4. Done: implement CapsuleSystem, RevealScene, AlbumScene, CollectionSystem, and end-of-night reporting.
+5. Done: add progression, hidden-machine flagging, time-window hints, richer task generation, and shift logs.
+6. Next: deepen polish with audio cues, richer geometry/assets, screenshot review, GitHub release readiness, and Vercel deployment.
 
 ## Architecture
 
@@ -22,6 +22,7 @@ The game fantasy is a cozy, quietly mysterious night-shift gacha shop loop: star
 - DOM overlays handle menus, HUD, settings, prompts, reveal cards, album browsing, and end reports.
 - Save data is JSON only and versioned from v1 onward.
 - Assets ship as GLB/glTF for important props and procedural low-poly meshes for early filler objects.
+- `GameSession` owns save-backed systems and exposes high-level scene actions.
 
 ## Public Interfaces
 
@@ -33,7 +34,7 @@ The game fantasy is a cozy, quietly mysterious night-shift gacha shop loop: star
 ## Testing
 
 - Vitest covers pure logic and scene orchestration.
-- Playwright covers boot, fake desktop, Start Shift transition, and later end-to-end shop/reveal loops.
+- Playwright covers boot, fake desktop, bedroom PC, shop task completion, token conversion, capsule reveal, end report, and bedroom return.
 - CI runs install, lint, unit tests, browser install, e2e tests, and build on push or PR to `main`.
 
 ## Deployment
