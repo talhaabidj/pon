@@ -378,7 +378,8 @@ You MUST:
   - PLAN.md (living design doc).
   - AGENTS.md (how you, the agent, operate; how you use tests and tools).
   - README.md (project description, run/build/deploy instructions).
-  - LICENSE (MIT or similar).
+  - LICENSE (Custom non-commercial, attribution-required license).
+  - ASSETS_LICENSE.md (CC BY-NC-SA 4.0 for assets, CC BY 4.0 for specific models).
 
 CI:
 - Add `.github/workflows/ci.yml`:

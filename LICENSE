@@ -1,21 +1,17 @@
-MIT License
+Copyright (c) 2026 Talha Abid
 
-Copyright (c) 2026 PON Contributors
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, and modify the Software for PERSONAL and NON-COMMERCIAL purposes only, subject to the following conditions:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Attribution: Any use, copy, or modification of the Software must include a visible credit to "PON — Night Shift Gacha by Talha Abid" and a link to the original repository.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. No Commercial Use: The Software may not be used, in whole or in part, in any product or service that is sold, monetized, or used for commercial advantage, without the express prior written permission of the copyright holder. This includes but is not limited to commercial games, commercial middleware, SaaS products, or paid assets.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. Streaming and Videos Exception: You are explicitly permitted to record, stream, and upload gameplay videos of this project (including modifications) to platforms such as YouTube, Twitch, or similar services, and to monetize such content through platform ad revenue, sponsorships, or donations, provided that:
+   - You include visible credit to "PON — Night Shift Gacha by Talha Abid".
+   - You do not represent the game itself or its assets as your own original IP.
+
+4. No Misrepresentation: You may not misrepresent the origin of the Software or claim that your modified version is the original work. Clear attribution to the original project is required.
+
+5. No Sublicensing as Open Source: You may not relicense the Software, or any substantial portion of it, under an OSI-approved open source license or any license that permits commercial use without the explicit prior written permission of the copyright holder.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
