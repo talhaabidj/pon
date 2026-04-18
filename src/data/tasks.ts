@@ -1,50 +1,60 @@
 /**
- * Shift task templates.
+ * tasks.ts — Task template definitions.
+ *
+ * 5 task types used by TaskSystem to generate nightly work.
  */
-import type { TaskType } from '../systems/TaskSystem';
 
-export interface TaskTemplate {
-  readonly id: string;
-  readonly type: TaskType;
-  readonly label: string;
-  readonly baseReward: number;
-  readonly minutes: number;
-}
+import type { TaskTemplate } from './types.js';
 
 export const TASK_TEMPLATES: readonly TaskTemplate[] = [
   {
-    id: 'clean-floor',
+    id: 'task-clean-floor',
     type: 'clean_floor',
-    label: 'Mop the capsule trail near the aisle marker',
-    baseReward: 120,
-    minutes: 22,
+    description: 'Mop a dirty floor spot',
+    baseReward: 60,
+    timeCost: 10,
+    targetType: 'floor',
   },
   {
-    id: 'wipe-lens',
-    type: 'wipe_machine',
-    label: 'Wipe the acrylic lens until it stops clouding',
-    baseReward: 90,
-    minutes: 16,
+    id: 'task-wipe-glass',
+    type: 'wipe_glass',
+    description: 'Wipe machine glass clean',
+    baseReward: 50,
+    timeCost: 8,
+    targetType: 'machine',
   },
   {
-    id: 'restock-capsules',
+    id: 'task-restock',
     type: 'restock',
-    label: 'Restock a low capsule bin from the back crate',
-    baseReward: 140,
-    minutes: 28,
+    description: 'Restock capsules from storage crate',
+    baseReward: 80,
+    timeCost: 15,
+    targetType: 'machine',
   },
   {
-    id: 'fix-jam',
+    id: 'task-fix-jam',
     type: 'fix_jam',
-    label: 'Free a capsule jam without cracking the shell',
-    baseReward: 170,
-    minutes: 34,
+    description: 'Fix a jammed capsule mechanism',
+    baseReward: 100,
+    timeCost: 18,
+    targetType: 'machine',
   },
   {
-    id: 'rewire-plug',
-    type: 'rewire_machine',
-    label: 'Reconnect a humming machine with the safe voltage pattern',
-    baseReward: 210,
-    minutes: 42,
+    id: 'task-rewire',
+    type: 'rewire',
+    description: 'Reconnect a disconnected machine plug',
+    baseReward: 120,
+    timeCost: 20,
+    targetType: 'machine',
   },
-];
+] as const;
+
+/** Lookup template by ID */
+export function getTaskTemplateById(id: string): TaskTemplate | undefined {
+  return TASK_TEMPLATES.find((t) => t.id === id);
+}
+
+/** Get task templates by type */
+export function getTaskTemplatesByType(type: string): TaskTemplate[] {
+  return TASK_TEMPLATES.filter((t) => t.type === type);
+}

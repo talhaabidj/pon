@@ -1,12 +1,28 @@
-import { Game } from './core/Game';
-import './styles.css';
+/**
+ * main.ts — PON entry point.
+ *
+ * Initializes the Game instance and boots into the first scene.
+ */
 
-const gameRoot = document.querySelector<HTMLElement>('#game-root');
-const uiRoot = document.querySelector<HTMLElement>('#ui-root');
+import { Game } from './core/Game.js';
+import { BootScene } from './scenes/BootScene.js';
+import './styles/desktop.css';
+import './styles/bedroom.css';
+import './styles/shop.css';
 
-if (!gameRoot || !uiRoot) {
-  throw new Error('PON could not find #game-root and #ui-root.');
+async function main() {
+  const container = document.getElementById('canvas-container');
+  if (!container) {
+    throw new Error('Missing #canvas-container element in index.html');
+  }
+
+  const game = new Game(container);
+  game.start();
+
+  // Boot into the loading / desktop flow
+  await game.sceneManager.switchTo(new BootScene(game));
 }
 
-const game = new Game(gameRoot, uiRoot);
-game.start();
+main().catch((err) => {
+  console.error('PON failed to start:', err);
+});

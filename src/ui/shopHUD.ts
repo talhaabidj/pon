@@ -1,0 +1,247 @@
+/**
+ * shopHUD — Shop scene HUD overlay.
+ *
+ * Displays: in-game clock, money, tokens, task list, pull result.
+ */
+
+const SHOP_HUD_ID = 'shop-hud';
+
+export function mountShopHUD() {
+  const uiRoot = document.getElementById('ui-root');
+  if (!uiRoot) return;
+
+  const container = document.createElement('div');
+  container.id = SHOP_HUD_ID;
+  container.innerHTML = `
+    <div class="crosshair" id="shop-crosshair"></div>
+
+    <div class="shop-top-bar">
+      <div class="shop-clock" id="shop-clock">10:00 PM</div>
+      <div class="shop-time-bar">
+        <div class="shop-time-fill" id="shop-time-fill"></div>
+      </div>
+      <div class="shop-stats">
+        <span class="shop-stat" id="shop-money">$0</span>
+        <span class="shop-stat-divider">|</span>
+        <span class="shop-stat" id="shop-tokens">🪙 0</span>
+      </div>
+    </div>
+
+    <div class="shop-task-panel" id="shop-tasks">
+      <div class="task-panel-header">Tasks</div>
+      <div class="task-list" id="task-list"></div>
+    </div>
+
+    <div class="interact-prompt" id="shop-interact-prompt">
+      <kbd>E</kbd> <span id="shop-interact-text">Interact</span>
+    </div>
+
+    <div class="shop-pull-result hidden" id="pull-result">
+      <div class="pull-capsule" id="pull-capsule"></div>
+      <div class="pull-item-name" id="pull-item-name"></div>
+      <div class="pull-item-rarity" id="pull-item-rarity"></div>
+      <div class="pull-item-flavor" id="pull-item-flavor"></div>
+      <div class="pull-dismiss">Press any key to continue</div>
+    </div>
+
+    <div class="shop-token-overlay hidden" id="token-overlay">
+      <div class="overlay-panel">
+        <div class="overlay-header">
+          <h2>Buy Tokens</h2>
+          <button class="overlay-close" id="token-overlay-close">✕</button>
+        </div>
+        <div class="overlay-body">
+          <div class="token-info">
+            <p>Each token costs <strong>$50</strong></p>
+            <p>Your balance: <span id="token-balance">$0</span></p>
+          </div>
+          <div class="token-buttons">
+            <button class="token-buy-btn" data-count="1">Buy 1 ($50)</button>
+            <button class="token-buy-btn" data-count="3">Buy 3 ($150)</button>
+            <button class="token-buy-btn" data-count="5">Buy 5 ($250)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shop-night-end hidden" id="night-end-overlay">
+      <div class="overlay-panel night-summary-panel">
+        <h2>Night Complete</h2>
+        <div class="night-summary" id="night-summary"></div>
+        <button class="night-continue-btn" id="night-continue">Return Home</button>
+      </div>
+    </div>
+
+    <div class="shop-ending-soon hidden" id="ending-soon-banner">
+      ⚠️ Shift ending soon!
+    </div>
+  `;
+  uiRoot.appendChild(container);
+}
+
+export function unmountShopHUD() {
+  document.getElementById(SHOP_HUD_ID)?.remove();
+}
+
+// —— Update functions ——
+
+export function updateClock(timeStr: string) {
+  const el = document.getElementById('shop-clock');
+  if (el) el.textContent = timeStr;
+}
+
+export function updateTimeBar(progress: number) {
+  const el = document.getElementById('shop-time-fill') as HTMLElement | null;
+  if (el) el.style.width = `${Math.min(100, progress * 100)}%`;
+}
+
+export function updateMoney(amount: number) {
+  const el = document.getElementById('shop-money');
+  if (el) el.textContent = `$${amount}`;
+}
+
+export function updateTokens(count: number) {
+  const el = document.getElementById('shop-tokens');
+  if (el) el.textContent = `🪙 ${count}`;
+}
+
+export function updateTokenBalance(amount: number) {
+  const el = document.getElementById('token-balance');
+  if (el) el.textContent = `$${amount}`;
+}
+
+export function renderTaskList(
+  tasks: Array<{ description: string; isCompleted: boolean }>,
+) {
+  const list = document.getElementById('task-list');
+  if (!list) return;
+
+  list.innerHTML = tasks
+    .map(
+      (t, i) =>
+        `<div class="task-item ${t.isCompleted ? 'completed' : ''}" data-idx="${i}">
+          <span class="task-check">${t.isCompleted ? '✓' : '○'}</span>
+          <span class="task-desc">${t.description}</span>
+        </div>`,
+    )
+    .join('');
+}
+
+// —— Interact prompt ——
+
+export function showShopPrompt(text: string) {
+  const el = document.getElementById('shop-interact-prompt');
+  const txt = document.getElementById('shop-interact-text');
+  if (el && txt) {
+    txt.textContent = text;
+    el.classList.add('visible');
+  }
+  document.getElementById('shop-crosshair')?.classList.add('interact');
+}
+
+export function hideShopPrompt() {
+  document.getElementById('shop-interact-prompt')?.classList.remove('visible');
+  document.getElementById('shop-crosshair')?.classList.remove('interact');
+}
+
+// —— Pull result ——
+
+export function showPullResult(
+  name: string,
+  rarity: string,
+  flavor: string,
+  accentColor: string,
+) {
+  const el = document.getElementById('pull-result');
+  const capsuleEl = document.getElementById('pull-capsule');
+  const nameEl = document.getElementById('pull-item-name');
+  const rarityEl = document.getElementById('pull-item-rarity');
+  const flavorEl = document.getElementById('pull-item-flavor');
+
+  if (el && capsuleEl && nameEl && rarityEl && flavorEl) {
+    capsuleEl.style.background = accentColor;
+    nameEl.textContent = name;
+    rarityEl.textContent = rarity.toUpperCase();
+    rarityEl.className = `pull-item-rarity rarity-${rarity}`;
+    flavorEl.textContent = `"${flavor}"`;
+    el.classList.remove('hidden');
+  }
+}
+
+export function hidePullResult() {
+  document.getElementById('pull-result')?.classList.add('hidden');
+}
+
+export function isPullResultVisible(): boolean {
+  const el = document.getElementById('pull-result');
+  return el ? !el.classList.contains('hidden') : false;
+}
+
+// —— Token overlay ——
+
+export function showTokenOverlay() {
+  document.getElementById('token-overlay')?.classList.remove('hidden');
+}
+
+export function hideTokenOverlay() {
+  document.getElementById('token-overlay')?.classList.add('hidden');
+}
+
+export function isTokenOverlayVisible(): boolean {
+  const el = document.getElementById('token-overlay');
+  return el ? !el.classList.contains('hidden') : false;
+}
+
+// —— Night end overlay ——
+
+export function showNightEndOverlay(summary: {
+  tasksCompleted: number;
+  tasksTotal: number;
+  moneyEarned: number;
+  itemsObtained: string[];
+}) {
+  const el = document.getElementById('night-end-overlay');
+  const summaryEl = document.getElementById('night-summary');
+  if (el && summaryEl) {
+    summaryEl.innerHTML = `
+      <div class="summary-stat">
+        <span>Tasks Completed</span>
+        <span>${summary.tasksCompleted} / ${summary.tasksTotal}</span>
+      </div>
+      <div class="summary-stat">
+        <span>Money Earned</span>
+        <span>$${summary.moneyEarned}</span>
+      </div>
+      <div class="summary-stat">
+        <span>Items Obtained</span>
+        <span>${summary.itemsObtained.length}</span>
+      </div>
+    `;
+    el.classList.remove('hidden');
+  }
+}
+
+export function hideNightEndOverlay() {
+  document.getElementById('night-end-overlay')?.classList.add('hidden');
+}
+
+export function isNightEndVisible(): boolean {
+  const el = document.getElementById('night-end-overlay');
+  return el ? !el.classList.contains('hidden') : false;
+}
+
+// —— Ending soon banner ——
+
+export function showEndingSoon() {
+  document.getElementById('ending-soon-banner')?.classList.remove('hidden');
+}
+
+export function hideEndingSoon() {
+  document.getElementById('ending-soon-banner')?.classList.add('hidden');
+}
+
+// —— Any overlay open ——
+
+export function isAnyShopOverlayOpen(): boolean {
+  return isPullResultVisible() || isTokenOverlayVisible() || isNightEndVisible();
+}

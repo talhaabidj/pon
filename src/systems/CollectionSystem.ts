@@ -1,91 +1,106 @@
 /**
- * Collection state and set completion helpers.
+ * CollectionSystem — Tracks owned items and set completion.
+ *
+ * Pure logic. Operates on item IDs and set definitions.
  */
-import { ITEMS, type ItemDefinition } from '../data/items';
-import { SETS, type SetDefinition } from '../data/sets';
+
+import { SETS } from '../data/sets.js';
+import { getItemById } from '../data/items.js';
+import type { Item, ItemSet } from '../data/types.js';
 
 export interface SetProgress {
-  readonly set: SetDefinition;
-  readonly collected: number;
-  readonly total: number;
-  readonly complete: boolean;
-  readonly itemIds: readonly string[];
-  readonly missingItemIds: readonly string[];
+  set: ItemSet;
+  ownedCount: number;
+  totalCount: number;
+  isComplete: boolean;
+  ownedItemIds: string[];
+  missingItemIds: string[];
 }
 
 export class CollectionSystem {
-  private readonly collectedItemIds = new Set<string>();
+  private ownedItemIds: Set<string>;
 
-  public constructor(
-    initialItemIds: readonly string[] = [],
-    private readonly items: readonly ItemDefinition[] = ITEMS,
-    private readonly sets: readonly SetDefinition[] = SETS,
-  ) {
-    initialItemIds.forEach((itemId) => this.addItem(itemId));
+  constructor(initialOwned: string[] = []) {
+    this.ownedItemIds = new Set(initialOwned);
   }
 
-  public addItem(itemId: string): boolean {
-    this.getItem(itemId);
-    const wasNew = !this.collectedItemIds.has(itemId);
-    this.collectedItemIds.add(itemId);
-    return wasNew;
+  /** Add an item to the collection. Returns true if it's new. */
+  addItem(itemId: string): boolean {
+    if (this.ownedItemIds.has(itemId)) return false;
+    this.ownedItemIds.add(itemId);
+    return true;
   }
 
-  public hasItem(itemId: string): boolean {
-    return this.collectedItemIds.has(itemId);
+  /** Check if an item is owned */
+  hasItem(itemId: string): boolean {
+    return this.ownedItemIds.has(itemId);
   }
 
-  public getCount(): number {
-    return this.collectedItemIds.size;
+  /** Get all owned item IDs */
+  getOwnedItemIds(): string[] {
+    return [...this.ownedItemIds];
   }
 
-  public getCollectedItemIds(): readonly string[] {
-    return [...this.collectedItemIds].sort();
+  /** Get count of owned items */
+  getOwnedCount(): number {
+    return this.ownedItemIds.size;
   }
 
-  public getOwnedItems(): readonly ItemDefinition[] {
-    return this.getCollectedItemIds().map((itemId) => this.getItem(itemId));
+  /** Get full Item objects for owned items */
+  getOwnedItems(): Item[] {
+    const items: Item[] = [];
+    for (const id of this.ownedItemIds) {
+      const item = getItemById(id);
+      if (item) items.push(item);
+    }
+    return items;
   }
 
-  public getSetProgress(setId: string): SetProgress {
-    const set = this.getSet(setId);
-    const missingItemIds = set.itemIds.filter((itemId) => !this.collectedItemIds.has(itemId));
+  /** Get progress for a specific set */
+  getSetProgress(setId: string): SetProgress | null {
+    const set = SETS.find((s) => s.id === setId);
+    if (!set) return null;
+
+    const ownedInSet = set.itemIds.filter((id) =>
+      this.ownedItemIds.has(id),
+    );
+    const missingInSet = set.itemIds.filter(
+      (id) => !this.ownedItemIds.has(id),
+    );
 
     return {
       set,
-      collected: set.itemIds.length - missingItemIds.length,
-      total: set.itemIds.length,
-      complete: missingItemIds.length === 0,
-      itemIds: set.itemIds,
-      missingItemIds,
+      ownedCount: ownedInSet.length,
+      totalCount: set.itemIds.length,
+      isComplete: ownedInSet.length === set.itemIds.length,
+      ownedItemIds: ownedInSet,
+      missingItemIds: missingInSet,
     };
   }
 
-  public getAllSetProgress(): readonly SetProgress[] {
-    return this.sets.map((set) => this.getSetProgress(set.id));
+  /** Get progress for all sets */
+  getAllSetProgress(): SetProgress[] {
+    return SETS.map((s) => this.getSetProgress(s.id)!);
   }
 
-  public getCompletedSets(): readonly SetDefinition[] {
-    return this.getAllSetProgress()
-      .filter((progress) => progress.complete)
-      .map((progress) => progress.set);
+  /** Count completed sets */
+  getCompletedSetCount(): number {
+    return this.getAllSetProgress().filter((p) => p.isComplete).length;
   }
 
-  private getItem(itemId: string): ItemDefinition {
-    const item = this.items.find((definition) => definition.id === itemId);
-    if (!item) {
-      throw new Error(`Cannot collect unknown item: ${itemId}`);
-    }
-
-    return item;
+  /** Check if an item is a duplicate (already owned) */
+  isDuplicate(itemId: string): boolean {
+    return this.ownedItemIds.has(itemId);
   }
 
-  private getSet(setId: string): SetDefinition {
-    const set = this.sets.find((definition) => definition.id === setId);
-    if (!set) {
-      throw new Error(`Unknown set id: ${setId}`);
-    }
+  /** Get duplicate item IDs from owned collection */
+  getDuplicateCandidates(): string[] {
+    // For Wondertrade: all owned items are potential trade-away candidates
+    return [...this.ownedItemIds];
+  }
 
-    return set;
+  /** Load state */
+  loadState(ownedIds: string[]) {
+    this.ownedItemIds = new Set(ownedIds);
   }
 }

@@ -1,82 +1,67 @@
 /**
- * Versioned localStorage save boundary for serializable game state.
+ * Save — localStorage persistence for game state.
+ *
+ * Encodes/decodes a GameState object with versioning.
  */
-const SAVE_KEY = 'pon.save.v1';
 
-import type { MachineState } from '../systems/MaintenanceSystem';
+import type { GameState } from '../data/types.js';
+import { SAVE_KEY, DEFAULT_SETTINGS } from '../core/Config.js';
 
-export interface SaveSettings {
-  readonly masterVolume: number;
-  readonly mouseSensitivity: number;
-  readonly invertY: boolean;
+const CURRENT_VERSION = 1;
+
+/** Create a fresh game state */
+export function createDefaultGameState(): GameState {
+  return {
+    version: CURRENT_VERSION,
+    nightsWorked: 0,
+    money: 0,
+    tokens: 0,
+    ownedItemIds: [],
+    secretsTriggered: [],
+    settings: { ...DEFAULT_SETTINGS },
+  };
 }
 
-export interface SaveFlags {
-  readonly hiddenMachineFound: boolean;
-  readonly ghostlineHintSeen: boolean;
-}
+/** Load game state from localStorage. Returns null if no save exists or is corrupt. */
+export function loadGameState(): GameState | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
 
-export interface SaveData {
-  readonly version: 1;
-  readonly night: number;
-  readonly money: number;
-  readonly tokens: number;
-  readonly lifetimeMoney: number;
-  readonly lifetimeTokensUsed: number;
-  readonly collectedItemIds: readonly string[];
-  readonly shiftLog: readonly string[];
-  readonly machineStates: readonly MachineState[];
-  readonly settings: SaveSettings;
-  readonly flags: SaveFlags;
-}
+    const parsed = JSON.parse(raw) as GameState;
 
-export const DEFAULT_SAVE_DATA: SaveData = {
-  version: 1,
-  night: 1,
-  money: 0,
-  tokens: 0,
-  lifetimeMoney: 0,
-  lifetimeTokensUsed: 0,
-  collectedItemIds: [],
-  shiftLog: [],
-  machineStates: [],
-  settings: {
-    masterVolume: 0.8,
-    mouseSensitivity: 1,
-    invertY: false,
-  },
-  flags: {
-    hiddenMachineFound: false,
-    ghostlineHintSeen: false,
-  },
-};
-
-export class SaveSystem {
-  public load(): SaveData {
-    const raw = window.localStorage.getItem(SAVE_KEY);
-    if (!raw) {
-      return DEFAULT_SAVE_DATA;
+    // Version check
+    if (parsed.version !== CURRENT_VERSION) {
+      // Future: handle migration
+      console.warn('Save version mismatch, starting fresh');
+      return null;
     }
 
-    try {
-      const parsed = JSON.parse(raw) as Partial<SaveData>;
-      return {
-        ...DEFAULT_SAVE_DATA,
-        ...parsed,
-        version: 1,
-        settings: { ...DEFAULT_SAVE_DATA.settings, ...parsed.settings },
-        flags: { ...DEFAULT_SAVE_DATA.flags, ...parsed.flags },
-      };
-    } catch {
-      return DEFAULT_SAVE_DATA;
-    }
+    return parsed;
+  } catch {
+    console.warn('Failed to load save, starting fresh');
+    return null;
   }
+}
 
-  public save(data: SaveData): void {
-    window.localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+/** Save game state to localStorage */
+export function saveGameState(state: GameState): boolean {
+  try {
+    state.version = CURRENT_VERSION;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    return true;
+  } catch {
+    console.error('Failed to save game state');
+    return false;
   }
+}
 
-  public clear(): void {
-    window.localStorage.removeItem(SAVE_KEY);
-  }
+/** Delete the save */
+export function deleteSave(): void {
+  localStorage.removeItem(SAVE_KEY);
+}
+
+/** Check if a save exists */
+export function hasSave(): boolean {
+  return localStorage.getItem(SAVE_KEY) !== null;
 }

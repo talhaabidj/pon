@@ -1,82 +1,67 @@
 /**
- * Initial boot scene that warms the renderer and hands off to the fake desktop.
+ * BootScene — Initial loading scene.
+ *
+ * Shows a minimal loading screen while critical assets are preloaded.
+ * Transitions to DesktopScene from update() to avoid re-entrant switchTo.
  */
-import {
-  AmbientLight,
-  Mesh,
-  MeshBasicMaterial,
-  PerspectiveCamera,
-  RingGeometry,
-  Scene,
-} from 'three';
-import { GAME_CONFIG } from '../core/Config';
-import type { GameContext, GameScene, SceneId } from '../core/Scene';
-import type { WebGLRenderer } from 'three';
 
-export class BootScene implements GameScene {
-  public readonly id: SceneId = 'boot';
-  private readonly scene = new Scene();
-  private readonly camera = new PerspectiveCamera(
-    GAME_CONFIG.camera.fov,
-    1,
-    GAME_CONFIG.camera.near,
-    GAME_CONFIG.camera.far,
-  );
-  private readonly ringGeometry = new RingGeometry(0.85, 1, 48);
-  private readonly ringMaterial = new MeshBasicMaterial({ color: 0xc9f46c });
-  private readonly ring = new Mesh(this.ringGeometry, this.ringMaterial);
-  private context: GameContext | null = null;
-  private overlay: HTMLElement | null = null;
-  private elapsedSeconds = 0;
+import type { Scene } from '../data/types.js';
+import type { Game } from '../core/Game.js';
+import { DesktopScene } from './DesktopScene.js';
 
-  public constructor() {
-    this.camera.position.set(0, 0, 4);
-    this.scene.add(new AmbientLight(0xffffff, 1));
-    this.scene.add(this.ring);
+export class BootScene implements Scene {
+  private game: Game;
+  private isReady = false;
+  private hasTransitioned = false;
+
+  constructor(game: Game) {
+    this.game = game;
   }
 
-  public enter(context: GameContext): void {
-    this.context = context;
-    this.elapsedSeconds = 0;
+  async init() {
+    const loadingBar = document.querySelector(
+      '.loading-bar-fill',
+    ) as HTMLElement | null;
 
-    const overlay = document.createElement('div');
-    overlay.className = 'scene-overlay boot-overlay';
-    overlay.innerHTML = `
-      <div class="boot-mark">
-        <div class="boot-logo">PON</div>
-        <div>Night shift shell loading</div>
-      </div>
-    `;
-    context.uiRoot.append(overlay);
-    this.overlay = overlay;
+    if (loadingBar) {
+      loadingBar.style.animation = 'none';
+      loadingBar.style.width = '30%';
+    }
+
+    // TODO: Preload critical assets here (models, textures, audio)
+    await this.simulateLoading(loadingBar);
+
+    // Hide loading screen
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+      loadingScreen.classList.add('hidden');
+      setTimeout(() => loadingScreen.remove(), 500);
+    }
+
+    // Mark ready — transition happens in update() to avoid re-entrant switchTo
+    this.isReady = true;
   }
 
-  public exit(): void {
-    this.overlay?.remove();
-    this.overlay = null;
+  private async simulateLoading(
+    bar: HTMLElement | null,
+  ): Promise<void> {
+    const steps = [40, 60, 80, 100];
+    for (const pct of steps) {
+      await new Promise((r) => setTimeout(r, 200));
+      if (bar) bar.style.width = `${pct}%`;
+    }
+    await new Promise((r) => setTimeout(r, 300));
   }
 
-  public update(deltaSeconds: number): void {
-    this.elapsedSeconds += deltaSeconds;
-    this.ring.rotation.z += deltaSeconds * 1.8;
-
-    if (this.elapsedSeconds >= GAME_CONFIG.bootSceneDurationSeconds) {
-      this.context?.switchScene('desktop');
+  update(_dt: number) {
+    if (this.isReady && !this.hasTransitioned) {
+      this.hasTransitioned = true;
+      // Defer to next microtask so SceneManager.isTransitioning is false
+      void this.game.sceneManager.switchTo(new DesktopScene(this.game));
     }
   }
 
-  public resize(width: number, height: number): void {
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
-  }
-
-  public render(renderer: WebGLRenderer): void {
-    renderer.render(this.scene, this.camera);
-  }
-
-  public dispose(): void {
-    this.exit();
-    this.ringGeometry.dispose();
-    this.ringMaterial.dispose();
+  dispose() {
+    // Nothing to clean up
   }
 }

@@ -1,242 +1,265 @@
 /**
- * Item definitions for capsule prizes.
+ * items.ts — All collectible items in PON.
+ *
+ * 4 sets × 6 items = 24 items total for first release.
+ * Each item has a rarity, set, flavor text, and optional tags.
  */
-export type Rarity = 'common' | 'uncommon' | 'rare' | 'secret';
 
-export interface ItemDefinition {
-  readonly id: string;
-  readonly name: string;
-  readonly rarity: Rarity;
-  readonly setId: string;
-  readonly flavorText: string;
-  readonly iconKey: string;
-  readonly tags: readonly string[];
-}
+import type { Item } from './types.js';
 
-export const ITEMS: readonly ItemDefinition[] = [
+export const ITEMS: readonly Item[] = [
+  // ————————————————————————————————
+  // Set 1: Neko Patisserie (cat desserts)
+  // ————————————————————————————————
   {
-    id: 'neon-cat-nap',
-    name: 'Neon Cat Nap',
+    id: 'neko-macaron',
+    name: 'Macaron Mew',
     rarity: 'common',
-    setId: 'neon-cats',
-    flavorText: 'A tiny cat curled around a glow-stick moon.',
-    iconKey: 'cat-nap',
-    tags: ['display-shelf'],
+    setId: 'neko-patisserie',
+    flavorText: 'A pastel pink macaron with tiny cat ears. Tastes like strawberry dreams.',
+    iconKey: 'neko-macaron',
+    tags: [],
   },
   {
-    id: 'neon-cat-vending',
-    name: 'Vending Cat',
+    id: 'neko-croissant',
+    name: 'Croissant Calico',
     rarity: 'common',
-    setId: 'neon-cats',
-    flavorText: 'It guards the warm cans after midnight.',
-    iconKey: 'cat-vending',
-    tags: ['display-shelf'],
+    setId: 'neko-patisserie',
+    flavorText: 'Flaky golden layers hide a sleepy calico kitten inside.',
+    iconKey: 'neko-croissant',
+    tags: [],
   },
   {
-    id: 'neon-cat-ticket',
-    name: 'Ticket Gate Cat',
+    id: 'neko-donut',
+    name: 'Donut Tabby',
     rarity: 'uncommon',
-    setId: 'neon-cats',
-    flavorText: 'It stamps passes for trains that are not on any map.',
-    iconKey: 'cat-ticket',
-    tags: ['display-wall'],
+    setId: 'neko-patisserie',
+    flavorText: 'A chocolate-glazed donut with sprinkle whiskers and a tabby tail.',
+    iconKey: 'neko-donut',
+    tags: [],
   },
   {
-    id: 'neon-cat-static',
-    name: 'Static-Ear Calico',
+    id: 'neko-eclair',
+    name: 'Éclair Siamese',
+    rarity: 'uncommon',
+    setId: 'neko-patisserie',
+    flavorText: 'Elegant and long, this éclair has piercing blue candy eyes.',
+    iconKey: 'neko-eclair',
+    tags: [],
+  },
+  {
+    id: 'neko-cake',
+    name: 'Shortcake Bengal',
     rarity: 'rare',
-    setId: 'neon-cats',
-    flavorText: 'Its ears crackle when a machine is about to jam.',
-    iconKey: 'cat-static',
-    tags: ['machine-sensitive'],
+    setId: 'neko-patisserie',
+    flavorText: 'A strawberry shortcake with wild rosette fur patterns. Very photogenic.',
+    iconKey: 'neko-cake',
+    tags: [],
   },
   {
-    id: 'robot-bento',
-    name: 'Bento Bot',
-    rarity: 'common',
-    setId: 'retro-robots',
-    flavorText: 'Programmed to pack rice into impossible shapes.',
-    iconKey: 'robot-bento',
-    tags: ['display-shelf'],
+    id: 'neko-souffle',
+    name: 'Soufflé Sphinx',
+    rarity: 'epic',
+    setId: 'neko-patisserie',
+    flavorText: 'Rises perfectly every time. Stares at you with ancient, dessert-knowing eyes.',
+    iconKey: 'neko-souffle',
+    tags: [],
   },
-  {
-    id: 'robot-tape',
-    name: 'Cassette Courier',
-    rarity: 'common',
-    setId: 'retro-robots',
-    flavorText: 'Still rewinding a message from 1987.',
-    iconKey: 'robot-tape',
-    tags: ['display-shelf'],
-  },
-  {
-    id: 'robot-bulb',
-    name: 'Bulb-Head Clerk',
-    rarity: 'uncommon',
-    setId: 'retro-robots',
-    flavorText: 'Its idea light turns on only after closing.',
-    iconKey: 'robot-bulb',
-    tags: ['shop-lore'],
-  },
-  {
-    id: 'robot-coin',
-    name: 'Coin-Return Oracle',
-    rarity: 'secret',
-    setId: 'retro-robots',
-    flavorText: 'It predicts the next pull, then politely forgets.',
-    iconKey: 'robot-coin',
-    tags: ['time-locked'],
-  },
-  {
-    id: 'spirit-moss',
-    name: 'Moss Listener',
-    rarity: 'common',
-    setId: 'forest-spirits',
-    flavorText: 'A little forest resident who hears dust settling.',
-    iconKey: 'spirit-moss',
-    tags: ['display-shelf'],
-  },
-  {
-    id: 'spirit-lantern',
-    name: 'Lantern Sprout',
-    rarity: 'common',
-    setId: 'forest-spirits',
-    flavorText: 'It glows brighter near freshly cleaned glass.',
-    iconKey: 'spirit-lantern',
-    tags: ['maintenance'],
-  },
-  {
-    id: 'spirit-umbrella',
-    name: 'Umbrella Kodama',
-    rarity: 'uncommon',
-    setId: 'forest-spirits',
-    flavorText: 'The canopy drips with indoor rain.',
-    iconKey: 'spirit-umbrella',
-    tags: ['weather'],
-  },
-  {
-    id: 'spirit-shelf-door',
-    name: 'Shelf-Door Spirit',
-    rarity: 'rare',
-    setId: 'forest-spirits',
-    flavorText: 'It knows which shelves move when nobody is looking.',
-    iconKey: 'spirit-shelf-door',
-    tags: ['hidden-clue'],
-  },
+
+  // ————————————————————————————————
+  // Set 2: Express Line (train mascots)
+  // ————————————————————————————————
   {
     id: 'train-local',
-    name: 'Last Local',
+    name: 'Local Liner',
     rarity: 'common',
-    setId: 'midnight-trains',
-    flavorText: 'A two-car train with one lit window.',
+    setId: 'express-line',
+    flavorText: 'The everyday hero. Stops at every station, never complains.',
     iconKey: 'train-local',
-    tags: ['display-wall'],
+    tags: [],
   },
   {
-    id: 'train-ticket',
-    name: 'Sleepless Ticket',
+    id: 'train-rapid',
+    name: 'Rapid Runner',
     rarity: 'common',
-    setId: 'midnight-trains',
-    flavorText: 'The destination changes when you look away.',
-    iconKey: 'train-ticket',
-    tags: ['shop-lore'],
+    setId: 'express-line',
+    flavorText: 'Skips the small stops. Has places to be.',
+    iconKey: 'train-rapid',
+    tags: [],
   },
   {
-    id: 'train-platform',
-    name: 'Platform 3:07',
+    id: 'train-express',
+    name: 'Express Ace',
     rarity: 'uncommon',
-    setId: 'midnight-trains',
-    flavorText: 'A platform sign for the hour when machines whisper.',
-    iconKey: 'train-platform',
+    setId: 'express-line',
+    flavorText: 'Wind-swept and gleaming. Only the important stations.',
+    iconKey: 'train-express',
+    tags: [],
+  },
+  {
+    id: 'train-limited',
+    name: 'Limited Edition',
+    rarity: 'uncommon',
+    setId: 'express-line',
+    flavorText: 'Reserved seats only. Comes with a tiny bento box accessory.',
+    iconKey: 'train-limited',
+    tags: [],
+  },
+  {
+    id: 'train-shinkansen',
+    name: 'Bullet Blaze',
+    rarity: 'rare',
+    setId: 'express-line',
+    flavorText: 'Nose like an arrow, speed like a thought. The pride of the line.',
+    iconKey: 'train-shinkansen',
+    tags: [],
+  },
+  {
+    id: 'train-phantom',
+    name: 'Phantom Express',
+    rarity: 'epic',
+    setId: 'express-line',
+    flavorText: 'Runs on no known schedule. Passengers arrive before they depart.',
+    iconKey: 'train-phantom',
+    tags: [],
+  },
+
+  // ————————————————————————————————
+  // Set 3: Moonlight Garden (night flora)
+  // ————————————————————————————————
+  {
+    id: 'moon-fern',
+    name: 'Silverfern',
+    rarity: 'common',
+    setId: 'moonlight-garden',
+    flavorText: 'Unfurls only under moonlight. Leaves shimmer like liquid mercury.',
+    iconKey: 'moon-fern',
+    tags: [],
+  },
+  {
+    id: 'moon-moss',
+    name: 'Starglow Moss',
+    rarity: 'common',
+    setId: 'moonlight-garden',
+    flavorText: 'Soft green carpet that pulses faintly with bioluminescence.',
+    iconKey: 'moon-moss',
+    tags: [],
+  },
+  {
+    id: 'moon-lily',
+    name: 'Dusk Lily',
+    rarity: 'uncommon',
+    setId: 'moonlight-garden',
+    flavorText: 'Opens at sunset, closes at dawn. Petals feel like cool silk.',
+    iconKey: 'moon-lily',
+    tags: [],
+  },
+  {
+    id: 'moon-vine',
+    name: 'Twilight Creeper',
+    rarity: 'uncommon',
+    setId: 'moonlight-garden',
+    flavorText: 'Grows an inch every night. Nobody knows where it\'s headed.',
+    iconKey: 'moon-vine',
+    tags: [],
+  },
+  {
+    id: 'moon-orchid',
+    name: 'Eclipse Orchid',
+    rarity: 'rare',
+    setId: 'moonlight-garden',
+    flavorText: 'Blooms only during lunar eclipses. Smells like cold starlight.',
+    iconKey: 'moon-orchid',
+    tags: [],
+  },
+  {
+    id: 'moon-tree',
+    name: 'Dreamwood Sapling',
+    rarity: 'epic',
+    setId: 'moonlight-garden',
+    flavorText: 'Plant it and it grows into your dreams. Literally.',
+    iconKey: 'moon-tree',
+    tags: [],
+  },
+
+  // ————————————————————————————————
+  // Set 4: Pixel Legends (retro game characters)
+  // ————————————————————————————————
+  {
+    id: 'pixel-knight',
+    name: 'Pixel Knight',
+    rarity: 'common',
+    setId: 'pixel-legends',
+    flavorText: '8-bit sword, 8-bit shield, infinite determination.',
+    iconKey: 'pixel-knight',
+    tags: [],
+  },
+  {
+    id: 'pixel-mage',
+    name: 'Glitch Mage',
+    rarity: 'common',
+    setId: 'pixel-legends',
+    flavorText: 'Casts spells by exploiting buffer overflows.',
+    iconKey: 'pixel-mage',
+    tags: [],
+  },
+  {
+    id: 'pixel-thief',
+    name: 'Sprite Thief',
+    rarity: 'uncommon',
+    setId: 'pixel-legends',
+    flavorText: 'Steals items from other figurines when you\'re not looking.',
+    iconKey: 'pixel-thief',
+    tags: [],
+  },
+  {
+    id: 'pixel-healer',
+    name: 'Potion Princess',
+    rarity: 'uncommon',
+    setId: 'pixel-legends',
+    flavorText: 'Her potions restore HP and taste like cherry soda.',
+    iconKey: 'pixel-healer',
+    tags: [],
+  },
+  {
+    id: 'pixel-dragon',
+    name: 'Boss Dragon',
+    rarity: 'rare',
+    setId: 'pixel-legends',
+    flavorText: 'Final boss of World 8. Takes 99 hits. Worth every one.',
+    iconKey: 'pixel-dragon',
+    tags: [],
+  },
+  {
+    id: 'pixel-dev',
+    name: 'The Developer',
+    rarity: 'legendary',
+    setId: 'pixel-legends',
+    flavorText: 'Created the world, then forgot the save function. Classic.',
+    iconKey: 'pixel-dev',
+    tags: ['hidden-machine'],
+  },
+
+  // ————————————————————————————————
+  // Special items (time-locked / secret)
+  // ————————————————————————————————
+  {
+    id: 'secret-golden-capsule',
+    name: 'Golden Capsule',
+    rarity: 'legendary',
+    setId: 'pixel-legends',
+    flavorText: 'They say it only appears at 3 AM. Contains something that shouldn\'t exist.',
+    iconKey: 'golden-capsule',
     tags: ['time-locked'],
   },
-  {
-    id: 'train-ghostline',
-    name: 'Ghostline Express',
-    rarity: 'secret',
-    setId: 'midnight-trains',
-    flavorText: 'It runs only after a jam is fixed at the right minute.',
-    iconKey: 'train-ghostline',
-    tags: ['time-locked', 'secret'],
-  },
-  {
-    id: 'snack-melon',
-    name: 'Melon Pan Charm',
-    rarity: 'common',
-    setId: 'seasonal-snacks',
-    flavorText: 'Warm plastic bread, somehow comforting.',
-    iconKey: 'snack-melon',
-    tags: ['display-shelf'],
-  },
-  {
-    id: 'snack-soda',
-    name: 'Ramune Marble',
-    rarity: 'common',
-    setId: 'seasonal-snacks',
-    flavorText: 'The marble taps back from inside the bottle.',
-    iconKey: 'snack-soda',
-    tags: ['sound'],
-  },
-  {
-    id: 'snack-taiyaki',
-    name: 'Taiyaki Twin',
-    rarity: 'uncommon',
-    setId: 'seasonal-snacks',
-    flavorText: 'One fish smiles. The other knows why.',
-    iconKey: 'snack-taiyaki',
-    tags: ['display-shelf'],
-  },
-  {
-    id: 'snack-moon-dango',
-    name: 'Moon Dango Stack',
-    rarity: 'rare',
-    setId: 'seasonal-snacks',
-    flavorText: 'Best eaten under fluorescent stars.',
-    iconKey: 'snack-moon-dango',
-    tags: ['night-only'],
-  },
-  {
-    id: 'staff-key',
-    name: 'Soft Brass Key',
-    rarity: 'common',
-    setId: 'staff-only',
-    flavorText: 'A key for a cabinet that is not drawn on the floor plan.',
-    iconKey: 'staff-key',
-    tags: ['hidden-machine-only'],
-  },
-  {
-    id: 'staff-point-card',
-    name: 'Blank Point Card',
-    rarity: 'uncommon',
-    setId: 'staff-only',
-    flavorText: 'Every stamp looks like a tiny closed eye.',
-    iconKey: 'staff-point-card',
-    tags: ['hidden-machine-only'],
-  },
-  {
-    id: 'staff-mirror-capsule',
-    name: 'Mirror Capsule',
-    rarity: 'rare',
-    setId: 'staff-only',
-    flavorText: 'Inside is a room that looks almost like yours.',
-    iconKey: 'staff-mirror-capsule',
-    tags: ['hidden-machine-only', 'story'],
-  },
-  {
-    id: 'staff-wonder-token',
-    name: 'Wonder Token',
-    rarity: 'secret',
-    setId: 'staff-only',
-    flavorText: 'It hums in the same key as the closed shop shutters.',
-    iconKey: 'staff-wonder-token',
-    tags: ['hidden-machine-only', 'secret'],
-  },
-];
+] as const;
 
-export function getItemById(itemId: string): ItemDefinition {
-  const item = ITEMS.find((definition) => definition.id === itemId);
-  if (!item) {
-    throw new Error(`Unknown item id: ${itemId}`);
-  }
+/** Lookup item by ID */
+export function getItemById(id: string): Item | undefined {
+  return ITEMS.find((item) => item.id === id);
+}
 
-  return item;
+/** Get all items for a given set */
+export function getItemsBySet(setId: string): Item[] {
+  return ITEMS.filter((item) => item.setId === setId);
 }

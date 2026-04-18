@@ -1,97 +1,98 @@
 /**
- * Maps physical keyboard input to game actions so scenes do not depend on raw keys.
+ * Input — Centralized keyboard and mouse state.
+ *
+ * Tracks which keys are currently held and provides high-level queries
+ * like movement vectors and interaction presses. Pointer lock state
+ * is managed by FirstPersonController.
  */
-export type InputAction =
-  | 'moveForward'
-  | 'moveBackward'
-  | 'moveLeft'
-  | 'moveRight'
-  | 'interact'
-  | 'confirm'
-  | 'cancel'
-  | 'pause'
-  | 'album'
-  | 'settings';
-
-const DEFAULT_KEY_BINDINGS = new Map<string, InputAction>([
-  ['KeyW', 'moveForward'],
-  ['ArrowUp', 'moveForward'],
-  ['KeyS', 'moveBackward'],
-  ['ArrowDown', 'moveBackward'],
-  ['KeyA', 'moveLeft'],
-  ['ArrowLeft', 'moveLeft'],
-  ['KeyD', 'moveRight'],
-  ['ArrowRight', 'moveRight'],
-  ['KeyE', 'interact'],
-  ['Enter', 'confirm'],
-  ['Escape', 'cancel'],
-  ['KeyP', 'pause'],
-  ['KeyC', 'album'],
-  ['Comma', 'settings'],
-]);
 
 export class Input {
-  private readonly pressedActions = new Set<InputAction>();
-  private readonly keyBindings = new Map(DEFAULT_KEY_BINDINGS);
-  private enabled = true;
+  private keysDown = new Set<string>();
+  private keysJustPressed = new Set<string>();
+  private mouseDeltaX = 0;
+  private mouseDeltaY = 0;
 
-  public constructor(private readonly target: HTMLElement | Window = window) {
-    window.addEventListener('keydown', this.handleKeyDown);
-    window.addEventListener('keyup', this.handleKeyUp);
-    window.addEventListener('blur', this.clear);
+  constructor() {
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
+    document.addEventListener('mousemove', this.onMouseMove);
   }
 
-  public isPressed(action: InputAction): boolean {
-    return this.enabled && this.pressedActions.has(action);
-  }
+  // —— Event handlers ——
 
-  public setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-    if (!enabled) {
-      this.pressedActions.clear();
+  private onKeyDown = (e: KeyboardEvent) => {
+    const key = e.code;
+    if (!this.keysDown.has(key)) {
+      this.keysJustPressed.add(key);
     }
-  }
-
-  public destroy(): void {
-    window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('keyup', this.handleKeyUp);
-    window.removeEventListener('blur', this.clear);
-    this.pressedActions.clear();
-  }
-
-  private readonly handleKeyDown = (event: KeyboardEvent): void => {
-    const action = this.keyBindings.get(event.code);
-    if (!this.enabled || !action || this.isTypingTarget(event.target)) {
-      return;
-    }
-
-    event.preventDefault();
-    this.pressedActions.add(action);
+    this.keysDown.add(key);
   };
 
-  private readonly handleKeyUp = (event: KeyboardEvent): void => {
-    const action = this.keyBindings.get(event.code);
-    if (!action) {
-      return;
-    }
-
-    event.preventDefault();
-    this.pressedActions.delete(action);
+  private onKeyUp = (e: KeyboardEvent) => {
+    this.keysDown.delete(e.code);
   };
 
-  private readonly clear = (): void => {
-    this.pressedActions.clear();
+  private onMouseMove = (e: MouseEvent) => {
+    this.mouseDeltaX += e.movementX;
+    this.mouseDeltaY += e.movementY;
   };
 
-  private isTypingTarget(target: EventTarget | null): boolean {
-    if (!(target instanceof HTMLElement)) {
-      return false;
+  // —— Queries ——
+
+  /** Returns a normalized {x, z} movement vector from WASD/arrow keys */
+  getMovementVector(): { x: number; z: number } {
+    let x = 0;
+    let z = 0;
+
+    if (this.keysDown.has('KeyW') || this.keysDown.has('ArrowUp')) z -= 1;
+    if (this.keysDown.has('KeyS') || this.keysDown.has('ArrowDown')) z += 1;
+    if (this.keysDown.has('KeyA') || this.keysDown.has('ArrowLeft')) x -= 1;
+    if (this.keysDown.has('KeyD') || this.keysDown.has('ArrowRight')) x += 1;
+
+    // Normalize diagonal movement
+    const len = Math.sqrt(x * x + z * z);
+    if (len > 0) {
+      x /= len;
+      z /= len;
     }
 
-    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
+    return { x, z };
   }
 
-  public getTarget(): HTMLElement | Window {
-    return this.target;
+  isRunning(): boolean {
+    return this.keysDown.has('ShiftLeft') || this.keysDown.has('ShiftRight');
+  }
+
+  isInteractPressed(): boolean {
+    return this.keysJustPressed.has('KeyE');
+  }
+
+  isMenuPressed(): boolean {
+    return this.keysJustPressed.has('Escape');
+  }
+
+  isKeyDown(code: string): boolean {
+    return this.keysDown.has(code);
+  }
+
+  isKeyJustPressed(code: string): boolean {
+    return this.keysJustPressed.has(code);
+  }
+
+  getMouseDelta(): { x: number; y: number } {
+    return { x: this.mouseDeltaX, y: this.mouseDeltaY };
+  }
+
+  /** Must be called at end of each frame to reset per-frame state */
+  endFrame() {
+    this.keysJustPressed.clear();
+    this.mouseDeltaX = 0;
+    this.mouseDeltaY = 0;
+  }
+
+  dispose() {
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
+    document.removeEventListener('mousemove', this.onMouseMove);
   }
 }

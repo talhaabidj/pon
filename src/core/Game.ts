@@ -1,105 +1,81 @@
 /**
- * Bootstraps the Three.js renderer, input layer, scene manager, and animation loop.
+ * Game — Main application class.
+ *
+ * Creates the Three.js renderer, manages the render loop,
+ * handles window resizing, and delegates to SceneManager.
  */
-import { SRGBColorSpace, WebGLRenderer } from 'three';
-import { BedroomScene } from '../scenes/BedroomScene';
-import { BootScene } from '../scenes/BootScene';
-import { DesktopScene } from '../scenes/DesktopScene';
-import { AlbumScene } from '../scenes/AlbumScene';
-import { EndScene } from '../scenes/EndScene';
-import { RevealScene } from '../scenes/RevealScene';
-import { ShopScene } from '../scenes/ShopScene';
-import { GAME_CONFIG } from './Config';
-import { GameSession } from './GameSession';
-import { Input } from './Input';
-import { SceneManager } from './SceneManager';
-import type { GameContext, SceneId, SceneTransitionPayload } from './Scene';
+
+import * as THREE from 'three';
+import { SceneManager } from './SceneManager.js';
+import { Input } from './Input.js';
+import { RENDERER_PIXEL_RATIO_MAX } from './Config.js';
 
 export class Game {
-  private readonly renderer: WebGLRenderer;
-  private readonly input: Input;
-  private readonly session: GameSession;
-  private readonly sceneManager: SceneManager;
-  private animationFrameId = 0;
-  private lastFrameTime = 0;
+  readonly renderer: THREE.WebGLRenderer;
+  readonly sceneManager: SceneManager;
+  readonly input: Input;
 
-  public constructor(
-    private readonly gameRoot: HTMLElement,
-    private readonly uiRoot: HTMLElement,
-  ) {
-    this.renderer = new WebGLRenderer({
+  private clock = new THREE.Clock();
+  private animationFrameId = 0;
+
+  constructor(container: HTMLElement) {
+    // —— Renderer ——
+    this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: 'high-performance',
     });
-    this.renderer.outputColorSpace = SRGBColorSpace;
-    this.renderer.setClearColor(GAME_CONFIG.clearColor);
-    this.renderer.domElement.dataset.testid = 'pon-canvas';
-    this.gameRoot.append(this.renderer.domElement);
+    this.renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, RENDERER_PIXEL_RATIO_MAX),
+    );
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
+    container.appendChild(this.renderer.domElement);
 
-    this.input = new Input(this.renderer.domElement);
-    this.session = new GameSession();
+    // —— Systems ——
+    this.sceneManager = new SceneManager();
+    this.input = new Input();
 
-    const context: GameContext = {
-      gameRoot: this.gameRoot,
-      uiRoot: this.uiRoot,
-      input: this.input,
-      session: this.session,
-      switchScene: (sceneId: SceneId, payload?: SceneTransitionPayload) => {
-        this.sceneManager.switchTo(sceneId, payload);
-      },
-      getSize: () => this.getSize(),
-    };
-
-    this.sceneManager = new SceneManager(context);
-    this.sceneManager.register(new BootScene());
-    this.sceneManager.register(new DesktopScene());
-    this.sceneManager.register(new BedroomScene());
-    this.sceneManager.register(new ShopScene());
-    this.sceneManager.register(new RevealScene());
-    this.sceneManager.register(new AlbumScene());
-    this.sceneManager.register(new EndScene());
-
-    window.addEventListener('resize', this.handleResize);
-    this.handleResize();
+    // —— Resize ——
+    window.addEventListener('resize', this.onResize);
   }
 
-  public start(): void {
-    this.sceneManager.switchTo('boot');
-    this.lastFrameTime = performance.now();
-    this.animationFrameId = window.requestAnimationFrame(this.tick);
+  /** Start the render loop */
+  start() {
+    this.clock.start();
+    this.loop();
   }
 
-  public dispose(): void {
-    window.cancelAnimationFrame(this.animationFrameId);
-    window.removeEventListener('resize', this.handleResize);
+  /** Stop the render loop and clean up */
+  stop() {
+    cancelAnimationFrame(this.animationFrameId);
     this.sceneManager.dispose();
-    this.input.destroy();
+    this.input.dispose();
+    window.removeEventListener('resize', this.onResize);
     this.renderer.dispose();
-    this.renderer.domElement.remove();
   }
 
-  private readonly tick = (time: number): void => {
-    const rawDelta = (time - this.lastFrameTime) / 1000;
-    const deltaSeconds = Math.min(rawDelta, GAME_CONFIG.maxDeltaSeconds);
-    this.lastFrameTime = time;
+  /** The main render loop */
+  private loop = () => {
+    this.animationFrameId = requestAnimationFrame(this.loop);
 
-    this.sceneManager.update(deltaSeconds);
-    this.sceneManager.render(this.renderer);
-    this.animationFrameId = window.requestAnimationFrame(this.tick);
+    const dt = Math.min(this.clock.getDelta(), 1 / 30); // cap dt to avoid spiral of death
+    this.sceneManager.update(dt);
+    this.input.endFrame();
   };
 
-  private readonly handleResize = (): void => {
-    const { width, height } = this.getSize();
-    const pixelRatio = Math.min(window.devicePixelRatio, GAME_CONFIG.maxPixelRatio);
-    this.renderer.setPixelRatio(pixelRatio);
-    this.renderer.setSize(width, height, false);
-    this.sceneManager.resize(width, height);
+  private onResize = () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    this.renderer.setSize(width, height);
+
+    // Scenes are responsible for updating their own cameras on resize
+    // via listening to a 'resize' event or checking in update()
   };
 
-  private getSize(): { width: number; height: number } {
-    return {
-      width: Math.max(1, this.gameRoot.clientWidth || window.innerWidth),
-      height: Math.max(1, this.gameRoot.clientHeight || window.innerHeight),
-    };
+  /** Get the renderer's DOM element (for pointer lock etc.) */
+  get canvas(): HTMLCanvasElement {
+    return this.renderer.domElement;
   }
 }

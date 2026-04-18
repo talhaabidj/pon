@@ -1,115 +1,171 @@
 /**
- * Gacha machine data definitions.
+ * machines.ts — Gacha machine definitions.
+ *
+ * 6 standard machines + 1 hidden machine + 1 Wondertrade = 8 total.
  */
-import type { Rarity } from './items';
 
-export interface MachinePosition {
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-  readonly rotationY: number;
-}
-
-export interface MachineDefinition {
-  readonly id: string;
-  readonly displayName: string;
-  readonly seriesName: string;
-  readonly itemIds: readonly string[];
-  readonly rarityWeights: Readonly<Record<Rarity, number>>;
-  readonly jamChance: number;
-  readonly maintenanceDifficulty: number;
-  readonly tokenCost: number;
-  readonly unlockNight: number;
-  readonly position: MachinePosition;
-  readonly quirks: readonly string[];
-}
+import type { MachineDefinition } from './types.js';
 
 export const MACHINES: readonly MachineDefinition[] = [
+  // ————————————————————————————————
+  // Row 1 (Z = -4): Set-specific machines
+  // ————————————————————————————————
   {
-    id: 'machine-neon-cats',
-    displayName: 'Machine 01: Neon Cats',
-    seriesName: 'Neon Cats',
-    itemIds: ['neon-cat-nap', 'neon-cat-vending', 'neon-cat-ticket', 'neon-cat-static'],
-    rarityWeights: { common: 68, uncommon: 24, rare: 7, secret: 1 },
-    jamChance: 0.08,
+    id: 'machine-neko',
+    name: 'Pâtisserie Neko',
+    position: [-3, 0, -4],
+    rotation: 0,
+    itemPoolIds: [
+      'neko-macaron', 'neko-croissant', 'neko-donut',
+      'neko-eclair', 'neko-cake', 'neko-souffle',
+    ],
+    rarityWeights: {
+      common: 40, uncommon: 30, rare: 20, epic: 9, legendary: 1,
+    },
+    maintenanceDifficulty: 2,
+    quirks: ['generous-when-clean'],
+  },
+  {
+    id: 'machine-train',
+    name: 'Express Line Depot',
+    position: [-1, 0, -4],
+    rotation: 0,
+    itemPoolIds: [
+      'train-local', 'train-rapid', 'train-express',
+      'train-limited', 'train-shinkansen', 'train-phantom',
+    ],
+    rarityWeights: {
+      common: 38, uncommon: 30, rare: 20, epic: 11, legendary: 1,
+    },
+    maintenanceDifficulty: 3,
+    quirks: ['jams-often'],
+  },
+  {
+    id: 'machine-moon',
+    name: 'Lunar Greenhouse',
+    position: [1, 0, -4],
+    rotation: 0,
+    itemPoolIds: [
+      'moon-fern', 'moon-moss', 'moon-lily',
+      'moon-vine', 'moon-orchid', 'moon-tree',
+    ],
+    rarityWeights: {
+      common: 35, uncommon: 32, rare: 22, epic: 10, legendary: 1,
+    },
+    maintenanceDifficulty: 2,
+    quirks: ['generous-when-clean'],
+  },
+  {
+    id: 'machine-pixel',
+    name: 'Pixel Arcade',
+    position: [3, 0, -4],
+    rotation: 0,
+    itemPoolIds: [
+      'pixel-knight', 'pixel-mage', 'pixel-thief',
+      'pixel-healer', 'pixel-dragon',
+    ],
+    rarityWeights: {
+      common: 40, uncommon: 28, rare: 22, epic: 9, legendary: 1,
+    },
+    maintenanceDifficulty: 3,
+    quirks: [],
+  },
+
+  // ————————————————————————————————
+  // Row 2 (Z = 1): Mixed + specialty
+  // ————————————————————————————————
+  {
+    id: 'machine-mix-a',
+    name: 'Lucky Mix α',
+    position: [-3, 0, 1],
+    rotation: 0,
+    itemPoolIds: [
+      'neko-macaron', 'train-local', 'moon-fern', 'pixel-knight',
+      'neko-donut', 'train-express', 'moon-lily', 'pixel-thief',
+    ],
+    rarityWeights: {
+      common: 45, uncommon: 30, rare: 18, epic: 6, legendary: 1,
+    },
     maintenanceDifficulty: 1,
-    tokenCost: 1,
-    unlockNight: 1,
-    position: { x: -3, y: 0, z: -2.3, rotationY: 0 },
-    quirks: ['glows when recently cleaned'],
+    quirks: [],
   },
   {
-    id: 'machine-retro-robots',
-    displayName: 'Machine 02: Retro Robots',
-    seriesName: 'Retro Robots',
-    itemIds: ['robot-bento', 'robot-tape', 'robot-bulb', 'robot-coin'],
-    rarityWeights: { common: 62, uncommon: 25, rare: 10, secret: 3 },
-    jamChance: 0.12,
-    maintenanceDifficulty: 2,
-    tokenCost: 1,
-    unlockNight: 1,
-    position: { x: -1.75, y: 0, z: -2.3, rotationY: 0 },
-    quirks: ['coin return clicks twice after midnight'],
+    id: 'machine-mix-b',
+    name: 'Lucky Mix β',
+    position: [-1, 0, 1],
+    rotation: 0,
+    itemPoolIds: [
+      'neko-eclair', 'train-limited', 'moon-vine', 'pixel-healer',
+      'neko-cake', 'train-shinkansen', 'moon-orchid', 'pixel-dragon',
+    ],
+    rarityWeights: {
+      common: 30, uncommon: 30, rare: 25, epic: 13, legendary: 2,
+    },
+    maintenanceDifficulty: 4,
+    quirks: ['jams-often'],
   },
-  {
-    id: 'machine-forest-spirits',
-    displayName: 'Machine 03: Forest Spirits',
-    seriesName: 'Forest Spirits',
-    itemIds: ['spirit-moss', 'spirit-lantern', 'spirit-umbrella', 'spirit-shelf-door'],
-    rarityWeights: { common: 66, uncommon: 23, rare: 10, secret: 1 },
-    jamChance: 0.1,
-    maintenanceDifficulty: 2,
-    tokenCost: 1,
-    unlockNight: 1,
-    position: { x: -0.5, y: 0, z: -2.3, rotationY: 0 },
-    quirks: ['lens fogs when the AC cycles'],
-  },
-  {
-    id: 'machine-midnight-trains',
-    displayName: 'Machine 04: Midnight Trains',
-    seriesName: 'Midnight Trains',
-    itemIds: ['train-local', 'train-ticket', 'train-platform', 'train-ghostline'],
-    rarityWeights: { common: 70, uncommon: 22, rare: 6, secret: 2 },
-    jamChance: 0.15,
-    maintenanceDifficulty: 2,
-    tokenCost: 1,
-    unlockNight: 1,
-    position: { x: 0.75, y: 0, z: -2.3, rotationY: 0 },
-    quirks: ['rare window around 03:00'],
-  },
-  {
-    id: 'machine-seasonal-snacks',
-    displayName: 'Machine 05: Seasonal Snacks',
-    seriesName: 'Seasonal Snacks',
-    itemIds: ['snack-melon', 'snack-soda', 'snack-taiyaki', 'snack-moon-dango'],
-    rarityWeights: { common: 65, uncommon: 25, rare: 9, secret: 1 },
-    jamChance: 0.08,
-    maintenanceDifficulty: 1,
-    tokenCost: 1,
-    unlockNight: 2,
-    position: { x: 2, y: 0, z: -2.3, rotationY: 0 },
-    quirks: ['seasonal plate changes after set completion'],
-  },
+
+  // ————————————————————————————————
+  // Wondertrade (trade duplicates)
+  // ————————————————————————————————
   {
     id: 'machine-wondertrade',
-    displayName: 'Machine 00: Wondertrade',
-    seriesName: 'Staff Only',
-    itemIds: ['staff-key', 'staff-point-card', 'staff-mirror-capsule', 'staff-wonder-token'],
-    rarityWeights: { common: 55, uncommon: 28, rare: 14, secret: 3 },
-    jamChance: 0.18,
-    maintenanceDifficulty: 3,
-    tokenCost: 2,
-    unlockNight: 3,
-    position: { x: 3.3, y: 0, z: 1.25, rotationY: -Math.PI / 2 },
-    quirks: ['hidden-machine-only', 'appears after completing unusual tasks'],
+    name: 'Wonder Exchange',
+    position: [1, 0, 1],
+    rotation: 0,
+    itemPoolIds: [], // Special: uses CollectionSystem for trade logic
+    rarityWeights: {
+      common: 30, uncommon: 30, rare: 25, epic: 12, legendary: 3,
+    },
+    maintenanceDifficulty: 2,
+    quirks: [],
+    unlockCondition: {
+      type: 'nights_worked',
+      threshold: 3,
+      unlocks: 'wondertrade',
+    },
   },
-];
 
-export function getMachineById(machineId: string): MachineDefinition {
-  const machine = MACHINES.find((definition) => definition.id === machineId);
-  if (!machine) {
-    throw new Error(`Unknown machine id: ${machineId}`);
-  }
+  // ————————————————————————————————
+  // Hidden machine (secret)
+  // ————————————————————————————————
+  {
+    id: 'machine-hidden',
+    name: '???',
+    position: [3, 0, 1],
+    rotation: 0,
+    itemPoolIds: [
+      'pixel-dev', 'neko-souffle', 'train-phantom',
+      'moon-tree', 'secret-golden-capsule',
+    ],
+    rarityWeights: {
+      common: 0, uncommon: 10, rare: 30, epic: 40, legendary: 20,
+    },
+    maintenanceDifficulty: 5,
+    quirks: ['generous-when-clean', 'jams-often'],
+    unlockCondition: {
+      type: 'nights_worked',
+      threshold: 5,
+      unlocks: 'hidden_machine',
+    },
+  },
+] as const;
 
-  return machine;
+/** Lookup machine by ID */
+export function getMachineById(id: string): MachineDefinition | undefined {
+  return MACHINES.find((m) => m.id === id);
+}
+
+/** Get machines available for a given night (checks unlock conditions) */
+export function getAvailableMachines(
+  nightsWorked: number,
+  _secretsTriggered: string[] = [],
+): MachineDefinition[] {
+  return MACHINES.filter((m) => {
+    if (!m.unlockCondition) return true;
+    if (m.unlockCondition.type === 'nights_worked') {
+      return nightsWorked >= m.unlockCondition.threshold;
+    }
+    return false;
+  });
 }

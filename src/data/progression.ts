@@ -1,65 +1,93 @@
 /**
- * Night progression tuning.
+ * progression.ts — Night-by-night progression data.
+ *
+ * Controls how each night escalates: more tasks, harder machines,
+ * new content unlocks.
  */
-export interface ProgressionStep {
-  readonly night: number;
-  readonly taskCount: number;
-  readonly unlockedMachineIds: readonly string[];
-  readonly note: string;
-  readonly hiddenMachineUnlocked: boolean;
-}
 
-export const PROGRESSION_STEPS: readonly ProgressionStep[] = [
+import type { NightProgressionStep } from './types.js';
+
+export const PROGRESSION: readonly NightProgressionStep[] = [
   {
     night: 1,
-    taskCount: 3,
-    unlockedMachineIds: [
-      'machine-neon-cats',
-      'machine-retro-robots',
-      'machine-forest-spirits',
-      'machine-midnight-trains',
+    taskCount: [3, 4],
+    availableMachineIds: [
+      'machine-neko', 'machine-train', 'machine-moon', 'machine-pixel',
+      'machine-mix-a',
     ],
-    note: 'First night: learn the floor and keep the obvious machines happy.',
-    hiddenMachineUnlocked: false,
+    unlocks: [],
+    difficultyModifier: 1.0,
   },
   {
     night: 2,
-    taskCount: 4,
-    unlockedMachineIds: [
-      'machine-neon-cats',
-      'machine-retro-robots',
-      'machine-forest-spirits',
-      'machine-midnight-trains',
-      'machine-seasonal-snacks',
+    taskCount: [3, 5],
+    availableMachineIds: [
+      'machine-neko', 'machine-train', 'machine-moon', 'machine-pixel',
+      'machine-mix-a', 'machine-mix-b',
     ],
-    note: 'A seasonal machine rolls out near the counter.',
-    hiddenMachineUnlocked: false,
+    unlocks: ['machine-mix-b'],
+    difficultyModifier: 1.1,
   },
   {
     night: 3,
-    taskCount: 5,
-    unlockedMachineIds: [
-      'machine-neon-cats',
-      'machine-retro-robots',
-      'machine-forest-spirits',
-      'machine-midnight-trains',
-      'machine-seasonal-snacks',
-      'machine-wondertrade',
+    taskCount: [4, 5],
+    availableMachineIds: [
+      'machine-neko', 'machine-train', 'machine-moon', 'machine-pixel',
+      'machine-mix-a', 'machine-mix-b', 'machine-wondertrade',
     ],
-    note: 'A staff-only unit fits into a gap that was not there yesterday.',
-    hiddenMachineUnlocked: true,
+    unlocks: ['wondertrade'],
+    difficultyModifier: 1.2,
   },
-];
+  {
+    night: 4,
+    taskCount: [4, 6],
+    availableMachineIds: [
+      'machine-neko', 'machine-train', 'machine-moon', 'machine-pixel',
+      'machine-mix-a', 'machine-mix-b', 'machine-wondertrade',
+    ],
+    unlocks: [],
+    difficultyModifier: 1.3,
+  },
+  {
+    night: 5,
+    taskCount: [5, 7],
+    availableMachineIds: [
+      'machine-neko', 'machine-train', 'machine-moon', 'machine-pixel',
+      'machine-mix-a', 'machine-mix-b', 'machine-wondertrade',
+      'machine-hidden',
+    ],
+    unlocks: ['hidden_machine'],
+    difficultyModifier: 1.4,
+  },
+  {
+    night: 6,
+    taskCount: [5, 7],
+    availableMachineIds: [
+      'machine-neko', 'machine-train', 'machine-moon', 'machine-pixel',
+      'machine-mix-a', 'machine-mix-b', 'machine-wondertrade',
+      'machine-hidden',
+    ],
+    unlocks: [],
+    difficultyModifier: 1.5,
+  },
+] as const;
 
-export function getProgressionStep(night: number): ProgressionStep {
-  const sorted = [...PROGRESSION_STEPS].sort((a, b) => a.night - b.night);
-  let active = sorted[0];
-
-  for (const step of sorted) {
-    if (night >= step.night) {
-      active = step;
-    }
+/**
+ * Get progression step for a given night number.
+ * If night exceeds defined steps, returns the last step
+ * with scaled difficulty.
+ */
+export function getProgressionForNight(night: number): NightProgressionStep {
+  if (night <= PROGRESSION.length) {
+    return PROGRESSION[night - 1]!;
   }
 
-  return active;
+  // Beyond defined steps: use last step as template with scaled difficulty
+  const last = PROGRESSION[PROGRESSION.length - 1]!;
+  return {
+    ...last,
+    night,
+    difficultyModifier:
+      last.difficultyModifier + (night - PROGRESSION.length) * 0.1,
+  };
 }

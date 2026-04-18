@@ -1,64 +1,75 @@
 /**
- * Collection set data definitions.
+ * sets.ts — Item set definitions for PON.
+ *
+ * 4 themed sets, each with 6 items (+ 1 secret item in set 4).
  */
-export interface SetDefinition {
-  readonly id: string;
-  readonly name: string;
-  readonly theme: string;
-  readonly itemIds: readonly string[];
-  readonly completionReward: string;
-}
 
-export const SETS: readonly SetDefinition[] = [
-  {
-    id: 'neon-cats',
-    name: 'Neon Cats',
-    theme: 'Alley cats, late trains, and glowing shop signs.',
-    itemIds: ['neon-cat-nap', 'neon-cat-vending', 'neon-cat-ticket', 'neon-cat-static'],
-    completionReward: 'A glowing cat poster appears above the PC.',
-  },
-  {
-    id: 'retro-robots',
-    name: 'Retro Robots',
-    theme: 'Tiny machine helpers with outdated but sincere firmware.',
-    itemIds: ['robot-bento', 'robot-tape', 'robot-bulb', 'robot-coin'],
-    completionReward: 'A toy robot begins blinking on the desk shelf.',
-  },
-  {
-    id: 'forest-spirits',
-    name: 'Forest Spirits',
-    theme: 'Small guardians that have moved into the store vents.',
-    itemIds: ['spirit-moss', 'spirit-lantern', 'spirit-umbrella', 'spirit-shelf-door'],
-    completionReward: 'A mossy charm hangs from the bedroom window latch.',
-  },
-  {
-    id: 'midnight-trains',
-    name: 'Midnight Trains',
-    theme: 'Miniature routes that only run after the last customer leaves.',
-    itemIds: ['train-local', 'train-ticket', 'train-platform', 'train-ghostline'],
-    completionReward: 'A little platform sign clicks to 03:07.',
-  },
-  {
-    id: 'seasonal-snacks',
-    name: 'Seasonal Snacks',
-    theme: 'Convenience-store comforts for a long night shift.',
-    itemIds: ['snack-melon', 'snack-soda', 'snack-taiyaki', 'snack-moon-dango'],
-    completionReward: 'A tiny snack tray appears beside the keyboard.',
-  },
-  {
-    id: 'staff-only',
-    name: 'Staff Only',
-    theme: 'Capsules from a machine that should not fit behind the shelf.',
-    itemIds: ['staff-key', 'staff-point-card', 'staff-mirror-capsule', 'staff-wonder-token'],
-    completionReward: 'The bedroom door gains a second, smaller handle.',
-  },
-];
+import type { ItemSet } from './types.js';
 
-export function getSetById(setId: string): SetDefinition {
-  const set = SETS.find((definition) => definition.id === setId);
-  if (!set) {
-    throw new Error(`Unknown set id: ${setId}`);
-  }
+export const SETS: readonly ItemSet[] = [
+  {
+    id: 'neko-patisserie',
+    name: 'Neko Patisserie',
+    theme: 'Cat-shaped pastries and desserts from a feline bakery',
+    itemIds: [
+      'neko-macaron',
+      'neko-croissant',
+      'neko-donut',
+      'neko-eclair',
+      'neko-cake',
+      'neko-souffle',
+    ],
+    completionReward:
+      'Unlocks a tiny bakery display shelf for your bedroom wall.',
+  },
+  {
+    id: 'express-line',
+    name: 'Express Line',
+    theme: 'Anthropomorphic train mascots from every service tier',
+    itemIds: [
+      'train-local',
+      'train-rapid',
+      'train-express',
+      'train-limited',
+      'train-shinkansen',
+      'train-phantom',
+    ],
+    completionReward:
+      'Unlocks a model railway diorama for your bedroom desk.',
+  },
+  {
+    id: 'moonlight-garden',
+    name: 'Moonlight Garden',
+    theme: 'Bioluminescent plants that bloom only at night',
+    itemIds: [
+      'moon-fern',
+      'moon-moss',
+      'moon-lily',
+      'moon-vine',
+      'moon-orchid',
+      'moon-tree',
+    ],
+    completionReward:
+      'Unlocks a glowing terrarium for your bedroom windowsill.',
+  },
+  {
+    id: 'pixel-legends',
+    name: 'Pixel Legends',
+    theme: 'Classic RPG character figurines in retro pixel style',
+    itemIds: [
+      'pixel-knight',
+      'pixel-mage',
+      'pixel-thief',
+      'pixel-healer',
+      'pixel-dragon',
+      'pixel-dev',
+    ],
+    completionReward:
+      'Unlocks a CRT monitor prop for your bedroom that plays a tiny game.',
+  },
+] as const;
 
-  return set;
+/** Lookup set by ID */
+export function getSetById(id: string): ItemSet | undefined {
+  return SETS.find((s) => s.id === id);
 }

@@ -1,64 +1,55 @@
 /**
- * Owns scene registration and transitions while leaving rendering details inside scenes.
+ * SceneManager — Manages active scene lifecycle.
+ *
+ * Holds the current scene implementing the Scene interface,
+ * handles transitions (dispose old → init new), and delegates
+ * the per-frame update call.
  */
-import type { WebGLRenderer } from 'three';
-import type { GameContext, GameScene, SceneId, SceneTransitionPayload } from './Scene';
+
+import type { Scene } from '../data/types.js';
 
 export class SceneManager {
-  private readonly scenes = new Map<SceneId, GameScene>();
-  private activeScene: GameScene | null = null;
+  private currentScene: Scene | null = null;
+  private isTransitioning = false;
 
-  public constructor(private readonly context: GameContext) {}
-
-  public register(scene: GameScene): void {
-    if (this.scenes.has(scene.id)) {
-      throw new Error(`Scene already registered: ${scene.id}`);
-    }
-
-    this.scenes.set(scene.id, scene);
+  /** Returns the currently active scene, or null */
+  getCurrent(): Scene | null {
+    return this.currentScene;
   }
 
-  public switchTo(sceneId: SceneId, payload?: SceneTransitionPayload): void {
-    const nextScene = this.scenes.get(sceneId);
-    if (!nextScene) {
-      throw new Error(`Cannot switch to unknown scene: ${sceneId}`);
-    }
-
-    if (this.activeScene?.id === sceneId) {
+  /** Switch to a new scene: dispose current, then init the new one */
+  async switchTo(nextScene: Scene): Promise<void> {
+    if (this.isTransitioning) {
+      console.warn('SceneManager: transition already in progress, ignoring');
       return;
     }
 
-    this.activeScene?.exit();
-    this.context.uiRoot.replaceChildren();
-    this.activeScene = nextScene;
+    this.isTransitioning = true;
 
-    const { width, height } = this.context.getSize();
-    nextScene.resize(width, height);
-    nextScene.enter(this.context, payload);
-  }
+    try {
+      // Dispose old scene
+      if (this.currentScene) {
+        this.currentScene.dispose();
+      }
 
-  public update(deltaSeconds: number): void {
-    this.activeScene?.update(deltaSeconds);
-  }
-
-  public render(renderer: WebGLRenderer): void {
-    this.activeScene?.render(renderer);
-  }
-
-  public resize(width: number, height: number): void {
-    this.activeScene?.resize(width, height);
-  }
-
-  public getActiveSceneId(): SceneId | null {
-    return this.activeScene?.id ?? null;
-  }
-
-  public dispose(): void {
-    this.activeScene?.exit();
-    for (const scene of this.scenes.values()) {
-      scene.dispose();
+      this.currentScene = nextScene;
+      await nextScene.init();
+    } finally {
+      this.isTransitioning = false;
     }
-    this.scenes.clear();
-    this.activeScene = null;
+  }
+
+  /** Called every frame by Game.ts with delta time */
+  update(dt: number) {
+    if (this.currentScene && !this.isTransitioning) {
+      this.currentScene.update(dt);
+    }
+  }
+
+  dispose() {
+    if (this.currentScene) {
+      this.currentScene.dispose();
+      this.currentScene = null;
+    }
   }
 }

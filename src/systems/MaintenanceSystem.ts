@@ -1,125 +1,119 @@
 /**
- * Tracks machine maintenance state independently from rendered machine meshes.
+ * MaintenanceSystem — Tracks per-machine state.
+ *
+ * Each machine can be clean/dirty, stocked/empty, jammed, or unpowered.
+ * Maintenance actions change these flags and affect gacha pulls.
  */
-import { MACHINES } from '../data/machines';
 
-export interface MachineState {
-  readonly machineId: string;
-  readonly dirty: boolean;
-  readonly lowStock: boolean;
-  readonly jammed: boolean;
-  readonly powered: boolean;
-}
-
-export type MachineMaintenanceState = 'ready' | 'dirty' | 'lowStock' | 'jammed' | 'offline';
+import type { MachineState } from '../data/types.js';
+import { MACHINES } from '../data/machines.js';
 
 export class MaintenanceSystem {
-  private readonly states = new Map<string, MachineState>();
+  private states: Map<string, MachineState> = new Map();
 
-  public constructor(initialStates: readonly MachineState[] = []) {
-    for (const machine of MACHINES) {
-      this.states.set(machine.id, {
-        machineId: machine.id,
-        dirty: false,
-        lowStock: false,
-        jammed: false,
-        powered: true,
+  /** Initialize all machines with default (degraded) state for a night */
+  initializeForNight(
+    availableMachineIds: string[],
+    difficultyModifier: number,
+    rng: () => number = Math.random,
+  ) {
+    this.states.clear();
+
+    for (const id of availableMachineIds) {
+      const machine = MACHINES.find((m) => m.id === id);
+      if (!machine) continue;
+
+      // Higher difficulty = more problems
+      const dirtyChance = 0.3 * difficultyModifier;
+      const lowStockChance = 0.2 * difficultyModifier;
+      const jamChance = machine.quirks.includes('jams-often')
+        ? 0.4 * difficultyModifier
+        : 0.15 * difficultyModifier;
+      const unpoweredChance = 0.1 * difficultyModifier;
+
+      this.states.set(id, {
+        machineId: id,
+        cleanliness: rng() < dirtyChance ? 'dirty' : 'clean',
+        stockLevel: rng() < lowStockChance
+          ? (rng() < 0.3 ? 'empty' : 'low')
+          : 'ok',
+        isJammed: rng() < jamChance,
+        isPowered: rng() >= unpoweredChance,
       });
     }
-
-    for (const state of initialStates) {
-      this.states.set(state.machineId, state);
-    }
   }
 
-  public setState(machineId: string, state: MachineMaintenanceState): void {
-    const current = this.getMachineState(machineId);
-    this.states.set(machineId, {
-      machineId,
-      dirty: state === 'dirty' || current.dirty,
-      lowStock: state === 'lowStock' || current.lowStock,
-      jammed: state === 'jammed' || current.jammed,
-      powered: state === 'offline' ? false : current.powered,
-    });
+  /** Get current state for a machine */
+  getState(machineId: string): MachineState | undefined {
+    return this.states.get(machineId);
   }
 
-  public getState(machineId: string): MachineMaintenanceState {
-    const state = this.getMachineState(machineId);
-    if (!state.powered) {
-      return 'offline';
-    }
-    if (state.jammed) {
-      return 'jammed';
-    }
-    if (state.lowStock) {
-      return 'lowStock';
-    }
-    if (state.dirty) {
-      return 'dirty';
-    }
-
-    return 'ready';
+  /** Get all machine states */
+  getAllStates(): MachineState[] {
+    return [...this.states.values()];
   }
 
-  public getMachineState(machineId: string): MachineState {
+  /** Clean a machine */
+  cleanMachine(machineId: string): boolean {
+    const state = this.states.get(machineId);
+    if (!state || state.cleanliness === 'clean') return false;
+    state.cleanliness = 'clean';
+    return true;
+  }
+
+  /** Restock a machine */
+  restockMachine(machineId: string): boolean {
+    const state = this.states.get(machineId);
+    if (!state || state.stockLevel === 'ok') return false;
+    state.stockLevel = 'ok';
+    return true;
+  }
+
+  /** Fix a jammed machine */
+  fixJam(machineId: string): boolean {
+    const state = this.states.get(machineId);
+    if (!state || !state.isJammed) return false;
+    state.isJammed = false;
+    return true;
+  }
+
+  /** Rewire/power a machine */
+  rewire(machineId: string): boolean {
+    const state = this.states.get(machineId);
+    if (!state || state.isPowered) return false;
+    state.isPowered = true;
+    return true;
+  }
+
+  /** Check if a machine can be pulled from */
+  canPull(machineId: string): boolean {
+    const state = this.states.get(machineId);
+    if (!state) return false;
     return (
-      this.states.get(machineId) ?? {
-        machineId,
-        dirty: false,
-        lowStock: false,
-        jammed: false,
-        powered: true,
-      }
+      state.isPowered &&
+      !state.isJammed &&
+      state.stockLevel !== 'empty'
     );
   }
 
-  public markCleaned(machineId: string): void {
-    const state = this.getMachineState(machineId);
-    this.states.set(machineId, { ...state, dirty: false });
+  /**
+   * Get a list of issues with a machine (for task matching).
+   * Returns empty array if machine is in perfect condition.
+   */
+  getIssues(machineId: string): string[] {
+    const state = this.states.get(machineId);
+    if (!state) return [];
+
+    const issues: string[] = [];
+    if (state.cleanliness === 'dirty') issues.push('dirty');
+    if (state.stockLevel !== 'ok') issues.push('needs-restock');
+    if (state.isJammed) issues.push('jammed');
+    if (!state.isPowered) issues.push('unpowered');
+    return issues;
   }
 
-  public markRestocked(machineId: string): void {
-    const state = this.getMachineState(machineId);
-    this.states.set(machineId, { ...state, lowStock: false });
-  }
-
-  public markFixed(machineId: string): void {
-    const state = this.getMachineState(machineId);
-    this.states.set(machineId, { ...state, jammed: false });
-  }
-
-  public markRewired(machineId: string): void {
-    const state = this.getMachineState(machineId);
-    this.states.set(machineId, { ...state, powered: true });
-  }
-
-  public applyTaskProblem(machineId: string, state: MachineMaintenanceState): void {
-    const current = this.getMachineState(machineId);
-    this.states.set(machineId, {
-      machineId,
-      dirty: current.dirty || state === 'dirty',
-      lowStock: current.lowStock || state === 'lowStock',
-      jammed: current.jammed || state === 'jammed',
-      powered: state === 'offline' ? false : current.powered,
-    });
-  }
-
-  public completeTaskProblem(machineId: string, state: MachineMaintenanceState): void {
-    if (state === 'dirty') {
-      this.markCleaned(machineId);
-    }
-    if (state === 'lowStock') {
-      this.markRestocked(machineId);
-    }
-    if (state === 'jammed') {
-      this.markFixed(machineId);
-    }
-    if (state === 'offline') {
-      this.markRewired(machineId);
-    }
-  }
-
-  public toJSON(): readonly MachineState[] {
-    return [...this.states.values()];
+  /** Reset */
+  reset() {
+    this.states.clear();
   }
 }

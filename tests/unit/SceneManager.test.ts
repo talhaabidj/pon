@@ -1,51 +1,85 @@
-import { describe, expect, it } from 'vitest';
-import { SceneManager } from '../../src/core/SceneManager';
-import type { GameContext, GameScene, SceneId } from '../../src/core/Scene';
+/**
+ * SceneManager unit tests.
+ */
 
-function createScene(id: SceneId, events: string[]): GameScene {
+import { describe, it, expect, vi } from 'vitest';
+import { SceneManager } from '../../src/core/SceneManager.js';
+import type { Scene } from '../../src/data/types.js';
+
+function createMockScene(): Scene & {
+  initCalled: boolean;
+  updateCalls: number;
+  disposeCalled: boolean;
+} {
   return {
-    id,
-    enter: () => events.push(`${id}:enter`),
-    exit: () => events.push(`${id}:exit`),
-    update: () => events.push(`${id}:update`),
-    resize: () => events.push(`${id}:resize`),
-    render: () => events.push(`${id}:render`),
-    dispose: () => events.push(`${id}:dispose`),
+    initCalled: false,
+    updateCalls: 0,
+    disposeCalled: false,
+    async init() {
+      this.initCalled = true;
+    },
+    update(_dt: number) {
+      this.updateCalls++;
+    },
+    dispose() {
+      this.disposeCalled = true;
+    },
   };
 }
 
 describe('SceneManager', () => {
-  it('enters, exits, and tracks active scenes', () => {
-    const events: string[] = [];
-    const context = {
-      uiRoot: { replaceChildren: () => undefined },
-      getSize: () => ({ width: 1280, height: 720 }),
-    } as unknown as GameContext;
-    const manager = new SceneManager(context);
-
-    manager.register(createScene('desktop', events));
-    manager.register(createScene('bedroom', events));
-
-    manager.switchTo('desktop');
-    manager.switchTo('bedroom');
-
-    expect(manager.getActiveSceneId()).toBe('bedroom');
-    expect(events).toEqual([
-      'desktop:resize',
-      'desktop:enter',
-      'desktop:exit',
-      'bedroom:resize',
-      'bedroom:enter',
-    ]);
+  it('starts with no current scene', () => {
+    const sm = new SceneManager();
+    expect(sm.getCurrent()).toBeNull();
   });
 
-  it('throws on unknown scenes', () => {
-    const context = {
-      uiRoot: { replaceChildren: () => undefined },
-      getSize: () => ({ width: 1, height: 1 }),
-    } as unknown as GameContext;
-    const manager = new SceneManager(context);
+  it('switches to a scene and calls init', async () => {
+    const sm = new SceneManager();
+    const scene = createMockScene();
 
-    expect(() => manager.switchTo('shop')).toThrow('unknown scene');
+    await sm.switchTo(scene);
+
+    expect(sm.getCurrent()).toBe(scene);
+    expect(scene.initCalled).toBe(true);
+  });
+
+  it('disposes the previous scene when switching', async () => {
+    const sm = new SceneManager();
+    const sceneA = createMockScene();
+    const sceneB = createMockScene();
+
+    await sm.switchTo(sceneA);
+    await sm.switchTo(sceneB);
+
+    expect(sceneA.disposeCalled).toBe(true);
+    expect(sm.getCurrent()).toBe(sceneB);
+  });
+
+  it('delegates update to the current scene', async () => {
+    const sm = new SceneManager();
+    const scene = createMockScene();
+
+    await sm.switchTo(scene);
+    sm.update(0.016);
+    sm.update(0.016);
+
+    expect(scene.updateCalls).toBe(2);
+  });
+
+  it('does not update when no scene is set', () => {
+    const sm = new SceneManager();
+    // Should not throw
+    sm.update(0.016);
+  });
+
+  it('dispose cleans up current scene', async () => {
+    const sm = new SceneManager();
+    const scene = createMockScene();
+
+    await sm.switchTo(scene);
+    sm.dispose();
+
+    expect(scene.disposeCalled).toBe(true);
+    expect(sm.getCurrent()).toBeNull();
   });
 });

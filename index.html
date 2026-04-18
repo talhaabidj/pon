@@ -3,15 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PON — Night Shift Gacha</title>
     <meta
       name="description"
-      content="PON is a cozy, surreal gacha shop night-shift game."
+      content="Work the night shift at a Japanese gacha department store. Maintain temperamental capsule machines, pull prizes, and build your collection."
     />
-    <title>PON</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles/global.css" />
   </head>
   <body>
-    <div id="game-root" aria-label="PON game viewport"></div>
-    <div id="ui-root" aria-live="polite"></div>
-    <script type="module" src="./src/main.ts"></script>
+    <!-- Three.js canvas will be inserted here by Game.ts -->
+    <div id="canvas-container"></div>
+
+    <!-- All HTML/CSS UI overlays mount here -->
+    <div id="ui-root"></div>
+
+    <!-- Loading screen (visible before JS loads) -->
+    <div id="loading-screen">
+      <div class="loading-content">
+        <h1 class="loading-title">PON</h1>
+        <p class="loading-subtitle">Loading…</p>
+        <div class="loading-bar">
+          <div class="loading-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

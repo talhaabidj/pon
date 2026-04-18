@@ -1,71 +1,96 @@
-# PON
+# PON — Night Shift Gacha
 
-PON is a cozy, slightly surreal browser game about working the night shift in a Japanese-style gacha department store. You maintain humming capsule machines, earn wages, trade for tokens, pull strange prizes, and bring your collection back to a quiet bedroom hub.
+A cozy first-person browser game where you work the night shift at a Japanese gacha department store. Maintain temperamental capsule machines, secretly pull prizes on the clock, and build a wall of collectibles back home in your bedroom.
 
-## Stack
+## 🎮 Play
 
-- TypeScript
-- Vite
-- Three.js
-- Howler.js
-- HTML/CSS overlays
-- localStorage saves
-- Vitest
-- Playwright
-- ESLint and Prettier
+**[Play on Vercel →](#)** | **[Play on itch.io →](#)**
 
-## Local Development
+## ✨ Features
+
+- **First-person exploration** of a bedroom hub and a night gacha shop
+- **Maintenance tasks** — clean floors, wipe glass, restock machines, fix jams, rewire
+- **Gacha pulls** — themed capsule machines with rarity-weighted item pools
+- **Collection system** — build sets, track completion, discover secrets
+- **Hidden content** — secret machines, time-locked rares, machine personalities
+- **Cozy atmosphere** — late-night mood, warm lighting, ambient audio
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Rendering | Three.js (WebGL2) |
+| Language | TypeScript (strict) |
+| Build | Vite |
+| UI | HTML/CSS overlays |
+| Audio | Howler.js |
+| Testing | Vitest (unit) + Playwright (E2E) |
+| CI | GitHub Actions |
+| Deploy | Vercel (static) + itch.io (ZIP) |
+
+## 🚀 Getting Started
 
 ```bash
+# Install dependencies
 npm install
+
+# Start dev server (opens at http://localhost:3000)
 npm run dev
-```
 
-Open the URL printed by Vite. The current playable slice starts at a fake desktop, moves into the bedroom hub, enters the shop, completes a task, converts wages to tokens, pulls a capsule, views the reveal, and closes the shift report.
+# Type-check
+npm run typecheck
 
-## Scripts
-
-```bash
+# Lint
 npm run lint
-npm run test:unit
+
+# Unit tests
+npm run test
+
+# E2E tests
 npm run test:e2e
+
+# Production build
 npm run build
+
+# Preview production build
+npm run preview
 ```
 
-## Controls
+## 📦 Deployment
 
-The current slice uses mouse/touch UI for the playable loop. Future polish adds WASD movement, mouse look, and direct 3D proximity prompts.
-
-## Current Playable Loop
-
-1. Start at the fake OS desktop.
-2. Click `Start Shift`.
-3. Use the bedroom PC, album, or shop door.
-4. In the shop, complete checklist tasks for wages.
-5. Convert wages to tokens at the counter.
-6. Pull from an unlocked machine.
-7. Continue from the reveal screen.
-8. End the shift and return to the bedroom.
-
-## Vercel
-
-PON is configured as a static Vite app:
+### Vercel
 
 - Build command: `npm run build`
-- Output directory: `dist`
+- Output directory: `dist/`
+- Framework preset: Vite
 
-Vercel can host the production web app directly from the generated static bundle.
+### itch.io
 
-## itch.io / Static ZIP
+1. Run `npm run build`
+2. ZIP the contents of `dist/`
+3. Upload as an HTML5 game
 
-Run:
+## 📁 Project Structure
 
-```bash
-npm run build
+```
+pon/
+├── public/           # Static assets (audio, models, textures)
+├── src/
+│   ├── core/         # Game engine (Game, SceneManager, Input, etc.)
+│   ├── scenes/       # Scene implementations (Desktop, Bedroom, Shop, etc.)
+│   ├── world/        # 3D world builders (Bedroom, ShopFloor, machines, props)
+│   ├── systems/      # Game logic (Capsule, Collection, Economy, Tasks, etc.)
+│   ├── ui/           # HTML/CSS overlay modules
+│   ├── data/         # Static content (items, sets, machines, tasks)
+│   ├── styles/       # CSS files
+│   └── main.ts       # Entry point
+├── tests/
+│   ├── unit/         # Vitest unit tests
+│   └── e2e/          # Playwright E2E tests
+├── documentation/    # Design docs (PRD, GDD, Architecture, etc.)
+└── .logs/            # Development logs
 ```
 
-Then ZIP the contents of `dist/`. Vite is configured with `base: './'`, so built assets are referenced with relative URLs.
+## 📜 License
 
-## License
-
-MIT
+MIT — see [LICENSE](./LICENSE).

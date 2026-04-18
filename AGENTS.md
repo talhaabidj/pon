@@ -1,24 +1,51 @@
-# Agent Workflow
+# PON — Agent Behavior Guide
 
-This project is built incrementally by Codex as a senior game developer, technical artist, and software architect.
+## Skills / Modes
 
-## Working Rules
+You will use two conceptual skills while working on PON:
 
-- Keep the repository buildable at every milestone.
-- Prefer small, logical commits with clear messages.
-- Log significant work in `.logs/`.
-- Keep gameplay simulation state separate from Three.js rendering objects.
-- Use DOM overlays for text-heavy UI and Three.js for the playable 3D world.
-- Keep generated assets and public files organized under `public/`.
+### GameStudioSkill
 
-## Verification
+Use this mode when the primary work concerns:
+- Three.js scenes,
+- first-person movement and camera,
+- game loop, scene transitions,
+- worldbuilding (Bedroom, Shop, props, machines),
+- gameplay feel and visual feedback.
 
-- Run `npm run lint`, `npm run test:unit`, and `npm run build` after core code changes.
-- Use Playwright for browser-facing flow checks.
-- Capture screenshots during visual milestones and review HUD readability against the playfield.
+In this mode, prioritize:
+- Smooth framerate and low memory allocations,
+- Immersive player experience and clear interactions,
+- Clean separation of scenes/world from systems.
 
-## Documentation
+### WebAppStudioSkill
 
-- Update `PLAN.md` when project direction changes.
-- Update `README.md` when controls, setup, packaging, or deployment steps change.
-- Add one `.logs/NNN-topic.md` entry for each meaningful milestone.
+Use this mode when the primary work concerns:
+- TypeScript architecture and data models,
+- Vite, ESLint, Prettier, Vitest, Playwright,
+- HTML/CSS UI overlays,
+- CI/CD, GitHub Actions, Vercel deployment.
+
+In this mode, prioritize:
+- Code quality and maintainability,
+- Fast, reliable builds,
+- Green tests and CI,
+- Good documentation.
+
+## Workflow Rules
+
+1. Always keep `npm run build` and tests passing.
+2. Make small, verifiable changes per milestone.
+3. Log every significant change in `.logs/`.
+4. Update `PLAN.md` when milestones complete or scope changes.
+5. Switch skills mid-task if needed, but explain in `.logs/` which concerns you were addressing.
+
+## Documentation Reference
+
+All design truth lives in `documentation/`:
+- `prd.md` — Product requirements
+- `gdd.md` — Game design
+- `architecture.md` — Technical structure
+- `coding-standards.md` — Code conventions
+- `testing-and-deployment.md` — Test/deploy strategy
+- `skills.md` — Skill definitions

@@ -1,54 +1,94 @@
 /**
- * In-game night clock. Time advances by actions rather than wall-clock seconds.
+ * TimeSystem — In-game clock for the night shift.
+ *
+ * Tracks time from 22:00 to 06:00 (next day).
+ * Actions advance the clock. Emits end-of-night when time runs out.
  */
+
+import {
+  NIGHT_START_MINUTES,
+  NIGHT_END_MINUTES,
+  IDLE_TIME_PER_REAL_SECOND,
+} from '../core/Config.js';
+
 export class TimeSystem {
-  public static readonly SHIFT_START_HOUR = 22;
-  public static readonly SHIFT_LENGTH_MINUTES = 8 * 60;
-  private minutesAfterStart = 0;
+  private currentMinutes: number;
+  private endMinutes: number;
+  private isNightOver = false;
 
-  public constructor(initialMinutesAfterStart = 0) {
-    this.minutesAfterStart = initialMinutesAfterStart;
+  constructor(
+    startMinutes = NIGHT_START_MINUTES,
+    endMinutes = NIGHT_END_MINUTES,
+  ) {
+    this.currentMinutes = startMinutes;
+    this.endMinutes = endMinutes;
   }
 
-  public advanceMinutes(minutes: number): void {
-    this.minutesAfterStart = Math.min(
-      TimeSystem.SHIFT_LENGTH_MINUTES,
-      this.minutesAfterStart + Math.max(0, Math.floor(minutes)),
-    );
+  /** Advance the clock by a number of game-minutes */
+  advance(minutes: number) {
+    if (this.isNightOver) return;
+    this.currentMinutes += minutes;
+    if (this.currentMinutes >= this.endMinutes) {
+      this.isNightOver = true;
+    }
   }
 
-  public getMinutesAfterStart(): number {
-    return this.minutesAfterStart;
+  /** Advance based on real-time delta (idle passage) */
+  advanceRealTime(dtSeconds: number) {
+    this.advance(dtSeconds * IDLE_TIME_PER_REAL_SECOND);
   }
 
-  public getClock(): string {
-    const totalMinutes = TimeSystem.SHIFT_START_HOUR * 60 + this.minutesAfterStart;
-    const wrappedMinutes = totalMinutes % (24 * 60);
-    const hours = Math.floor(wrappedMinutes / 60)
-      .toString()
-      .padStart(2, '0');
-    const minutes = (wrappedMinutes % 60).toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
+  /** Get current time as hours (0–23 range, wrapping past midnight) */
+  getCurrentHour(): number {
+    const totalMinutes = this.currentMinutes % (24 * 60);
+    return Math.floor(totalMinutes / 60);
   }
 
-  public isWithinWindow(startClock: string, endClock: string): boolean {
-    const now = this.clockToShiftMinute(this.getClock());
-    const start = this.clockToShiftMinute(startClock);
-    const end = this.clockToShiftMinute(endClock);
-
-    return now >= start && now <= end;
+  /** Get current time as minutes within the hour */
+  getCurrentMinuteOfHour(): number {
+    return Math.floor(this.currentMinutes % 60);
   }
 
-  public isShiftOver(): boolean {
-    return this.minutesAfterStart >= TimeSystem.SHIFT_LENGTH_MINUTES;
+  /** Get formatted time string (e.g., "02:34 AM") */
+  getFormattedTime(): string {
+    let hour = this.getCurrentHour();
+    const minute = this.getCurrentMinuteOfHour();
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    if (hour > 12) hour -= 12;
+    if (hour === 0) hour = 12;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${ampm}`;
   }
 
-  private clockToShiftMinute(clock: string): number {
-    const [hoursText, minutesText] = clock.split(':');
-    const absoluteMinutes = Number(hoursText) * 60 + Number(minutesText);
-    const shiftStart = TimeSystem.SHIFT_START_HOUR * 60;
-    return absoluteMinutes >= shiftStart
-      ? absoluteMinutes - shiftStart
-      : absoluteMinutes + 24 * 60 - shiftStart;
+  /** Get raw current minutes (for calculations) */
+  getCurrentMinutes(): number {
+    return this.currentMinutes;
+  }
+
+  /** Get remaining minutes in the night */
+  getRemainingMinutes(): number {
+    return Math.max(0, this.endMinutes - this.currentMinutes);
+  }
+
+  /** Get progress through the night (0 to 1) */
+  getNightProgress(): number {
+    const total = this.endMinutes - NIGHT_START_MINUTES;
+    const elapsed = this.currentMinutes - NIGHT_START_MINUTES;
+    return Math.min(1, Math.max(0, elapsed / total));
+  }
+
+  /** Check if night is ending soon (within 15 game-minutes) */
+  isEndingSoon(): boolean {
+    return this.getRemainingMinutes() <= 15 && !this.isNightOver;
+  }
+
+  /** Check if the night shift has ended */
+  isOver(): boolean {
+    return this.isNightOver;
+  }
+
+  /** Reset for a new night */
+  reset() {
+    this.currentMinutes = NIGHT_START_MINUTES;
+    this.isNightOver = false;
   }
 }
