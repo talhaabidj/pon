@@ -311,5 +311,168 @@ export function buildShopFloor(
   exitLight.position.set(0, 2.8, HALF_D - 0.5);
   group.add(exitLight);
 
+  // ————————————————————————————————
+  // Ambient Decorations
+  // ————————————————————————————————
+
+  // Neon "OPEN" sign (back wall)
+  const neonMat = new THREE.MeshStandardMaterial({
+    color: 0xff3366,
+    emissive: 0xff3366,
+    emissiveIntensity: 0.6,
+  });
+  const neonSign = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 0.15, 0.02),
+    neonMat,
+  );
+  neonSign.position.set(-4, 3.2, -HALF_D + 0.02);
+  group.add(neonSign);
+
+  // Neon glow light
+  const neonGlow = new THREE.PointLight(0xff3366, 0.3, 3, 2);
+  neonGlow.position.set(-4, 3.2, -HALF_D + 0.3);
+  group.add(neonGlow);
+
+  // Wall posters (left wall)
+  const posterColors = [0x7c6ef0, 0xf06e7c, 0x6ef0c0];
+  for (let i = 0; i < 3; i++) {
+    const posterMat = new THREE.MeshStandardMaterial({
+      color: posterColors[i]!,
+      roughness: 0.9,
+    });
+    const poster = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.5, 0.7),
+      posterMat,
+    );
+    poster.position.set(-HALF_W + 0.02, 2.2, -2 + i * 2.5);
+    poster.rotation.y = Math.PI / 2;
+    group.add(poster);
+  }
+
+  // Notice board (right wall)
+  const boardMat = new THREE.MeshStandardMaterial({
+    color: 0x3d2b1f,
+    roughness: 0.9,
+  });
+  const noticeBoard = new THREE.Mesh(
+    new THREE.BoxGeometry(0.03, 0.8, 1.2),
+    boardMat,
+  );
+  noticeBoard.position.set(HALF_W - 0.02, 2.0, 0);
+  group.add(noticeBoard);
+
+  // Pinned notes on board
+  const noteColors = [0xffee88, 0x88eeff, 0xff88cc, 0x88ff88];
+  for (let i = 0; i < 4; i++) {
+    const noteMat = new THREE.MeshStandardMaterial({
+      color: noteColors[i]!,
+      roughness: 0.95,
+    });
+    const note = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.15, 0.12),
+      noteMat,
+    );
+    note.position.set(
+      HALF_W - 0.03,
+      1.85 + (i % 2) * 0.3,
+      -0.3 + (i % 3) * 0.3,
+    );
+    note.rotation.y = -Math.PI / 2;
+    group.add(note);
+  }
+
+  // Floor vending machine (soda machine near token station)
+  const vendBody = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 1.6, 0.45),
+    new THREE.MeshStandardMaterial({ color: 0x204080, roughness: 0.5, metalness: 0.3 }),
+  );
+  vendBody.position.set(5.5, 0.8, 1);
+  group.add(vendBody);
+
+  const vendScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.35, 0.5),
+    new THREE.MeshStandardMaterial({
+      color: 0x111122,
+      emissive: 0x3366ff,
+      emissiveIntensity: 0.15,
+    }),
+  );
+  vendScreen.position.set(5.5, 1.0, 1.226);
+  group.add(vendScreen);
+
+  // ————————————————————————————————
+  // Secret Interactables
+  // ————————————————————————————————
+
+  // Secret 1: Hidden note behind counter
+  const secretNote = new THREE.Group();
+  secretNote.name = 'secret-note';
+  secretNote.userData['interactable'] = true;
+  secretNote.userData['interactType'] = 'secret';
+  secretNote.userData['secretId'] = 'hidden-note';
+  secretNote.userData['secretName'] = 'A crumpled note';
+  secretNote.userData['prompt'] = 'Examine Note';
+
+  const noteObj = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.12, 0.08),
+    new THREE.MeshStandardMaterial({
+      color: 0xeedd99,
+      roughness: 0.95,
+    }),
+  );
+  noteObj.position.set(0, 0.01, 0);
+  noteObj.rotation.x = -Math.PI / 2;
+  secretNote.add(noteObj);
+  secretNote.position.set(-5.5, 0, -4.8);
+  group.add(secretNote);
+  interactables.push(secretNote);
+
+  // Secret 2: Loose ceiling tile (back corner)
+  const secretTile = new THREE.Group();
+  secretTile.name = 'secret-tile';
+  secretTile.userData['interactable'] = true;
+  secretTile.userData['interactType'] = 'secret';
+  secretTile.userData['secretId'] = 'loose-tile';
+  secretTile.userData['secretName'] = 'Something behind the tile...';
+  secretTile.userData['prompt'] = 'Inspect Tile';
+
+  const tileObj = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.02, 0.5),
+    new THREE.MeshStandardMaterial({
+      color: 0x222230,
+      roughness: 0.7,
+    }),
+  );
+  tileObj.position.set(0, 0, 0);
+  secretTile.add(tileObj);
+  secretTile.position.set(5.5, 3.95, -5);
+  group.add(secretTile);
+  interactables.push(secretTile);
+
+  // Secret 3: Scratched mark on floor near hidden machine spot
+  const secretMark = new THREE.Group();
+  secretMark.name = 'secret-mark';
+  secretMark.userData['interactable'] = true;
+  secretMark.userData['interactType'] = 'secret';
+  secretMark.userData['secretId'] = 'floor-mark';
+  secretMark.userData['secretName'] = 'Strange scratch marks';
+  secretMark.userData['prompt'] = 'Examine Marks';
+
+  const markObj = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.3, 0.3),
+    new THREE.MeshStandardMaterial({
+      color: 0x2a2a18,
+      roughness: 1.0,
+      transparent: true,
+      opacity: 0.6,
+    }),
+  );
+  markObj.rotation.x = -Math.PI / 2;
+  markObj.position.set(0, 0.002, 0);
+  secretMark.add(markObj);
+  secretMark.position.set(3, 0, 1.5);
+  group.add(secretMark);
+  interactables.push(secretMark);
+
   return { group, machineGroups, interactables };
 }

@@ -75,6 +75,8 @@ export function mountShopHUD() {
     <div class="shop-ending-soon hidden" id="ending-soon-banner">
       ⚠️ Shift ending soon!
     </div>
+
+    <div class="toast-container" id="shop-toasts"></div>
   `;
   uiRoot.appendChild(container);
 }
@@ -265,4 +267,21 @@ export function hideEndingSoon() {
 
 export function isAnyShopOverlayOpen(): boolean {
   return isPullResultVisible() || isTokenOverlayVisible() || isNightEndVisible();
+}
+
+// —— Toast notifications ——
+
+export function showToast(message: string, duration = 3000) {
+  const container = document.getElementById('shop-toasts');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
 }

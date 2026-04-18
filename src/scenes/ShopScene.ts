@@ -62,6 +62,7 @@ import {
   isNightEndVisible,
   showEndingSoon,
   hideEndingSoon,
+  showToast,
 } from '../ui/shopHUD.js';
 
 // Bounds
@@ -90,6 +91,8 @@ export class ShopScene implements Scene {
   private itemsObtainedThisNight: string[] = [];
   private nightEnded = false;
   private endingSoonShown = false;
+  private witchingHourShown = false;
+  private secretsTriggeredThisNight: string[] = [];
 
   constructor(
     game: Game,
@@ -236,6 +239,12 @@ export class ShopScene implements Scene {
       if (this.time.isOver()) {
         this.endNight();
       }
+
+      // 3 AM witching hour event
+      if (this.time.getCurrentHour() === 3 && !this.witchingHourShown) {
+        this.witchingHourShown = true;
+        showToast('🌙 3:00 AM — The witching hour... rare items stir.', 5000);
+      }
     }
 
     // —— Movement ——
@@ -315,6 +324,9 @@ export class ShopScene implements Scene {
         break;
       case 'wondertrade':
         this.handleWondertrade();
+        break;
+      case 'secret':
+        this.handleSecret(object);
         break;
       case 'shop-exit':
         this.endNight();
@@ -498,6 +510,30 @@ export class ShopScene implements Scene {
   }
 
   // ————————————————————————————————
+  // Secrets
+  // ————————————————————————————————
+
+  private handleSecret(object: THREE.Object3D) {
+    const secretId = object.userData['secretId'] as string;
+    if (!secretId) return;
+
+    // Only trigger once per session
+    if (this.secretsTriggeredThisNight.includes(secretId)) return;
+
+    if (this.progression.triggerSecret(secretId)) {
+      this.secretsTriggeredThisNight.push(secretId);
+
+      const secretName = object.userData['secretName'] as string ?? 'Something strange...';
+      showToast(`🔍 Secret discovered: ${secretName}`, 4000);
+
+      // Bonus money for finding secrets
+      this.economy.earnMoney(50);
+      this.moneyEarnedThisNight += 50;
+      this.updateHUD();
+    }
+  }
+
+  // ————————————————————————————————
   // Night End
   // ————————————————————————————————
 
@@ -516,7 +552,7 @@ export class ShopScene implements Scene {
       moneyEarned: this.moneyEarnedThisNight,
       tokensSpent: 0,
       itemsObtained: this.itemsObtainedThisNight,
-      secretsTriggered: [],
+      secretsTriggered: this.secretsTriggeredThisNight,
     });
 
     // Resolve item details for display
