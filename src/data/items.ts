@@ -1,5 +1,5 @@
 /**
- * items.ts — All collectible items in PON.
+ * items.ts — All collectible items in Catchapon.
  *
  * 4 sets × 6 items = 24 items total for first release.
  * Each item has a rarity, set, flavor text, and optional tags.

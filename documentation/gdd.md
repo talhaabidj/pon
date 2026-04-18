@@ -1,6 +1,6 @@
-# PON – Game Design Document (GDD)
+# Catchapon – Game Design Document (GDD)
 
-This GDD refines the PRD into concrete player experience, scenes, mechanics, and content for PON.
+This GDD refines the PRD into concrete player experience, scenes, mechanics, and content for Catchapon.
 
 ---
 
@@ -72,7 +72,7 @@ Work the night shift in a Japanese gacha department store, maintain temperamenta
 
 - Fullscreen HTML/CSS overlay.
 - “Apps” or buttons:
-  - **PON Night Shift:** Start the game proper.
+  - **Catchapon Night Shift:** Start the game proper.
   - Profile (opens read‑only stats).
   - Collection (shortcuts into Album).
   - Settings (master volume, mouse sensitivity, invert Y, etc.).
@@ -278,7 +278,7 @@ MVP:
   - Sensible default mouse sensitivity.
 - Audio:
   - Ambient bedroom and shop loops.
-  - Machine hums, capsule drop “pon” SFX, UI beeps.
+  - Machine hums, capsule drop “catchapon” SFX, UI beeps.
 - Feedback:
   - Clear highlights for interactable objects.
   - Short, readable tooltips / prompts.

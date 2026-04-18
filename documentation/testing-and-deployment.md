@@ -1,4 +1,4 @@
-# PON – Testing & Deployment
+# Catchapon – Testing & Deployment
 
 ---
 
@@ -54,7 +54,7 @@
 
 ### 3.1 Vercel
 
-- Treat PON as a static Vite site.
+- Treat Catchapon as a static Vite site.
 - Build command: `npm run build`.
 - Output directory: `dist/`.
 - Ensure all asset paths are relative or Vercel-compatible.

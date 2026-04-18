@@ -1,6 +1,6 @@
-# PON – Technical Architecture
+# Catchapon – Technical Architecture
 
-This document describes the high-level technical structure for PON and how modules interact.
+This document describes the high-level technical structure for Catchapon and how modules interact.
 
 ---
 

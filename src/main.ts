@@ -1,5 +1,5 @@
 /**
- * main.ts — PON entry point.
+ * main.ts — Catchapon entry point.
  *
  * Initializes the Game instance and boots into the first scene.
  */
@@ -24,5 +24,5 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('PON failed to start:', err);
+  console.error('Catchapon failed to start:', err);
 });

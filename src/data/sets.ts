@@ -1,5 +1,5 @@
 /**
- * sets.ts — Item set definitions for PON.
+ * sets.ts — Item set definitions for Catchapon.
  *
  * 4 themed sets, each with 6 items (+ 1 secret item in set 4).
  */

@@ -1,6 +1,6 @@
-# PON – Coding Standards
+# Catchapon – Coding Standards
 
-This file defines how we write and structure code in PON.
+This file defines how we write and structure code in Catchapon.
 
 ---
 

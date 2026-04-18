@@ -1,6 +1,6 @@
-# PON – Agent Skills
+# Catchapon – Agent Skills
 
-This document defines two high-level “skills” or modes that the Antigravity agent (Claude Opus) should use when working on PON.
+This document defines two high-level “skills” or modes that the Antigravity agent (Claude Opus) should use when working on Catchapon.
 
 The goal is to make behavior explicit and predictable, similar in spirit to having a dedicated game studio agent and a web app studio agent.
 

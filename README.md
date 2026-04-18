@@ -1,4 +1,4 @@
-# PON — Night Shift Gacha
+# Catchapon — Night Shift Gacha
 
 A cozy first-person browser game where you work the night shift at a Japanese gacha department store. Maintain temperamental capsule machines, secretly pull prizes on the clock, and build a wall of collectibles back home in your bedroom.
 
@@ -73,7 +73,7 @@ npm run preview
 ## 📁 Project Structure
 
 ```
-pon/
+catchapon/
 ├── public/           # Static assets (audio, models, textures)
 ├── src/
 │   ├── core/         # Game engine (Game, SceneManager, Input, etc.)
@@ -99,5 +99,5 @@ This project is **source-available and non-commercial** for the game code, with 
 - **Default assets (models, textures, audio, narrative text, UI, etc.):** Licensed under **Creative Commons BY-NC-SA 4.0**. See [ASSETS_LICENSE.md](./ASSETS_LICENSE.md).
 - **Specific 3D low-poly models:** Some models are licensed under **Creative Commons BY 4.0** and are listed explicitly in [ASSETS_LICENSE.md](./ASSETS_LICENSE.md).
 
-You are allowed to create and monetize gameplay videos (e.g., on YouTube or streaming platforms) as long as you credit: "PON — Night Shift Gacha by Talha Abid".
+You are allowed to create and monetize gameplay videos (e.g., on YouTube or streaming platforms) as long as you credit: "Catchapon — Night Shift Gacha by Talha Abid".
 

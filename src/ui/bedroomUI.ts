@@ -24,7 +24,7 @@ export function mountBedroomUI() {
     <div class="bedroom-overlay hidden" id="pc-overlay">
       <div class="overlay-panel">
         <div class="overlay-header">
-          <h2>PON Terminal</h2>
+          <h2>Catchapon Terminal</h2>
           <button class="overlay-close" id="pc-overlay-close">✕</button>
         </div>
         <div class="overlay-body">

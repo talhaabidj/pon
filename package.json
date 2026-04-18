@@ -1,9 +1,9 @@
 {
-  "name": "pon",
+  "name": "catchapon",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "PON — A cozy first-person Japanese gacha department store game",
+  "description": "Catchapon — A cozy first-person Japanese gacha department store game",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

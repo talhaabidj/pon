@@ -6,9 +6,9 @@ You are working INSIDE an IDE (Google Antigravity), with access to:
 - a browser,
 - and Claude Opus 4.6/4.7 as your main reasoning/coding model.
 
-Your job is to DESIGN, PLAN, and IMPLEMENT a **production‑grade**, browser-based game called **PON**.
+Your job is to DESIGN, PLAN, and IMPLEMENT a **production‑grade**, browser-based game called **Catchapon**.
 
-PON must:
+Catchapon must:
 - run fully in the browser (HTML5/WebGL),
 - be open‑source and cleanly structured for **GitHub**,
 - build as a static bundle suitable for **itch.io** (ZIP with `index.html` at root),
@@ -63,7 +63,7 @@ At each major step, log what you did in `.logs/` and keep PLAN.md in sync.
 1. HIGH‑LEVEL GAME CONCEPT (LOCKED)
 ====================================================
 
-Title: PON
+Title: Catchapon
 
 Theme: Machines.
 
@@ -103,7 +103,7 @@ Core loop per night:
    - Convert money → **gacha tokens** at the counter or staff terminal.
    - Spend tokens on machines:
      - Choose a machine (theme/series).
-     - Trigger pull: machine animates, capsule drops (“pon”).
+     - Trigger pull: machine animates, capsule drops (“catchapon”).
      - Switch to a **2D item reveal screen** with item card (name, rarity, set, flavor text, icon).
      - Item is added to **collection**.
 5. End of night:
@@ -172,7 +172,7 @@ Visual + performance constraints:
 
 Create this baseline structure (extend if needed, but keep it coherent):
 
-pon/
+catchapon/
   public/
     audio/
     models/

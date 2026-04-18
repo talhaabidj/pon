@@ -1,8 +1,8 @@
-# PON — Agent Behavior Guide
+# Catchapon — Agent Behavior Guide
 
 ## Skills / Modes
 
-You will use two conceptual skills while working on PON:
+You will use two conceptual skills while working on Catchapon:
 
 ### GameStudioSkill
 

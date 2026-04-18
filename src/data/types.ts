@@ -1,5 +1,5 @@
 /**
- * PON — Data Type Contracts
+ * Catchapon — Data Type Contracts
  *
  * Central type definitions for all game entities.
  * These types are the backbone of system logic and data modules.

@@ -20,7 +20,7 @@ export function mountDesktopUI(game: Game) {
     <div class="desktop-screen">
       <div class="desktop-taskbar">
         <div class="taskbar-left">
-          <span class="taskbar-logo">⬡ PON OS</span>
+          <span class="taskbar-logo">⬡ Catchapon OS</span>
         </div>
         <div class="taskbar-right">
           <span class="taskbar-clock" id="desktop-clock"></span>
@@ -46,7 +46,7 @@ export function mountDesktopUI(game: Game) {
           </button>
         </div>
         <div class="desktop-hero">
-          <h1 class="hero-title">PON</h1>
+          <h1 class="hero-title">Catchapon</h1>
           <p class="hero-subtitle">Night Shift Gacha</p>
           <div class="hero-divider"></div>
           <p class="hero-hint">Select <strong>Night Shift</strong> to begin</p>

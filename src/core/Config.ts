@@ -1,5 +1,5 @@
 /**
- * Config — Tuning constants for PON.
+ * Config — Tuning constants for Catchapon.
  *
  * All gameplay and rendering knobs live here so nothing is a magic number.
  */
