@@ -35,6 +35,7 @@ import { ProgressionSystem } from '../systems/ProgressionSystem.js';
 // Data
 import { MACHINES, getAvailableMachines } from '../data/machines.js';
 import { TASK_TEMPLATES } from '../data/tasks.js';
+import { getItemById, ITEMS } from '../data/items.js';
 
 // World
 import { buildShopFloor } from '../world/ShopFloor.js';
@@ -293,16 +294,27 @@ export class ShopScene implements Scene {
     }
     if (type === 'token-station') return 'Buy Tokens';
     if (type === 'shop-exit') return 'End Shift';
+    if (type === 'wondertrade') {
+      const dupes = this.collection.getOwnedItemIds().length;
+      return dupes > 0 ? 'Wonder Exchange' : 'Wonder Exchange (need items)';
+    }
     return defaultPrompt;
   }
 
   private handleInteraction(type: string, object: THREE.Object3D) {
     switch (type) {
       case 'machine':
+        // Try task completion first, then pull
+        if (this.tryCompleteNearbyTask(object.userData['machineId'] as string)) {
+          return; // Completed a task
+        }
         this.handleMachinePull(object);
         break;
       case 'token-station':
         this.handleTokenStation();
+        break;
+      case 'wondertrade':
+        this.handleWondertrade();
         break;
       case 'shop-exit':
         this.endNight();
@@ -388,33 +400,101 @@ export class ShopScene implements Scene {
   }
 
   // ————————————————————————————————
-  // Task Completion (simplified for M4)
+  // Task Completion
   // ————————————————————————————————
 
   /**
-   * For M4, tasks are auto-completed when the player walks near
-   * the relevant machine/floor spot. In later milestones, this will
-   * require a mini-action (button mashing, timing, etc.)
+   * Attempt to complete a task relevant to the given machine.
+   * Auto-completes when interacting near the machine target.
+   * Returns true if a task was completed.
    */
-  // @ts-expect-error — Method reserved for M5 mini-actions
-  private tryCompleteNearbyTask(_machineId?: string) {
+  private tryCompleteNearbyTask(machineId?: string): boolean {
     const tasks = this.tasks.getTasks();
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i]!;
       if (task.isCompleted) continue;
 
-      // Auto-complete for now
-      if (this.tasks.completeTask(i)) {
+      const template = TASK_TEMPLATES.find((t) => t.id === task.templateId);
+      if (!template) continue;
+
+      // Match: floor tasks complete near any machine, machine tasks match target
+      const isMatch =
+        template.targetType === 'floor' ||
+        (template.targetType === 'machine' && task.targetId === machineId);
+
+      if (isMatch && this.tasks.completeTask(i)) {
         const reward = this.tasks.getTaskReward(task.templateId);
         const timeCost = this.tasks.getTaskTimeCost(task.templateId);
         this.economy.earnMoney(reward);
         this.moneyEarnedThisNight += reward;
         this.time.advance(timeCost);
+
+        // Update maintenance state based on task
+        if (machineId) {
+          if (template.type === 'wipe_glass') {
+            this.maintenance.cleanMachine(machineId);
+          } else if (template.type === 'restock') {
+            this.maintenance.restockMachine(machineId);
+          } else if (template.type === 'fix_jam') {
+            this.maintenance.fixJam(machineId);
+          } else if (template.type === 'rewire') {
+            this.maintenance.rewire(machineId);
+          }
+        }
+
         this.renderTasks();
         this.updateHUD();
-        return;
+        return true;
       }
     }
+    return false;
+  }
+
+  // ————————————————————————————————
+  // Wondertrade
+  // ————————————————————————————————
+
+  private handleWondertrade() {
+    // Need at least 1 item owned
+    const owned = this.collection.getOwnedItemIds();
+    if (owned.length === 0) return;
+
+    // Pick a random owned item to trade away (player doesn't choose for simplicity)
+    const tradeAwayId = owned[Math.floor(Math.random() * owned.length)]!;
+
+    // Pick a random item NOT in collection from all items
+    const unowned = ITEMS.filter((item) => !this.collection.hasItem(item.id));
+    if (unowned.length === 0) return; // Player has everything!
+
+    const received = unowned[Math.floor(Math.random() * unowned.length)]!;
+
+    // Remove the traded item conceptually (we don't actually remove from collection
+    // since the CollectionSystem tracks unique ownership — just add the new one)
+    this.collection.addItem(received.id);
+    this.itemsObtainedThisNight.push(received.id);
+    this.time.advance(PULL_TIME_COST);
+
+    // Show reveal
+    const accentColors: Record<string, string> = {
+      common: '#aaaaaa',
+      uncommon: '#44cc44',
+      rare: '#4488ff',
+      epic: '#cc44ff',
+      legendary: '#ffcc00',
+    };
+
+    const tradeItem = getItemById(tradeAwayId);
+    const tradeName = tradeItem ? tradeItem.name : 'an item';
+
+    showPullResult(
+      `${received.name}`,
+      received.rarity,
+      `Traded ${tradeName} → received ${received.name}!`,
+      accentColors[received.rarity] ?? '#7c6ef0',
+    );
+
+    this.controller.setEnabled(false);
+    this.updateHUD();
   }
 
   // ————————————————————————————————
@@ -439,11 +519,17 @@ export class ShopScene implements Scene {
       secretsTriggered: [],
     });
 
+    // Resolve item details for display
+    const itemDetails = this.itemsObtainedThisNight
+      .map((id) => getItemById(id))
+      .filter((item): item is NonNullable<typeof item> => item != null)
+      .map((item) => ({ name: item.name, rarity: item.rarity }));
+
     showNightEndOverlay({
       tasksCompleted: this.tasks.getCompletedCount(),
       tasksTotal: this.tasks.getTotalCount(),
       moneyEarned: this.moneyEarnedThisNight,
-      itemsObtained: this.itemsObtainedThisNight,
+      itemsObtained: itemDetails,
     });
   }
 

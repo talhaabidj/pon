@@ -198,11 +198,31 @@ export function showNightEndOverlay(summary: {
   tasksCompleted: number;
   tasksTotal: number;
   moneyEarned: number;
-  itemsObtained: string[];
+  itemsObtained: Array<{ name: string; rarity: string }>;
 }) {
   const el = document.getElementById('night-end-overlay');
   const summaryEl = document.getElementById('night-summary');
   if (el && summaryEl) {
+    const rarityColors: Record<string, string> = {
+      common: '#9ca3af',
+      uncommon: '#34d399',
+      rare: '#60a5fa',
+      epic: '#a78bfa',
+      legendary: '#fbbf24',
+    };
+
+    const itemsHtml = summary.itemsObtained.length > 0
+      ? summary.itemsObtained
+          .map(
+            (item) =>
+              `<div class="summary-item" style="color: ${rarityColors[item.rarity] ?? '#aaa'};">
+                <span class="summary-item-dot" style="background: ${rarityColors[item.rarity] ?? '#aaa'};"></span>
+                ${item.name}
+              </div>`,
+          )
+          .join('')
+      : '<span style="color: var(--color-text-dim);">No items this shift</span>';
+
     summaryEl.innerHTML = `
       <div class="summary-stat">
         <span>Tasks Completed</span>
@@ -216,6 +236,7 @@ export function showNightEndOverlay(summary: {
         <span>Items Obtained</span>
         <span>${summary.itemsObtained.length}</span>
       </div>
+      <div class="summary-items">${itemsHtml}</div>
     `;
     el.classList.remove('hidden');
   }

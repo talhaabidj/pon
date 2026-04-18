@@ -133,6 +133,12 @@ export function buildShopFloor(
   for (const def of machines) {
     const state = machineStates.get(def.id);
     const machineGroup = createCapsuleMachine(def, state);
+
+    // Wondertrade gets a special interaction type
+    if (def.id === 'machine-wondertrade') {
+      machineGroup.userData['interactType'] = 'wondertrade';
+    }
+
     group.add(machineGroup);
     machineGroups.set(def.id, machineGroup);
     interactables.push(machineGroup);
