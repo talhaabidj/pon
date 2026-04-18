@@ -145,22 +145,22 @@ export function buildBedroom(): BedroomLayout {
   bed.position.set(-1.6, 0, -1.2);
   group.add(bed);
 
-  // Desk — back-right corner, facing left wall
+  // Desk — back-right corner, flush against right wall
   const desk = createDesk();
-  desk.position.set(1.5, 0, -1.2);
+  desk.position.set(1.65, 0, -0.7);
   desk.rotation.y = -Math.PI / 2;
   group.add(desk);
 
   // PC on desk
   const pc = createPCSetup();
-  pc.position.set(1.5, 0.78, -1.2);
+  pc.position.set(1.65, 0.78, -0.7);
   pc.rotation.y = -Math.PI / 2;
   group.add(pc);
   interactables.push(pc);
 
   // Chair — in front of desk
   const chair = createChair();
-  chair.position.set(1.1, 0, -1.0);
+  chair.position.set(1.25, 0, -0.7);
   chair.rotation.y = Math.PI * 0.6;
   group.add(chair);
 
@@ -178,9 +178,9 @@ export function buildBedroom(): BedroomLayout {
   group.add(collectionWall);
   interactables.push(collectionWall);
 
-  // Ladder shelf — back wall, between bed and window
+  // Ladder shelf — back wall, flush
   const ladderShelf = createLadderShelf();
-  ladderShelf.position.set(-0.3, 0, -HALF_D + 0.15);
+  ladderShelf.position.set(-0.3, 0, -1.28);
   group.add(ladderShelf);
 
   // Window — back wall, right of center
@@ -194,9 +194,9 @@ export function buildBedroom(): BedroomLayout {
   ac.rotation.y = -Math.PI / 2;
   group.add(ac);
 
-  // Cupboard — front-left corner
+  // Cupboard — front-left corner, flush to walls
   const cupboard = createCupboard();
-  cupboard.position.set(-1.8, 0, 1.3);
+  cupboard.position.set(-1.65, 0, 1.25);
   cupboard.rotation.y = Math.PI;
   group.add(cupboard);
 
