@@ -2,7 +2,7 @@
  * SceneManager unit tests.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { SceneManager } from '../../src/core/SceneManager.js';
 import type { Scene } from '../../src/data/types.js';
 

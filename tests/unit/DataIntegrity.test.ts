@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { ITEMS, getItemById, getItemsBySet } from '../../src/data/items.js';
 import { SETS, getSetById } from '../../src/data/sets.js';
-import { MACHINES, getMachineById, getAvailableMachines } from '../../src/data/machines.js';
+import { MACHINES, getAvailableMachines } from '../../src/data/machines.js';
 import { TASK_TEMPLATES } from '../../src/data/tasks.js';
 import { PROGRESSION, getProgressionForNight } from '../../src/data/progression.js';
 

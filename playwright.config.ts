@@ -7,7 +7,6 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     headless: true,
-    viewport: { width: 1280, height: 720 },
     ...devices['Desktop Chrome'],
   },
   webServer: {
