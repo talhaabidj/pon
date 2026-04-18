@@ -104,15 +104,11 @@ export function mountDesktopUI(game: Game) {
       <div id="overlay-faq" style="display: none;">
         <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #7c6ef0;">Catchapon - Help & FAQ</h2>
         <div style="max-width: 800px; color: #ccc; font-size: 1.1rem; line-height: 1.6;">
-          <p>Welcome to <strong>Catchapon</strong>, a premium browser-based 3D gacha simulation and retro cozy management game.</p>
-          <h3 style="color: white; margin-top: 2rem;">What is my objective?</h3>
-          <p>Your job requires you to perform the Night Shift. You will clean up dirty floor spots (mop tasks), rewire disconnected plugs, fix mechanical jams, and wipe the glass on broken capsule machines.</p>
-          <h3 style="color: white; margin-top: 1.5rem;">How do I get Gacha Capsules?</h3>
-          <p>As you complete night shift maintenance tasks, you'll earn money. Spend this money at the Token Exchange machine to get golden tokens. Insert tokens into functional gacha machines to pull rare digital capsule toys.</p>
-          <h3 style="color: white; margin-top: 1.5rem;">Keyword Details (SEO)</h3>
-          <p style="font-size: 0.9rem; color: #777;">
-            Catchapon is a cozy life sim, an aesthetic neon webgl experience, 3D capsule toy collector, virtual gacha pull simulator, browser aesthetic game, mystery box unlocker, and night shift management simulator natively running in Three.js and Vite.
-          </p>
+          <p>Welcome to <strong>Catchapon</strong>, a premium browser aesthetic game offering a blend of a virtual gacha pull simulator and a cozy life sim natively built with Three.js and Vite.</p>
+          <h3 style="color: white; margin-top: 2rem;">What is my objective in this aesthetic neon webgl experience?</h3>
+          <p>Your job requires you to tackle the fast-paced challenges of a night shift management simulator. You will clean up dirty floor spots (mop tasks), rewire disconnected plugs, fix mechanical jams, and wipe the glass on broken capsule machines to keep the shop running perfectly.</p>
+          <h3 style="color: white; margin-top: 1.5rem;">How do I become a 3D capsule toy collector?</h3>
+          <p>As you complete your maintenance tasks, you'll earn money efficiently. Spend this money at the Token Exchange machine to grab golden tokens. Insert your tokens into fully functional gacha machines to act as a mystery box unlocker, allowing you to pull and collect rare digital capsule toys!</p>
         </div>
       </div>
     </div>
