@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Planning and Documentation
+PLAN.md
+AGENTS.md
+.logs/
+documentation/
