@@ -94,6 +94,11 @@ export class ShopScene implements Scene {
   private witchingHourShown = false;
   private secretsTriggeredThisNight: string[] = [];
 
+  // Screen shake
+  private shakeIntensity = 0;
+  private shakeDuration = 0;
+  private shakeTimer = 0;
+
   constructor(
     game: Game,
     economy?: EconomySystem,
@@ -269,6 +274,18 @@ export class ShopScene implements Scene {
       hideShopPrompt();
     }
 
+    // —— Screen shake ——
+    if (this.shakeTimer > 0) {
+      this.shakeTimer -= dt;
+      const t = this.shakeTimer / this.shakeDuration;
+      const intensity = this.shakeIntensity * t;
+      this.camera.position.x += (Math.random() - 0.5) * intensity;
+      this.camera.position.y += (Math.random() - 0.5) * intensity * 0.5 + PLAYER_HEIGHT;
+      if (this.shakeTimer <= 0) {
+        this.shakeTimer = 0;
+      }
+    }
+
     // —— Render ——
     this.game.renderer.render(this.scene3d, this.camera);
   }
@@ -392,6 +409,16 @@ export class ShopScene implements Scene {
       result.item.flavorText,
       accentColors[result.item.rarity] ?? '#7c6ef0',
     );
+
+    // Screen shake — scales with rarity
+    const shakeMap: Record<string, number> = {
+      common: 0.01,
+      uncommon: 0.015,
+      rare: 0.025,
+      epic: 0.04,
+      legendary: 0.06,
+    };
+    this.triggerShake(shakeMap[result.item.rarity] ?? 0.01, 0.3);
 
     this.controller.setEnabled(false);
     this.updateHUD();
@@ -645,4 +672,14 @@ export class ShopScene implements Scene {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
   };
+
+  // ————————————————————————————————
+  // Screen Shake
+  // ————————————————————————————————
+
+  private triggerShake(intensity: number, duration: number) {
+    this.shakeIntensity = intensity;
+    this.shakeDuration = duration;
+    this.shakeTimer = duration;
+  }
 }

@@ -11,6 +11,7 @@ import type { Scene } from '../data/types.js';
 export class SceneManager {
   private currentScene: Scene | null = null;
   private isTransitioning = false;
+  private transitionOverlay: HTMLDivElement | null = null;
 
   /** Returns the currently active scene, or null */
   getCurrent(): Scene | null {
@@ -27,6 +28,9 @@ export class SceneManager {
     this.isTransitioning = true;
 
     try {
+      // Fade to black
+      await this.fadeIn();
+
       // Dispose old scene
       if (this.currentScene) {
         this.currentScene.dispose();
@@ -34,6 +38,9 @@ export class SceneManager {
 
       this.currentScene = nextScene;
       await nextScene.init();
+
+      // Fade from black
+      await this.fadeOut();
     } finally {
       this.isTransitioning = false;
     }
@@ -51,5 +58,47 @@ export class SceneManager {
       this.currentScene.dispose();
       this.currentScene = null;
     }
+    this.transitionOverlay?.remove();
+    this.transitionOverlay = null;
+  }
+
+  /** Ensure transition overlay exists */
+  private getOverlay(): HTMLDivElement | null {
+    if (typeof document === 'undefined') return null;
+    if (!this.transitionOverlay) {
+      const el = document.createElement('div');
+      el.className = 'scene-transition-overlay';
+      el.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #000; z-index: 90; pointer-events: none;
+        opacity: 0; transition: opacity 0.35s ease-in-out;
+      `;
+      document.body.appendChild(el);
+      this.transitionOverlay = el;
+    }
+    return this.transitionOverlay;
+  }
+
+  /** Fade to black */
+  private fadeIn(): Promise<void> {
+    return new Promise((resolve) => {
+      const overlay = this.getOverlay();
+      if (!overlay) { resolve(); return; }
+      overlay.style.opacity = '0';
+      // Force reflow
+      void overlay.offsetWidth;
+      overlay.style.opacity = '1';
+      setTimeout(resolve, 350);
+    });
+  }
+
+  /** Fade from black */
+  private fadeOut(): Promise<void> {
+    return new Promise((resolve) => {
+      const overlay = this.getOverlay();
+      if (!overlay) { resolve(); return; }
+      overlay.style.opacity = '0';
+      setTimeout(resolve, 350);
+    });
   }
 }
