@@ -14,7 +14,7 @@
 | M3 | Data Layer & Core Systems | WebAppStudioSkill | ✅ Done |
 | M4 | Shop Scene (Night Floor) | GameStudioSkill | ✅ Done |
 | M5 | Reveal & Collection | Mixed | ✅ Done |
-| M6 | End of Night & Full Loop | Mixed | ⬜ Pending |
+| M6 | End of Night & Full Loop | Mixed | ✅ Done |
 | M7 | Secrets & Content | GameStudioSkill | ⬜ Pending |
 | M8 | Audio, Polish & Feel | GameStudioSkill | ⬜ Pending |
 | M9 | Testing & Deployment | WebAppStudioSkill | ⬜ Pending |
