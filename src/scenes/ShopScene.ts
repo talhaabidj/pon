@@ -615,9 +615,12 @@ export class ShopScene implements Scene {
       received.rarity,
       `Traded ${tradeName} → received ${received.name}!`,
       accentColors[received.rarity] ?? '#7c6ef0',
+      () => {
+        hidePullResult();
+        this.controller.setEnabled(true);
+        this.game.canvas.requestPointerLock();
+      }
     );
-
-    this.controller.setEnabled(false);
     this.updateHUD();
   }
 
