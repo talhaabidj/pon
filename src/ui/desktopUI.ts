@@ -10,7 +10,7 @@ import { loadGameState, saveGameState, createDefaultGameState } from '../core/Sa
 
 // If Howler is present in their node_modules, this binds global audio.
 // If not installed yet, this will error in Vite until user installs it, as per M14 reqs.
-// @ts-ignore - Ignore missing types if they haven't installed @types/howler yet
+// @ts-expect-error - Ignore missing types if they haven't installed @types/howler yet
 import * as HowlerModule from 'howler';
 
 const DESKTOP_ID = 'desktop-ui';

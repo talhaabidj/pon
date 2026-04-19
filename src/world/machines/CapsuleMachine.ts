@@ -9,6 +9,11 @@
 import * as THREE from 'three';
 import type { MachineDefinition, MachineState } from '../../data/types.js';
 
+interface AnimMats {
+  accentMat: THREE.MeshStandardMaterial;
+  labelMat: THREE.MeshStandardMaterial;
+}
+
 /** Accent colors by machine ID prefix */
 const ACCENT_COLORS: Record<string, number> = {
   'machine-neko': 0xf06e7c,
@@ -237,7 +242,7 @@ export function createCapsuleMachine(
     const isClean = s?.cleanliness === 'clean';
     const broken = s?.isJammed || !(s?.isPowered);
 
-    const mats = machine.userData['animMats'] as Array<any>;
+    const mats = machine.userData['animMats'] as AnimMats[];
     mats.forEach(({ accentMat, labelMat }) => {
       if (broken) {
         // Flicker chaotically
