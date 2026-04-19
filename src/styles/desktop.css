@@ -41,6 +41,16 @@
   color: var(--color-accent);
   letter-spacing: 0.08em;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.taskbar-img {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--color-accent-glow);
 }
 
 .taskbar-clock {
@@ -154,6 +164,15 @@
   text-shadow: 0 0 60px var(--color-accent-glow);
   margin-bottom: var(--space-2);
   line-height: 1;
+}
+
+.hero-logo {
+  width: 160px;
+  height: auto;
+  display: block;
+  margin: 0 auto var(--space-6);
+  border-radius: 50%;
+  box-shadow: 0 0 40px var(--color-accent-glow);
 }
 
 .hero-subtitle {
