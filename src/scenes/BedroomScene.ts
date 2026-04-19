@@ -261,11 +261,20 @@ export class BedroomScene implements Scene {
     // Create systems from save state
     const economy = new EconomySystem(this.gameState.money, this.gameState.tokens);
     const collection = new CollectionSystem(this.gameState.ownedItemIds);
-    const progression = new ProgressionSystem(this.gameState.nightsWorked);
+    const progression = new ProgressionSystem(
+      this.gameState.nightsWorked,
+      this.gameState.secretsTriggered,
+    );
 
     const { ShopScene } = await import('./ShopScene.js');
     await this.game.sceneManager.switchTo(
-      new ShopScene(this.game, economy, collection, progression),
+      new ShopScene(
+        this.game,
+        economy,
+        collection,
+        progression,
+        this.gameState.totalMoneyEarned,
+      ),
     );
 
     // Remove fade (the new scene will handle its own visuals)

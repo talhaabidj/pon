@@ -15,6 +15,7 @@ export function createDefaultGameState(): GameState {
     version: CURRENT_VERSION,
     nightsWorked: 0,
     money: 0,
+    totalMoneyEarned: 0,
     tokens: 0,
     ownedItemIds: [],
     secretsTriggered: [],
@@ -28,7 +29,7 @@ export function loadGameState(): GameState | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
 
-    const parsed = JSON.parse(raw) as GameState;
+    const parsed = JSON.parse(raw) as Partial<GameState>;
 
     // Version check
     if (parsed.version !== CURRENT_VERSION) {
@@ -37,7 +38,20 @@ export function loadGameState(): GameState | null {
       return null;
     }
 
-    return parsed;
+    // Backward-compatible migration for older saves that predate totalMoneyEarned.
+    return {
+      version: CURRENT_VERSION,
+      nightsWorked: parsed.nightsWorked ?? 0,
+      money: parsed.money ?? 0,
+      totalMoneyEarned: parsed.totalMoneyEarned ?? parsed.money ?? 0,
+      tokens: parsed.tokens ?? 0,
+      ownedItemIds: parsed.ownedItemIds ?? [],
+      secretsTriggered: parsed.secretsTriggered ?? [],
+      settings: {
+        ...DEFAULT_SETTINGS,
+        ...(parsed.settings ?? {}),
+      },
+    };
   } catch {
     console.warn('Failed to load save, starting fresh');
     return null;

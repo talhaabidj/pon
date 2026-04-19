@@ -20,7 +20,7 @@ import type { Game } from '../core/Game.js';
 import { FirstPersonController } from '../core/FirstPersonController.js';
 import { InteractionSystem } from '../core/InteractionSystem.js';
 import { PLAYER_HEIGHT, PULL_TIME_COST, DEFAULT_SETTINGS } from '../core/Config.js';
-import { saveGameState } from '../core/Save.js';
+import { loadGameState, saveGameState } from '../core/Save.js';
 import type { GameState } from '../data/types.js';
 
 // Systems
@@ -91,6 +91,7 @@ export class ShopScene implements Scene {
   private capsule: CapsuleSystem;
   private collection: CollectionSystem;
   private progression: ProgressionSystem;
+  private totalMoneyEarnedBeforeNight: number;
 
   // State
   private machineGroups = new Map<string, THREE.Group>();
@@ -112,6 +113,7 @@ export class ShopScene implements Scene {
     economy?: EconomySystem,
     collection?: CollectionSystem,
     progression?: ProgressionSystem,
+    totalMoneyEarned = 0,
   ) {
     this.game = game;
     this.scene3d = new THREE.Scene();
@@ -131,6 +133,7 @@ export class ShopScene implements Scene {
     this.economy = economy ?? new EconomySystem(200, 2);
     this.collection = collection ?? new CollectionSystem();
     this.progression = progression ?? new ProgressionSystem();
+    this.totalMoneyEarnedBeforeNight = totalMoneyEarned;
     this.time = new TimeSystem();
     this.tasks = new TaskSystem();
     this.maintenance = new MaintenanceSystem();
@@ -353,12 +356,25 @@ export class ShopScene implements Scene {
     }
 
     // —— Screen shake ——
+    let baseShakeX = this.camera.position.x;
+    let baseShakeY = this.camera.position.y;
+    let baseShakeZ = this.camera.position.z;
+    let shakeApplied = false;
+
     if (this.shakeTimer > 0) {
       this.shakeTimer -= dt;
       const t = this.shakeTimer / this.shakeDuration;
       const intensity = this.shakeIntensity * t;
-      this.camera.position.x += (Math.random() - 0.5) * intensity;
-      this.camera.position.y += (Math.random() - 0.5) * intensity * 0.5 + PLAYER_HEIGHT;
+
+      baseShakeX = this.camera.position.x;
+      baseShakeY = this.camera.position.y;
+      baseShakeZ = this.camera.position.z;
+
+      this.camera.position.x = baseShakeX + (Math.random() - 0.5) * intensity;
+      this.camera.position.y = baseShakeY + (Math.random() - 0.5) * intensity * 0.5;
+      this.camera.position.z = baseShakeZ + (Math.random() - 0.5) * intensity * 0.35;
+      shakeApplied = true;
+
       if (this.shakeTimer <= 0) {
         this.shakeTimer = 0;
       }
@@ -366,6 +382,13 @@ export class ShopScene implements Scene {
 
     // —— Render ——
     this.game.renderer.render(this.scene3d, this.camera);
+
+    // Restore camera so shake offset never accumulates into movement/collision.
+    if (shakeApplied) {
+      this.camera.position.x = baseShakeX;
+      this.camera.position.y = baseShakeY;
+      this.camera.position.z = baseShakeZ;
+    }
   }
 
   dispose() {
@@ -570,6 +593,7 @@ export class ShopScene implements Scene {
         this.economy.earnMoney(reward);
         this.moneyEarnedThisNight += reward;
         this.time.advance(timeCost);
+        showToast(`+$${reward} earned`, 1800);
 
         // Update maintenance state based on task
         if (template.targetType === 'machine') {
@@ -712,14 +736,20 @@ export class ShopScene implements Scene {
 
   /** Build the current GameState from system state */
   private buildGameState(): GameState {
+    const existingSettings = loadGameState()?.settings;
+
     return {
       version: 1,
       nightsWorked: this.progression.getNightsWorked(),
       money: this.economy.getMoney(),
+      totalMoneyEarned: this.totalMoneyEarnedBeforeNight + this.moneyEarnedThisNight,
       tokens: this.economy.getTokens(),
       ownedItemIds: this.collection.getOwnedItemIds(),
       secretsTriggered: this.progression.getSecretsTriggered(),
-      settings: { ...DEFAULT_SETTINGS },
+      settings: {
+        ...DEFAULT_SETTINGS,
+        ...(existingSettings ?? {}),
+      },
     };
   }
 

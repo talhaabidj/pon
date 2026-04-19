@@ -119,6 +119,7 @@ export interface GameState {
   version: number;
   nightsWorked: number;
   money: number;
+  totalMoneyEarned: number;
   tokens: number;
   ownedItemIds: string[];
   secretsTriggered: string[];

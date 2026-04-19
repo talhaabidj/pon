@@ -63,6 +63,10 @@ export function mountBedroomUI() {
               <span class="stat-value" id="stat-money">$0</span>
             </div>
             <div class="profile-stat">
+              <span class="stat-label">Current Balance</span>
+              <span class="stat-value" id="stat-wallet">$0</span>
+            </div>
+            <div class="profile-stat">
               <span class="stat-label">Items Collected</span>
               <span class="stat-value" id="stat-pulls">0 / 25</span>
             </div>
@@ -145,12 +149,14 @@ export function isPCOverlayVisible(): boolean {
 export function updatePCStats(state: GameState) {
   const nights = document.getElementById('stat-nights');
   const money = document.getElementById('stat-money');
+  const wallet = document.getElementById('stat-wallet');
   const pulls = document.getElementById('stat-pulls');
   const sets = document.getElementById('stat-sets');
   const secrets = document.getElementById('stat-secrets');
 
   if (nights) nights.textContent = String(state.nightsWorked);
-  if (money) money.textContent = `$${state.money}`;
+  if (money) money.textContent = `$${state.totalMoneyEarned}`;
+  if (wallet) wallet.textContent = `$${state.money}`;
   if (pulls) pulls.textContent = `${state.ownedItemIds.length} / 25`;
 
   let completedSets = 0;
