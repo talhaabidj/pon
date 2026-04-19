@@ -147,7 +147,12 @@ export function createCapsuleMachine(
     machine.add(internalDispenser);
 
     // —— Chaos Capsules! (Chaotic Instanced Pile inside the tank) ——
-    const capsulesData: any[] = [];
+    interface CapsuleData {
+      pos: THREE.Vector3;
+      rot: THREE.Euler;
+      vel: THREE.Vector3;
+    }
+    const capsulesData: CapsuleData[] = [];
     if (!isLowStock) {
       const capsuleCount = 45; // Huge pile!
       const capsuleGeo = new THREE.SphereGeometry(0.045, 8, 8);
