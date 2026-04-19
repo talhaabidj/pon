@@ -25,9 +25,8 @@
     "exactOptionalPropertyTypes": false,
 
     /* Paths */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
