@@ -1,8 +1,9 @@
 /**
- * CollectionWall — A wall-mounted display shelf/pegboard for gacha items.
+ * CollectionWall — A wall-mounted wooden display shelf for gacha items.
  *
- * INTERACTABLE — opens the Collection overlay.
- * Capsule spheres on shelves update to reflect owned items.
+ * INTERACTABLE — opens the Collection viewer overlay.
+ * Capsule spheres on wooden shelves update to reflect owned items.
+ * Styled as a warm, cozy wooden cabinet with subtle accent lighting.
  */
 
 import * as THREE from 'three';
@@ -23,105 +24,130 @@ export function createCollectionWall(): THREE.Group {
   wall.userData['interactType'] = 'collection';
   wall.userData['prompt'] = 'View Collection';
 
-  // —— Wall Frame ——
-  const frameMat = new THREE.MeshStandardMaterial({
-    color: 0x111115,
-    roughness: 0.8,
+  // —— Wooden Materials ——
+  const darkWoodMat = new THREE.MeshStandardMaterial({
+    color: 0x3d2b1f,
+    roughness: 0.85,
+    metalness: 0.05,
   });
-  const frameGeo = new THREE.BoxGeometry(1.48, 1.08, 0.04);
-  const frame = new THREE.Mesh(frameGeo, frameMat);
+  const lightWoodMat = new THREE.MeshStandardMaterial({
+    color: 0x8b6914,
+    roughness: 0.75,
+    metalness: 0.05,
+  });
+  const shelfWoodMat = new THREE.MeshStandardMaterial({
+    color: 0x654321,
+    roughness: 0.7,
+    metalness: 0.05,
+  });
+  const accentMat = new THREE.MeshStandardMaterial({
+    color: 0xdaa520,
+    emissive: 0xdaa520,
+    emissiveIntensity: 0.15,
+    roughness: 0.4,
+    metalness: 0.6,
+  });
+
+  // —— Outer Frame (thick wooden border — pushed back to avoid z-fight) ——
+  const frame = new THREE.Mesh(
+    new THREE.BoxGeometry(1.52, 1.12, 0.05),
+    darkWoodMat,
+  );
+  frame.position.z = -0.025;
   wall.add(frame);
 
-  // —— Pegboard backing ——
-  const boardMat = new THREE.MeshStandardMaterial({
-    color: 0x222228,
-    roughness: 0.9,
-  });
-  const board = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 1.0, 0.05),
-    boardMat,
+  // —— Back Panel (lighter wood — sits behind the frame) ——
+  const backPanel = new THREE.Mesh(
+    new THREE.BoxGeometry(1.42, 1.02, 0.02),
+    lightWoodMat,
   );
-  wall.add(board);
+  backPanel.position.z = -0.04;
+  wall.add(backPanel);
 
-  // —— Neon Strip (Top & Sides) ——
-  const neonMat = new THREE.MeshStandardMaterial({
-    color: 0x7c6ef0,
-    emissive: 0x7c6ef0,
-    emissiveIntensity: 1.5,
-  });
-  // Top strip
-  const neonTop = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.01, 0.01), neonMat);
-  neonTop.position.set(0, 0.48, 0.026);
-  wall.add(neonTop);
-  // Bottom strip
-  const neonBottom = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.01, 0.01), neonMat);
-  neonBottom.position.set(0, -0.48, 0.026);
-  wall.add(neonBottom);
+  // —— Top/Bottom golden inlay trim ——
+  const topTrim = new THREE.Mesh(new THREE.BoxGeometry(1.44, 0.012, 0.012), accentMat);
+  topTrim.position.set(0, 0.5, 0.005);
+  wall.add(topTrim);
 
-  // —— Acrylic Shelves (3 rows) ——
-  const shelfMat = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff,
-    metalness: 0.1,
-    roughness: 0.05,
-    transmission: 0.9,
-    transparent: true,
-    opacity: 0.6,
-  });
+  const bottomTrim = new THREE.Mesh(new THREE.BoxGeometry(1.44, 0.012, 0.012), accentMat);
+  bottomTrim.position.set(0, -0.5, 0.005);
+  wall.add(bottomTrim);
 
+  // —— Wooden Shelves (3 rows) with bracket supports ——
   for (let i = 0; i < 3; i++) {
+    const shelfY = -0.3 + i * 0.35;
+
+    // Shelf plank (well in front of backpanel)
     const shelfPlank = new THREE.Mesh(
-      new THREE.BoxGeometry(1.3, 0.015, 0.12),
-      shelfMat,
+      new THREE.BoxGeometry(1.3, 0.02, 0.13),
+      shelfWoodMat,
     );
-    // Add glowing bracket
-    const bracket = new THREE.Mesh(
-      new THREE.BoxGeometry(1.3, 0.005, 0.01),
-      neonMat
-    );
-    shelfPlank.position.set(0, -0.3 + i * 0.35, 0.06);
-    bracket.position.set(0, -0.307 + i * 0.35, 0.11);
+    shelfPlank.position.set(0, shelfY, 0.04);
     wall.add(shelfPlank);
-    wall.add(bracket);
+
+    // Front lip
+    const lip = new THREE.Mesh(
+      new THREE.BoxGeometry(1.3, 0.025, 0.008),
+      darkWoodMat,
+    );
+    lip.position.set(0, shelfY + 0.014, 0.1);
+    wall.add(lip);
+
+    // L-shaped bracket supports (2 per shelf)
+    for (let b = 0; b < 2; b++) {
+      const bx = -0.5 + b * 1.0;
+
+      const bracketV = new THREE.Mesh(
+        new THREE.BoxGeometry(0.012, 0.07, 0.008),
+        accentMat,
+      );
+      bracketV.position.set(bx, shelfY - 0.045, 0.05);
+      wall.add(bracketV);
+
+      const bracketH = new THREE.Mesh(
+        new THREE.BoxGeometry(0.012, 0.008, 0.09),
+        accentMat,
+      );
+      bracketH.position.set(bx, shelfY - 0.008, 0.04);
+      wall.add(bracketH);
+    }
   }
 
-  // —— 9 item slots (3 per row) — improved capsule shape ——
+  // —— 9 item slots (3 per row) ——
   const slotGroup = new THREE.Group();
   slotGroup.name = 'collection-slots';
 
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
-      // Empty slot placeholder (small ring)
-      const ringMat = new THREE.MeshStandardMaterial({
-        color: 0x333344,
-        roughness: 0.7,
+      const pedestalMat = new THREE.MeshStandardMaterial({
+        color: 0x4a3728,
+        roughness: 0.8,
       });
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(0.04, 0.005, 8, 24),
-        ringMat
+      const pedestal = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.028, 0.032, 0.01, 12),
+        pedestalMat,
       );
-      ring.rotation.x = Math.PI / 2;
 
-      const spacing = 0.35; // tighter spacing
+      const spacing = 0.35;
       const xPos = -0.35 + col * spacing;
-      const yPos = -0.3 + row * 0.35 + 0.01;
-      const zPos = 0.06;
+      const yPos = -0.3 + row * 0.35 + 0.02;
+      const zPos = 0.045;
 
-      ring.position.set(xPos, yPos, zPos);
-      wall.add(ring);
+      pedestal.position.set(xPos, yPos - 0.005, zPos);
+      wall.add(pedestal);
 
-      // The actual item (hidden initially)
       const slotMat = new THREE.MeshStandardMaterial({
         color: 0x1a1a24,
         roughness: 0.2,
         metalness: 0.4,
         transparent: true,
-        opacity: 0, // initially invisible
+        opacity: 0,
       });
       const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.04, 16, 12),
+        new THREE.SphereGeometry(0.035, 16, 12),
         slotMat,
       );
-      sphere.position.set(xPos, yPos + 0.04, zPos);
+      sphere.position.set(xPos, yPos + 0.035, zPos);
       sphere.name = `slot-${row}-${col}`;
       slotGroup.add(sphere);
     }
@@ -129,22 +155,25 @@ export function createCollectionWall(): THREE.Group {
   wall.add(slotGroup);
 
   // —— Title Plaque ——
-  const plaqueMat = new THREE.MeshStandardMaterial({
-    color: 0x222222,
-    metalness: 0.8,
-    roughness: 0.2,
-  });
   const plaque = new THREE.Mesh(
-    new THREE.BoxGeometry(0.4, 0.06, 0.02),
-    plaqueMat,
+    new THREE.BoxGeometry(0.45, 0.065, 0.02),
+    new THREE.MeshStandardMaterial({ color: 0x2a1f14, metalness: 0.3, roughness: 0.6 }),
   );
-  plaque.position.set(0, 0.6, 0.01);
+  plaque.position.set(0, 0.6, -0.01);
   wall.add(plaque);
 
-  // Accent light targeting the wall
-  const spotLight = new THREE.PointLight(0x7c6ef0, 1.0, 0, 2);
-  spotLight.power = 150;
-  spotLight.position.set(0, 0.8, 0.4);
+  const plaqueAccentTop = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.004, 0.004), accentMat);
+  plaqueAccentTop.position.set(0, 0.635, 0.002);
+  wall.add(plaqueAccentTop);
+
+  const plaqueAccentBot = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.004, 0.004), accentMat);
+  plaqueAccentBot.position.set(0, 0.565, 0.002);
+  wall.add(plaqueAccentBot);
+
+  // Warm spotlight
+  const spotLight = new THREE.PointLight(0xffe0a0, 1.0, 0, 2);
+  spotLight.power = 200;
+  spotLight.position.set(0, 0.9, 0.5);
   wall.add(spotLight);
 
   return wall;
@@ -152,7 +181,6 @@ export function createCollectionWall(): THREE.Group {
 
 /**
  * Update the collection wall to visually reflect owned items.
- * Maps owned items to shelf slots by color (rarity-based).
  */
 export function updateCollectionWallVisuals(
   wallGroup: THREE.Group,
@@ -161,7 +189,6 @@ export function updateCollectionWallVisuals(
   const slots = wallGroup.getObjectByName('collection-slots');
   if (!slots) return;
 
-  // Fill slots with owned item colors
   let slotIdx = 0;
   slots.traverse((child) => {
     if (child instanceof THREE.Mesh && child.name.startsWith('slot-')) {
@@ -173,7 +200,6 @@ export function updateCollectionWallVisuals(
         mat.opacity = 1.0;
         mat.emissive.setHex(color);
         mat.emissiveIntensity = 0.5;
-        // Make it glow and fully opaque
         mat.transparent = false;
       }
       slotIdx++;

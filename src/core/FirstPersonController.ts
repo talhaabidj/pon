@@ -28,6 +28,7 @@ export class FirstPersonController {
   private input: Input;
   private enabled = false;
   private isPointerLocked = false;
+  private cursorFreed = false;
   
   public onPause?: () => void;
 
@@ -86,6 +87,20 @@ export class FirstPersonController {
     return this.enabled;
   }
 
+  /** Temporarily free or re-lock cursor without pausing */
+  toggleCursorFree() {
+    if (!this.enabled) return;
+    this.cursorFreed = !this.cursorFreed;
+    
+    if (this.cursorFreed) {
+      if (document.pointerLockElement === this.domElement) {
+        document.exitPointerLock();
+      }
+    } else {
+      this.requestPointerLock();
+    }
+  }
+
   /** Called every frame with delta time in seconds */
   update(dt: number) {
     if (!this.enabled || !this.camera) return;
@@ -138,8 +153,13 @@ export class FirstPersonController {
     this.isPointerLocked = document.pointerLockElement === this.domElement;
     
     // If the controller expects pointer lock but it is lost, trigger pause
-    if (this.enabled && wasLocked && !this.isPointerLocked) {
+    if (this.enabled && wasLocked && !this.isPointerLocked && !this.cursorFreed) {
       if (this.onPause) this.onPause();
+    }
+    
+    // If user clicks back in manually, clear freed state
+    if (this.isPointerLocked && this.cursorFreed) {
+      this.cursorFreed = false;
     }
   };
 

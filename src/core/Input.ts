@@ -71,6 +71,10 @@ export class Input {
     return this.keysJustPressed.has('Escape');
   }
 
+  isCursorTogglePressed(): boolean {
+    return this.keysJustPressed.has('ControlLeft');
+  }
+
   isKeyDown(code: string): boolean {
     return this.keysDown.has(code);
   }

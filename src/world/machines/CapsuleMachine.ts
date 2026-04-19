@@ -147,6 +147,7 @@ export function createCapsuleMachine(
     machine.add(internalDispenser);
 
     // —— Chaos Capsules! (Chaotic Instanced Pile inside the tank) ——
+    const capsulesData: any[] = [];
     if (!isLowStock) {
       const capsuleCount = 45; // Huge pile!
       const capsuleGeo = new THREE.SphereGeometry(0.045, 8, 8);
@@ -169,11 +170,16 @@ export function createCapsuleMachine(
 
             const rx = -0.3 + (xLevel * 0.15) + (Math.random() * 0.05 - 0.025);
             const rz = -0.2 + (zLevel * 0.2) + (Math.random() * 0.05 - 0.025);
-            const ry = 1.12 + (yLevel * 0.11) + (Math.random() * 0.04) + yOffset;
+            // Drop them from the top to let gravity settle them
+            const ry = 1.4 + (yLevel * 0.11) + (Math.random() * 0.04) + yOffset;
             
-            // Jitter rotation so spheres feel chaotically piled if they have textures later
-            dummy.position.set(rx, ry, rz);
-            dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+            const pos = new THREE.Vector3(rx, ry, rz);
+            const rot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+            const vel = new THREE.Vector3((Math.random() - 0.5) * 0.2, 0, (Math.random() - 0.5) * 0.2);
+            capsulesData.push({ pos, rot, vel });
+            
+            dummy.position.copy(pos);
+            dummy.rotation.copy(rot);
             dummy.updateMatrix();
             instancedCapsules.setMatrixAt(i, dummy.matrix);
             
@@ -185,6 +191,7 @@ export function createCapsuleMachine(
       }
       instancedCapsules.instanceMatrix.needsUpdate = true;
       if (instancedCapsules.instanceColor) instancedCapsules.instanceColor.needsUpdate = true;
+      machine.userData['capsules'] = { mesh: instancedCapsules, data: capsulesData };
       machine.add(instancedCapsules);
     }
 
@@ -241,6 +248,67 @@ export function createCapsuleMachine(
   machine.userData['animate'] = (time: number, s?: MachineState) => {
     const isClean = s?.cleanliness === 'clean';
     const broken = s?.isJammed || !(s?.isPowered);
+
+    // —— Capsule Physics (Popcorn style) ——
+    let dt = time - (machine.userData['lastTime'] || time);
+    machine.userData['lastTime'] = time;
+    if (dt > 0.1) dt = 0.1; // clamp to prevent clipping on huge spikes
+    
+    // In ShopScene, time could be 0 init, so guard dt
+    if (dt > 0 && machine.userData['capsules']) {
+      const { mesh, data } = machine.userData['capsules'];
+      const dummy = new THREE.Object3D();
+      let needsMatrixUpdate = false;
+      
+      for (let i = 0; i < data.length; i++) {
+        const d = data[i];
+        
+        // Gravity
+        d.vel.y -= 1.8 * dt; // gravity
+
+        // Random subtle visual popcorn bounce so they look alive!
+        if (Math.random() < 0.005) {
+            d.vel.y += 0.3 + Math.random() * 0.3;
+            d.vel.x += (Math.random() - 0.5) * 0.4;
+            d.vel.z += (Math.random() - 0.5) * 0.4;
+        }
+
+        d.pos.addScaledVector(d.vel, dt);
+
+        // Floor collision (floor is ~1.06 + radius = 1.105)
+        if (d.pos.y < 1.105) {
+            d.pos.y = 1.105;
+            d.vel.y *= -0.4; // bounce
+            d.vel.x *= 0.9;  // friction
+            d.vel.z *= 0.9;
+        }
+
+        // Wall collisions
+        if (d.pos.x < -0.37) { d.pos.x = -0.37; d.vel.x *= -0.6; }
+        if (d.pos.x > 0.37) { d.pos.x = 0.37; d.vel.x *= -0.6; }
+        if (d.pos.z < -0.32) { d.pos.z = -0.32; d.vel.z *= -0.6; }
+        if (d.pos.z > 0.32) { d.pos.z = 0.32; d.vel.z *= -0.6; }
+
+        // Only update matrices if they are still moving meaningfully to save render time,
+        // but since we add random pops we just update them if velocity is non-negligible
+        if (d.vel.lengthSq() > 0.001) {
+          // Add some spin
+          d.rot.x += d.vel.z * dt * 5;
+          d.rot.z -= d.vel.x * dt * 5;
+          d.rot.y += d.vel.x * dt * 2;
+          
+          dummy.position.copy(d.pos);
+          dummy.rotation.copy(d.rot);
+          dummy.updateMatrix();
+          mesh.setMatrixAt(i, dummy.matrix);
+          needsMatrixUpdate = true;
+        }
+      }
+      
+      if (needsMatrixUpdate) {
+        mesh.instanceMatrix.needsUpdate = true;
+      }
+    }
 
     const mats = machine.userData['animMats'] as AnimMats[];
     mats.forEach(({ accentMat, labelMat }) => {

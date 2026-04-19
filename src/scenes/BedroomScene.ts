@@ -31,11 +31,12 @@ import {
   hideInteractPrompt,
   showPCOverlay,
   hidePCOverlay,
-  showCollectionOverlay,
   hideCollectionOverlay,
+  isCollectionOverlayVisible,
   isAnyOverlayOpen,
   updatePCStats,
-  updateCollectionOverlay,
+  openCollectionViewer,
+  navigateCollection,
 } from '../ui/bedroomUI.js';
 import {
   mountPauseUI,
@@ -132,16 +133,37 @@ export class BedroomScene implements Scene {
       // Controller disabled while overlay is open
       this.controller.setEnabled(false);
 
-      // Escape to close overlays
+      // Collection viewer A/D navigation
+      if (isCollectionOverlayVisible()) {
+        if (input.isKeyJustPressed('KeyA')) {
+          navigateCollection(-1);
+        }
+        if (input.isKeyJustPressed('KeyD')) {
+          navigateCollection(1);
+        }
+      }
+
+      // Escape to close overlays or pause menu
       if (input.isMenuPressed()) {
-        hidePCOverlay();
-        hideCollectionOverlay();
+        if (isPauseMenuVisible()) {
+          hidePauseMenu();
+          this.game.isPaused = false;
+          this.game.canvas.requestPointerLock();
+        } else {
+          hidePCOverlay();
+          hideCollectionOverlay();
+        }
         this.controller.setEnabled(true);
       }
 
       // Render but don't process movement
       this.game.renderer.render(this.scene3d, this.camera);
       return;
+    }
+
+    // —— Cursor Free Toggle ——
+    if (input.isCursorTogglePressed()) {
+      this.controller.toggleCursorFree();
     }
 
     // Ensure controller is enabled when no overlay
@@ -205,8 +227,7 @@ export class BedroomScene implements Scene {
         break;
 
       case 'collection':
-        updateCollectionOverlay(this.gameState.ownedItemIds);
-        showCollectionOverlay();
+        openCollectionViewer(this.gameState.ownedItemIds);
         this.controller.setEnabled(false);
         break;
 

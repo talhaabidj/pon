@@ -69,6 +69,7 @@ import {
   unmountPauseUI,
   showPauseMenu,
   hidePauseMenu,
+  isPauseMenuVisible,
 } from '../ui/pauseUI.js';
 
 // Bounds
@@ -253,6 +254,17 @@ export class ShopScene implements Scene {
   update(dt: number) {
     const input = this.game.input;
 
+    // —— Pause Menu Toggle ——
+    if (isPauseMenuVisible()) {
+      if (input.isMenuPressed()) {
+        hidePauseMenu();
+        this.game.isPaused = false;
+        this.game.canvas.requestPointerLock();
+      }
+      this.game.renderer.render(this.scene3d, this.camera);
+      return;
+    }
+
     // —— Night end overlay active ——
     if (isNightEndVisible()) {
       this.controller.setEnabled(false);
@@ -316,6 +328,12 @@ export class ShopScene implements Scene {
     if (!this.controller.isEnabled()) {
       this.controller.setEnabled(true);
     }
+    
+    // —— Cursor Free Toggle ——
+    if (input.isCursorTogglePressed()) {
+      this.controller.toggleCursorFree();
+    }
+    
     this.controller.update(dt);
     this.clampPosition();
 
