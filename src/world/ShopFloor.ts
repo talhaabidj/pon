@@ -141,7 +141,7 @@ export function buildShopFloor(
   const STORE_DEPTH = 3.5;    // how deep the storeroom extends behind the back wall
   const STORE_HEIGHT = 3.2;   // slightly lower ceiling than main shop
   const ARCHWAY_WIDTH = 1.28;  // opening in the back wall
-  const ARCHWAY_HEIGHT = 2.52; // opening height
+  const ARCHWAY_HEIGHT = 2.32; // opening height matched to door
   // Archway is positioned at the right side of the back wall
   const ARCHWAY_CENTER_X = HALF_W - STORE_WIDTH / 2; // = 7 - 2 = 5
   const STORE_LEFT_X = HALF_W - STORE_WIDTH;  // = 3
