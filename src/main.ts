@@ -11,9 +11,11 @@ import './styles/bedroom.css';
 import './styles/shop.css';
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 import { injectSpeedInsights } from '@vercel/speed-insights';
+import { inject } from '@vercel/analytics';
 
 async function main() {
   injectSpeedInsights();
+  inject();
   RectAreaLightUniformsLib.init();
   const container = document.getElementById('canvas-container');
   if (!container) {
