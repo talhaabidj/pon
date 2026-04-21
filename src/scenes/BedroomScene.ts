@@ -93,6 +93,7 @@ export class BedroomScene implements Scene {
     );
     this.pauseController = new PauseSceneController({
       controller: this.controller,
+      canvas: this.game.canvas,
       setPaused: (paused) => {
         this.game.isPaused = paused;
       },
@@ -180,6 +181,12 @@ export class BedroomScene implements Scene {
       }
       this.pauseController.handlePausedFrame();
 
+      this.game.renderer.render(this.scene3d, this.camera);
+      return;
+    }
+
+    // —— Click-to-start overlay (post-pause) ——
+    if (this.pauseController.isClickToStartVisible()) {
       this.game.renderer.render(this.scene3d, this.camera);
       return;
     }
@@ -448,6 +455,7 @@ export class BedroomScene implements Scene {
 
   private openPauseMenu() {
     if (isPauseMenuVisible()) return;
+    if (this.pauseController.isClickToStartVisible()) return;
     this.pauseController.openPauseMenu();
   }
 
