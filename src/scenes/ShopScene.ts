@@ -109,8 +109,8 @@ import {
 import { PauseSceneController } from './shared/PauseSceneController.js';
 
 // Bounds
-const SHOP_HALF_W = 6.5;
-const SHOP_HALF_D = 5.5;
+const SHOP_HALF_W = 7.0;
+const SHOP_HALF_D = 6.0;
 
 export class ShopScene implements Scene {
   private game: Game;
@@ -415,11 +415,11 @@ export class ShopScene implements Scene {
       const promptActions = this.getContextualActions(target.type, target.object);
       showShopPrompt({ text: prompt, actions: promptActions });
 
-      const restockHandled = input.isRestockPressed()
-        ? this.handleRestockInput(target.type, target.object)
+      const serviceHandled = input.isServicePressed()
+        ? this.handleServiceInput(target.type, target.object)
         : false;
 
-      if (!restockHandled && input.isInteractPressed()) {
+      if (!serviceHandled && input.isInteractPressed()) {
         this.handleInteraction(target.type, target.object);
       }
     } else {
@@ -567,7 +567,7 @@ export class ShopScene implements Scene {
   private getContextualActions(type: string, object?: THREE.Object3D): ShopPromptAction[] {
     if (type === 'machine') {
       const machineId = object ? getMachineId(object) : undefined;
-      if (!machineId) return [{ key: 'E', label: 'Interact' }];
+      if (!machineId) return [{ key: 'E', label: 'Pull' }];
 
       const state = this.maintenance.getState(machineId);
       const stock = state?.stockLevel ?? 'ok';
@@ -575,26 +575,29 @@ export class ShopScene implements Scene {
         (state?.cleanliness === 'dirty') ||
         (state?.isJammed === true) ||
         (state?.isPowered === false);
-      if (needsService) return [{ key: 'E', label: 'Service' }];
 
       const hasRestockNeed = (stock !== 'ok') || this.hasPendingRestockTask(machineId);
-      if (!hasRestockNeed) return [{ key: 'E', label: 'Pull' }];
-      if (stock === 'empty') return [{ key: 'R', label: 'Restock' }];
-      if (stock === 'low') {
+      
+      const hasServiceNeed = needsService || hasRestockNeed;
+
+      if (hasServiceNeed && stock !== 'empty') {
         return [
           { key: 'E', label: 'Pull' },
-          { key: 'R', label: 'Restock' },
+          { key: 'R', label: 'Service' },
         ];
+      } else if (hasServiceNeed && stock === 'empty') {
+        return [{ key: 'R', label: 'Service' }];
       }
-      return [{ key: 'R', label: 'Restock' }];
+      
+      return [{ key: 'E', label: 'Pull' }];
     }
 
     if (type === 'token-crate') {
-      return [{ key: 'E', label: 'Take Pack' }];
+      return [{ key: 'R', label: 'Take Pack' }];
     }
 
     if (type === 'storage-crate') {
-      return [{ key: 'E', label: 'Take Refill' }];
+      return [{ key: 'R', label: 'Take Refill' }];
     }
 
     if (type === 'token-station') {
@@ -603,23 +606,23 @@ export class ShopScene implements Scene {
         !this.tokenStationState.isPowered ||
         this.tokenStationState.isJammed ||
         this.tokenStationState.cleanliness === 'dirty';
-      if (needsService) return [{ key: 'E', label: 'Service' }];
+        
+      const hasRestockNeed = stock !== 'ok' || this.hasPendingRestockTask('token-station');
+      const hasServiceNeed = needsService || hasRestockNeed;
 
-      const hasRestockNeed =
-        stock !== 'ok' ||
-        this.hasPendingRestockTask('token-station');
-      if (!hasRestockNeed) return [{ key: 'E', label: 'Buy' }];
-      if (stock === 'empty') return [{ key: 'R', label: 'Restock' }];
-      if (stock === 'low') {
+      if (hasServiceNeed && stock !== 'empty') {
         return [
-          { key: 'E', label: 'Buy' },
-          { key: 'R', label: 'Restock' },
+          { key: 'E', label: 'Buy Tokens' },
+          { key: 'R', label: 'Service' },
         ];
+      } else if (hasServiceNeed && stock === 'empty') {
+        return [{ key: 'R', label: 'Service' }];
       }
-      return [{ key: 'R', label: 'Restock' }];
+      
+      return [{ key: 'E', label: 'Buy Tokens' }];
     }
 
-    if (type === 'floor-spot') return [{ key: 'E', label: 'Mop' }];
+    if (type === 'floor-spot') return [{ key: 'R', label: 'Mop' }];
     if (type === 'wondertrade') return [{ key: 'E', label: 'Trade' }];
     if (type === 'shop-exit') return [{ key: 'E', label: 'End Shift' }];
     if (type === 'secret') return [{ key: 'E', label: 'Inspect' }];
@@ -627,70 +630,84 @@ export class ShopScene implements Scene {
     return [{ key: 'E', label: 'Interact' }];
   }
 
-  private handleRestockInput(type: string, object: THREE.Object3D): boolean {
+  private handleServiceInput(type: string, object: THREE.Object3D): boolean {
+    if (type === 'floor-spot') {
+      this.handleFloorSpotMop(object);
+      return true;
+    }
+    
+    if (type === 'storage-crate') {
+      this.handleStorageCrate();
+      return true;
+    }
+    
+    if (type === 'token-crate') {
+      this.handleTokenCrate();
+      return true;
+    }
+
     if (type === 'machine') {
       const machineId = getMachineId(object);
       if (!machineId) return false;
 
+      // Service covers everything: clean, fix jam, restock, rewire
+      if (this.tryCompleteNearbyTask(machineId, 'all')) {
+        return true;
+      }
+
+      // If no task completed, check if they can do manual restock
       const state = this.maintenance.getState(machineId);
-      const hasRestockNeed = (state?.stockLevel !== 'ok') || this.hasPendingRestockTask(machineId);
-      if (!hasRestockNeed) return false;
-
-      if (!this.hasCapsuleRefill) {
-        showToast('Pick up capsules from the storage crate first', 1800);
-        return true;
-      }
-
-      if (this.tryCompleteNearbyTask(machineId, 'only')) {
-        return true;
-      }
-
-      if (state?.stockLevel === 'ok') {
-        showToast('No restock needed right now', 1300);
-        return true;
-      }
-
-      if (this.maintenance.restockMachine(machineId)) {
-        const machineGroup = this.machineGroups.get(machineId);
-        if (machineGroup) {
-          restockMachineCapsules(machineGroup);
+      const stock = state?.stockLevel ?? 'ok';
+      if (stock !== 'ok') {
+        if (!this.hasCapsuleRefill) {
+          showToast('Pick up capsules from the storage crate first', 1800);
+          return true;
         }
-        this.hasCapsuleRefill = false;
-        showToast('Machine restocked', 1400);
-        this.updateMachineTaskMarkers();
-        this.updateHUD();
+
+        if (this.maintenance.restockMachine(machineId)) {
+          const machineGroup = this.machineGroups.get(machineId);
+          if (machineGroup) {
+            restockMachineCapsules(machineGroup);
+          }
+          this.hasCapsuleRefill = false;
+          showToast('Machine restocked', 1400);
+          this.updateMachineTaskMarkers();
+          this.updateHUD();
+        }
+        return true;
       }
-      return true;
+      
+      // If we got here, they hit R but machine has no problems
+      showToast('Machine operating normally', 1300);
+      return false;
     }
 
     if (type === 'token-station') {
-      const hasRestockNeed =
-        this.tokenStationState.stockLevel !== 'ok' ||
-        this.hasPendingRestockTask('token-station');
-      if (!hasRestockNeed) return false;
-
-      if (!this.hasTokenRefill) {
-        showToast('Pick up token refill pack from token crate first', 1800);
+      // Service covers everything: clean, fix jam, rewire, restock
+      if (this.tryCompleteNearbyTask('token-station', 'all')) {
         return true;
       }
 
-      if (this.tryCompleteNearbyTask('token-station', 'only')) {
+      // If no task completed, check if they can do manual restock
+      const stock = this.tokenStationState.stockLevel;
+      if (stock !== 'ok') {
+        if (!this.hasTokenRefill) {
+          showToast('Pick up token refill pack from token crate first', 1800);
+          return true;
+        }
+
+        this.tokenStationState.stockLevel = 'ok';
+        this.hasTokenRefill = false;
+        const pulse = this.tokenStationGroup?.userData['pulseGlow'] as (() => void) | undefined;
+        pulse?.();
+        this.updateTokenStationDisplay();
+        this.updateHUD();
+        showToast('Terminal restocked', 1400);
         return true;
       }
-
-      if (this.tokenStationState.stockLevel === 'ok') {
-        showToast('No restock needed right now', 1300);
-        return true;
-      }
-
-      this.tokenStationState.stockLevel = 'ok';
-      this.hasTokenRefill = false;
-      const pulse = this.tokenStationGroup?.userData['pulseGlow'] as (() => void) | undefined;
-      pulse?.();
-      this.updateTokenStationDisplay();
-      this.updateHUD();
-      showToast('Terminal restocked', 1400);
-      return true;
+      
+      showToast('Terminal operating normally', 1300);
+      return false;
     }
 
     return false;
@@ -706,46 +723,51 @@ export class ShopScene implements Scene {
         const stockLevel = state?.stockLevel ?? 'ok';
 
         if (stockLevel === 'empty') {
-          if (!this.hasCapsuleRefill) {
-            showToast('Pick up capsules from the storage crate first', 1800);
-          } else {
-            showToast('Machine empty - press R to restock', 1500);
-          }
+          showToast('Machine empty - press R to service', 1500);
+          return;
+        }
+        
+        const needsService =
+          (state?.cleanliness === 'dirty') ||
+          (state?.isJammed === true) ||
+          (state?.isPowered === false);
+          
+        if (needsService) {
+           showToast(
+            getMachineOutOfOrderPrompt(state, this.hasCapsuleRefill) ?? ARCADE_STATUS_TEXT.outOfOrderServiceRequired,
+            1800,
+          );
           return;
         }
 
-        if (stockLevel === 'low' && this.hasCapsuleRefill) {
-          showToast('LOW STOCK - Press R to restock or E to pull', 1400);
-        }
-
-        if (this.tryCompleteNearbyTask(machineId, 'exclude')) {
-          return; // Completed a task
-        }
         this.handleMachinePull(object);
         break;
       }
-      case 'floor-spot':
-        this.handleFloorSpotMop(object);
-        break;
-      case 'storage-crate':
-        this.handleStorageCrate();
-        break;
-      case 'token-crate':
-        this.handleTokenCrate();
-        break;
       case 'token-station':
-        if (this.tokenStationState.stockLevel === 'empty' && !this.hasTokenRefill) {
-          showToast('Pick up token refill pack from token crate first', 1800);
+        if (this.tokenStationState.stockLevel === 'empty') {
+          const needsService =
+            !this.tokenStationState.isPowered ||
+            this.tokenStationState.isJammed ||
+            this.tokenStationState.cleanliness === 'dirty';
+          if(needsService) {
+            showToast('Terminal out of order - press R to service', 1500);
+          } else {
+             showToast('Terminal empty - press R to service', 1500);
+          }
           return;
         }
-
-        if (this.tokenStationState.stockLevel === 'low' && this.hasTokenRefill) {
-          showToast('LOW STOCK - Press R to restock or E to buy tokens', 1400);
+        
+        {
+          const needsService =
+            !this.tokenStationState.isPowered ||
+            this.tokenStationState.isJammed ||
+            this.tokenStationState.cleanliness === 'dirty';
+          if(needsService) {
+            showToast('Terminal out of order - press R to service', 1500);
+            return;
+          }
         }
 
-        if (this.tryCompleteNearbyTask('token-station', 'exclude')) {
-          return;
-        }
         this.handleTokenStation();
         break;
       case 'wondertrade':
@@ -1487,57 +1509,59 @@ export class ShopScene implements Scene {
 
   private clampPosition() {
     const pos = this.camera.position;
-    const playerRadius = 0.5;
+    const wallCollisionPadding = 0.34;
+    const getColliderPadding = (colliderName: string): number => {
+      if (colliderName.includes('wall')) return wallCollisionPadding;
+      if (colliderName.includes('shelf')) return 0.12;
+      if (colliderName.includes('crate')) return 0.16;
+      if (colliderName.startsWith('machine-') || colliderName === 'token-station') return 0.32;
+      if (colliderName.includes('counter') || colliderName === 'vending-machine') return 0.28;
+      return 0.24;
+    };
 
     // Storeroom geometry constants (must match ShopFloor.ts)
     const STORE_WIDTH = 4.0;
     const STORE_DEPTH = 3.5;
-    const ARCHWAY_WIDTH = 2.4;
-    const ARCHWAY_CENTER_X = SHOP_HALF_W - STORE_WIDTH / 2; // 5
     const STORE_LEFT_X = SHOP_HALF_W - STORE_WIDTH; // 3
     const STORE_BACK_Z = -SHOP_HALF_D - STORE_DEPTH; // -9.5
 
-    // Check if player is within the storeroom's X range
+    // Broad storeroom X acceptance: allows touching side walls without snap-ejecting.
     const inStoreroomXRange =
-      pos.x > STORE_LEFT_X + playerRadius &&
-      pos.x < SHOP_HALF_W - playerRadius;
-    // Check if player is within the archway opening's X range
-    const inArchwayXRange =
-      pos.x > ARCHWAY_CENTER_X - ARCHWAY_WIDTH / 2 + playerRadius &&
-      pos.x < ARCHWAY_CENTER_X + ARCHWAY_WIDTH / 2 - playerRadius;
+      pos.x > STORE_LEFT_X + 0.02 &&
+      pos.x < SHOP_HALF_W - 0.02;
 
     // X clamp: always within main shop width
-    pos.x = Math.max(-SHOP_HALF_W + playerRadius, Math.min(SHOP_HALF_W - playerRadius, pos.x));
+    pos.x = Math.max(
+      -SHOP_HALF_W + wallCollisionPadding,
+      Math.min(SHOP_HALF_W - wallCollisionPadding, pos.x),
+    );
 
     // Z clamp: depends on whether the player is in/near the storeroom
-    if (pos.z < -SHOP_HALF_D + playerRadius) {
+    if (pos.z < -SHOP_HALF_D + wallCollisionPadding) {
       // Player is behind the back wall line — only allowed if in storeroom bounds
       if (inStoreroomXRange) {
         // Clamp within storeroom
-        pos.z = Math.max(STORE_BACK_Z + playerRadius, pos.z);
-        pos.x = Math.max(STORE_LEFT_X + playerRadius, Math.min(SHOP_HALF_W - playerRadius, pos.x));
+        pos.z = Math.max(STORE_BACK_Z + wallCollisionPadding, pos.z);
+        pos.x = Math.max(
+          STORE_LEFT_X + wallCollisionPadding,
+          Math.min(SHOP_HALF_W - wallCollisionPadding, pos.x),
+        );
       } else {
         // Push back to main shop
-        pos.z = -SHOP_HALF_D + playerRadius;
+        pos.z = -SHOP_HALF_D + wallCollisionPadding;
       }
     } else {
       // Normal main shop Z clamp
-      pos.z = Math.min(SHOP_HALF_D - playerRadius, pos.z);
-    }
-
-    // At the back wall line, only allow passage through the archway
-    if (pos.z < -SHOP_HALF_D + playerRadius + 0.15 && pos.z > -SHOP_HALF_D - 0.15) {
-      if (!inArchwayXRange) {
-        pos.z = Math.max(-SHOP_HALF_D + playerRadius, pos.z);
-      }
+      pos.z = Math.min(SHOP_HALF_D - wallCollisionPadding, pos.z);
     }
 
     pos.y = PLAYER_HEIGHT;
 
     // Collision against all major shop objects from world colliders.
     for (const collider of this.colliders) {
-      const boundX = collider.halfW + playerRadius;
-      const boundZ = collider.halfD + playerRadius;
+      const colliderPadding = getColliderPadding(collider.name);
+      const boundX = collider.halfW + colliderPadding;
+      const boundZ = collider.halfD + colliderPadding;
 
       const dx = pos.x - collider.x;
       const dz = pos.z - collider.z;

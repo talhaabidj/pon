@@ -90,11 +90,11 @@ describe('Input', () => {
     expect(input.isInteractPressed()).toBe(true);
   });
 
-  it('detects restock press (KeyR) as just-pressed', () => {
+  it('detects service press (KeyR) as just-pressed', () => {
     window.dispatchEvent(
       new KeyboardEvent('keydown', { code: 'KeyR' }),
     );
-    expect(input.isRestockPressed()).toBe(true);
+    expect(input.isServicePressed()).toBe(true);
   });
 
   it('clears just-pressed state after endFrame', () => {

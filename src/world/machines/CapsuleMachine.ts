@@ -37,6 +37,9 @@ const ACCENT_COLORS: Record<string, number> = {
   'machine-hidden': 0x7c6ef0,
 };
 
+const CLEAN_GACHA_GLASS_COLOR = 0xf0f8ff;
+const DIRTY_GACHA_GLASS_COLOR = 0x3a3520;
+
 export function createCapsuleMachine(
   def: MachineDefinition,
   state?: MachineState,
@@ -75,7 +78,8 @@ export function createCapsuleMachine(
     });
 
     const glassMat = new THREE.MeshStandardMaterial({
-      color: isDirty ? 0x3a3520 : 0xf0f8ff,
+      // Keep all machine glass visually identical unless this machine is dirty.
+      color: isDirty ? DIRTY_GACHA_GLASS_COLOR : CLEAN_GACHA_GLASS_COLOR,
       transparent: true,
       opacity: isDirty ? 0.7 : 0.25,
       roughness: isDirty ? 0.8 : 0.05,

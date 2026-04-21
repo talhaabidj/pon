@@ -173,6 +173,7 @@ export function showShopPrompt(prompt: string | ShopPromptPayload, keyLabel = 'E
       actions.forEach((action) => {
         const actionEl = document.createElement('div');
         actionEl.className = 'shop-prompt-action';
+        actionEl.setAttribute('data-key', action.key);
 
         const keyEl = document.createElement('kbd');
         keyEl.className = 'shop-prompt-key';

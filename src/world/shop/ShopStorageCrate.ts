@@ -13,7 +13,7 @@ export function buildStorageCrate(): BuiltStorageCrate {
     type: 'storage-crate',
     prompt: 'Take refill canister',
   });
-  crate.position.set(5, 0, -8);
+  crate.position.set(5.25, 0.91, -9.0);
 
   const palletMat = new THREE.MeshStandardMaterial({
     color: 0x2a2119,
@@ -38,35 +38,36 @@ export function buildStorageCrate(): BuiltStorageCrate {
     metalness: 0.3,
   });
 
-  const palletBase = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.1, 0.78), palletMat);
-  palletBase.position.set(0, 0.05, 0);
+  // pallet removed from view
+  const palletBase = new THREE.Mesh(new THREE.BoxGeometry(0, 0, 0), palletMat);
+  palletBase.position.set(0, -0.05, 0);
   crate.add(palletBase);
 
   for (let i = -1; i <= 1; i += 1) {
-    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.035, 0.17), palletMat);
-    slat.position.set(0, 0.115, i * 0.24);
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(0, 0, 0), palletMat);
+    slat.position.set(0, -0.05, i * 0.24);
     crate.add(slat);
   }
 
   const outerShell = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.46, 0.66), crateWoodMat);
-  outerShell.position.set(0, 0.33, 0);
+  outerShell.position.set(0, 0.18, 0);
   crate.add(outerShell);
 
   const innerCavity = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.24, 0.52), crateInnerMat);
-  innerCavity.position.set(0, 0.42, 0);
+  innerCavity.position.set(0, 0.27, 0);
   crate.add(innerCavity);
 
   const lipFront = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.05, 0.06), crateWoodMat);
-  lipFront.position.set(0, 0.54, 0.3);
+  lipFront.position.set(0, 0.39, 0.3);
   crate.add(lipFront);
   const lipBack = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.05, 0.06), crateWoodMat);
-  lipBack.position.set(0, 0.54, -0.3);
+  lipBack.position.set(0, 0.39, -0.3);
   crate.add(lipBack);
   const lipLeft = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.54), crateWoodMat);
-  lipLeft.position.set(-0.41, 0.54, 0);
+  lipLeft.position.set(-0.41, 0.39, 0);
   crate.add(lipLeft);
   const lipRight = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.54), crateWoodMat);
-  lipRight.position.set(0.41, 0.54, 0);
+  lipRight.position.set(0.41, 0.39, 0);
   crate.add(lipRight);
 
   const cornerGeo = new THREE.BoxGeometry(0.045, 0.5, 0.045);
@@ -78,22 +79,22 @@ export function buildStorageCrate(): BuiltStorageCrate {
   ];
   cornerOffsets.forEach(([x, z]) => {
     const corner = new THREE.Mesh(cornerGeo, crateMetalMat);
-    corner.position.set(x, 0.33, z);
+    corner.position.set(x, 0.18, z);
     crate.add(corner);
   });
 
   const strapFront = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.08, 0.02), strapMat);
-  strapFront.position.set(0, 0.33, 0.34);
+  strapFront.position.set(0, 0.18, 0.34);
   crate.add(strapFront);
   const strapTop = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.02, 0.1), strapMat);
-  strapTop.position.set(0, 0.56, 0.22);
+  strapTop.position.set(0, 0.41, 0.22);
   crate.add(strapTop);
 
   const handleLeft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.24), crateInnerMat);
-  handleLeft.position.set(-0.45, 0.34, 0);
+  handleLeft.position.set(-0.45, 0.19, 0);
   crate.add(handleLeft);
   const handleRight = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.24), crateInnerMat);
-  handleRight.position.set(0.45, 0.34, 0);
+  handleRight.position.set(0.45, 0.19, 0);
   crate.add(handleRight);
 
   const decalCanvas = document.createElement('canvas');
@@ -122,7 +123,7 @@ export function buildStorageCrate(): BuiltStorageCrate {
     metalness: 0.05,
   });
   const frontDecal = new THREE.Mesh(new THREE.PlaneGeometry(0.76, 0.2), decalMat);
-  frontDecal.position.set(0, 0.36, 0.342);
+  frontDecal.position.set(0, 0.21, 0.342);
   crate.add(frontDecal);
 
   const canisterBodyMat = new THREE.MeshStandardMaterial({
@@ -153,7 +154,7 @@ export function buildStorageCrate(): BuiltStorageCrate {
     stripe.position.y = 0.1;
     canister.add(stripe);
 
-    canister.position.set(-0.2 + i * 0.2, 0.3, -0.03 + (i % 2) * 0.08);
+    canister.position.set(-0.2 + i * 0.2, 0.15, -0.03 + (i % 2) * 0.08);
     crate.add(canister);
   }
 
@@ -166,14 +167,14 @@ export function buildStorageCrate(): BuiltStorageCrate {
         roughness: 0.45,
       }),
     );
-    spill.position.set(4.7 + Math.random() * 0.65, 0.04, -7.72 + Math.random() * 0.42);
+    spill.position.set(4.78 + Math.random() * 0.58, 0.04, -8.72 + Math.random() * 0.34);
     spillCapsules.push(spill);
   }
 
   return {
     group: crate,
     interactable: crate,
-    collider: { name: 'storage-crate', x: 5, z: -8, halfW: 0.5, halfD: 0.39 },
+    collider: { name: 'storage-crate', x: 5.25, z: -9.0, halfW: 0.46, halfD: 0.34 },
     spillCapsules,
   };
 }

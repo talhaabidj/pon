@@ -108,11 +108,11 @@ export function buildTokenCrate(): BuiltShopInteractable {
     crate.add(canister);
   }
 
-  crate.position.set(4, 0, -7.6);
+  crate.position.set(3.95, 0.91, -9.0);
 
   return {
     group: crate,
     interactable: crate,
-    collider: { name: 'token-crate', x: 4, z: -7.6, halfW: 0.38, halfD: 0.28 },
+    collider: { name: 'token-crate', x: 3.95, z: -9.0, halfW: 0.34, halfD: 0.24 },
   };
 }

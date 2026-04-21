@@ -15,7 +15,6 @@ import { FirstPersonController } from '../../core/FirstPersonController.js';
 import {
   hidePauseMenu,
   isPauseMenuVisible,
-  setPauseResumeMessage,
   showPauseMenu,
 } from '../../ui/pauseUI.js';
 
@@ -54,9 +53,21 @@ export class PauseSceneController {
     if ((performance.now() - this.pauseOpenedAtMs) < PauseSceneController.ESC_TOGGLE_DEBOUNCE_MS) {
       return;
     }
-    // ESC-triggered resume: unpause but don't try to re-lock cursor.
-    // Browser won't allow pointer lock from ESC keydown.
-    this.resumeWithFreeCursor();
+    
+    // Hide pause UI immediately
+    hidePauseMenu();
+    this.setPaused(false);
+    
+    // ESC-triggered resume cannot re-lock the pointer IN THE SAME TICK
+    // because ESC is the standard "exit lock" key and browsers block re-entry
+    // from it. However, many browsers allow re-lock from a deferred timer.
+    setTimeout(() => {
+      // Re-enable and request lock (which triggers domElement.requestPointerLock())
+      this.controller.setEnabled(true);
+      
+      // If it fails, the controller degrades gracefully into 'free cursor' mode
+      // where the user can just click once to re-lock.
+    }, 200);
   }
 
   handlePausedFrame() {
@@ -76,11 +87,5 @@ export class PauseSceneController {
     this.controller.setEnabled(true);
   }
 
-  /** Resume from ESC key (no user gesture for pointer lock — cursor stays free). */
-  private resumeWithFreeCursor() {
-    hidePauseMenu();
-    this.setPaused(false);
-    setPauseResumeMessage('Click to resume');
-    this.controller.resumeWithFreeCursor();
-  }
+// removed unused resumeWithFreeCursor
 }

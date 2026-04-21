@@ -75,7 +75,7 @@ export class Input {
     return this.keysJustPressed.has('KeyE');
   }
 
-  isRestockPressed(): boolean {
+  isServicePressed(): boolean {
     return this.keysJustPressed.has('KeyR');
   }
 

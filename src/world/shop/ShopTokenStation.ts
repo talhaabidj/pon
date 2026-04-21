@@ -63,7 +63,7 @@ export function buildTokenStation(): BuiltShopInteractable {
   stationGroup.add(mainBody);
 
   // —— Slight backward tilt panel for the upper face (ergonomic) ——
-  const facePanel = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.85, 0.06), frameMat);
+  const facePanel = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.85, 0.06), frameMat);
   facePanel.position.set(0, 1.35, 0.22);
   facePanel.rotation.x = -0.08;
   stationGroup.add(facePanel);
@@ -256,11 +256,12 @@ export function buildTokenStation(): BuiltShopInteractable {
     }, 450);
   };
 
-  stationGroup.position.set(5.5, 0, 3);
+  stationGroup.position.set(5.08, 0, 2.62);
+  stationGroup.rotation.y = -Math.PI / 2;
 
   return {
     group: stationGroup,
     interactable: stationGroup,
-    collider: { name: 'token-station', x: 5.5, z: 3, halfW: 0.36, halfD: 0.3 },
+    collider: { name: 'token-station', x: 5.08, z: 2.62, halfW: 0.36, halfD: 0.3 },
   };
 }
