@@ -63,7 +63,7 @@ export function buildTokenStation(): BuiltShopInteractable {
   stationGroup.add(mainBody);
 
   // —— Slight backward tilt panel for the upper face (ergonomic) ——
-  const facePanel = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.85, 0.06), frameMat);
+  const facePanel = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.85, 0.06), frameMat);
   facePanel.position.set(0, 1.35, 0.22);
   facePanel.rotation.x = -0.08;
   stationGroup.add(facePanel);

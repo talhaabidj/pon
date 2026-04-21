@@ -9,8 +9,10 @@ import { BootScene } from './scenes/BootScene.js';
 import './styles/desktop.css';
 import './styles/bedroom.css';
 import './styles/shop.css';
+import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 
 async function main() {
+  RectAreaLightUniformsLib.init();
   const container = document.getElementById('canvas-container');
   if (!container) {
     throw new Error('Missing #canvas-container element in index.html');

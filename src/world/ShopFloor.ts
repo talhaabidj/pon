@@ -245,7 +245,7 @@ export function buildShopFloor(
     new THREE.BoxGeometry(storeDoorWidth - 0.2, 0.24, 0.008),
     storeDoorMetalMat,
   );
-  storeDoorKick.position.set(storeDoorWidth / 2, 0.22, -0.03);
+  storeDoorKick.position.set(storeDoorWidth / 2, 0.22, 0.03); // Fixed Z side
   storeDoorPivot.add(storeDoorKick);
 
   const storeLeverRose = new THREE.Mesh(
@@ -253,14 +253,15 @@ export function buildShopFloor(
     storeDoorMetalMat,
   );
   storeLeverRose.rotation.x = Math.PI / 2;
-  storeLeverRose.position.set(storeDoorWidth - 0.14, 1.04, -0.032);
+  storeLeverRose.position.set(storeDoorWidth - 0.14, 1.04, 0.032);
   storeDoorPivot.add(storeLeverRose);
 
   const storeLeverHandle = new THREE.Mesh(
-    new THREE.BoxGeometry(0.11, 0.014, 0.014),
+    new THREE.BoxGeometry(0.12, 0.014, 0.014),
     storeDoorMetalMat,
   );
-  storeLeverHandle.position.set(storeDoorWidth - 0.08, 1.04, -0.036);
+  // Point the handle left towards the hinge (X is smaller than rose X)
+  storeLeverHandle.position.set(storeDoorWidth - 0.20, 1.04, 0.036);
   storeDoorPivot.add(storeLeverHandle);
 
   // Removed hinges on the left side of the storeroom door as requested
@@ -625,16 +626,6 @@ export function buildShopFloor(
     roughness: 0.48,
     metalness: 0.2,
   });
-  const exitGlassMat = new THREE.MeshStandardMaterial({
-    color: 0xdde7f1,
-    emissive: 0x4f6980,
-    emissiveIntensity: 0.08,
-    transparent: true,
-    opacity: 0.22,
-    roughness: 0.08,
-    metalness: 0.08,
-    side: THREE.DoubleSide,
-  });
   const exitHardwareMat = new THREE.MeshStandardMaterial({
     color: 0xc7ced8,
     roughness: 0.34,
@@ -669,60 +660,25 @@ export function buildShopFloor(
   exitThreshold.position.set(0, 0.018, 0.03);
   exitGroup.add(exitThreshold);
 
-  const transomGlass = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.98, 0.32),
-    exitGlassMat,
-  );
-  transomGlass.position.set(0, 2.35, 0.07);
-  exitGroup.add(transomGlass);
-
-  const doorRailTop = new THREE.Mesh(
-    new THREE.BoxGeometry(0.94, 0.1, 0.055),
-    exitFrameMat,
-  );
-  doorRailTop.position.set(0, 2.12, 0.035);
-  exitGroup.add(doorRailTop);
-
-  const doorRailBottom = new THREE.Mesh(
-    new THREE.BoxGeometry(0.94, 0.18, 0.055),
-    exitFrameMat,
-  );
-  doorRailBottom.position.set(0, 0.11, 0.035);
-  exitGroup.add(doorRailBottom);
-
-  const doorStileL = new THREE.Mesh(
-    new THREE.BoxGeometry(0.09, 1.96, 0.055),
-    exitFrameMat,
-  );
-  doorStileL.position.set(-0.425, 1.1, 0.035);
-  exitGroup.add(doorStileL);
-
-  const doorStileR = new THREE.Mesh(
-    new THREE.BoxGeometry(0.09, 1.96, 0.055),
-    exitFrameMat,
-  );
-  doorStileR.position.set(0.425, 1.1, 0.035);
-  exitGroup.add(doorStileR);
-
-  // Solid elegant entrance door instead of basic glass
+  // A solid elegant entrance door panel perfectly filling the frame gap (1.08 x 2.58)
   const solidDoorMat = new THREE.MeshStandardMaterial({
-    color: 0x222631,
-    roughness: 0.6,
-    metalness: 0.1,
+    color: 0x1d2128,
+    roughness: 0.85,
+    metalness: 0.15,
   });
   const exitDoorPanel = new THREE.Mesh(
-    new THREE.BoxGeometry(0.76, 1.68, 0.04),
+    new THREE.BoxGeometry(1.08, 2.58, 0.05),
     solidDoorMat,
   );
-  exitDoorPanel.position.set(0, 1.2, 0.05);
+  exitDoorPanel.position.set(0, 0.035 + 2.58 / 2, 0.05);
   exitGroup.add(exitDoorPanel);
 
-  const mullion = new THREE.Mesh(
-    new THREE.BoxGeometry(0.028, 1.64, 0.01),
+  const detailMullion = new THREE.Mesh(
+    new THREE.BoxGeometry(0.04, 2.4, 0.02),
     exitTrimMat,
   );
-  mullion.position.set(0, 1.18, 0.07);
-  exitGroup.add(mullion);
+  detailMullion.position.set(0, 1.35, 0.07);
+  exitGroup.add(detailMullion);
 
   // Long vertical brushed metal handle bar
   const handleGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.7, 12);
@@ -805,23 +761,23 @@ export function buildShopFloor(
     diffuser.rotation.y = rotationY;
     group.add(diffuser);
 
-    // Warm, cozy realistic lighting without sharp spot splatters
-    const light = new THREE.PointLight(0xffe2c1, 1.0, 7.5, 2);
-    light.power = 650;
-    light.position.set(x, 3.75, z);
-    
+    // Warm, cozy realistic uniform panel light (RectAreaLight)
+    const light = new THREE.RectAreaLight(0xffdec2, 5.0, length - 0.08, 0.36);
+    light.position.set(x, 3.88, z);
+    light.rotation.x = -Math.PI / 2; // Face down
+    light.rotation.z = -rotationY; // Sync orientation
     group.add(light);
   };
 
   const fixturePositions: Array<[number, number, number]> = [
-    [-4.8, -2.65, 0],
-    [-1.6, -2.65, 0],
-    [1.6, -2.65, 0],
-    [4.8, -2.65, 0],
-    [-4.8, 1.05, 0],
-    [-1.6, 1.05, 0],
-    [1.6, 1.05, 0],
-    [4.95, 2.45, 0],
+    [-4.8, -2.65, Math.PI / 2],
+    [-1.6, -2.65, Math.PI / 2],
+    [1.6, -2.65, Math.PI / 2],
+    [4.8, -2.65, Math.PI / 2],
+    [-4.8, 1.05, Math.PI / 2],
+    [-1.6, 1.05, Math.PI / 2],
+    [1.6, 1.05, Math.PI / 2],
+    [4.95, 2.45, Math.PI / 2],
   ];
   fixturePositions.forEach(([x, z, rot]) => {
     addCeilingFixture(x, z, 2.4, rot);
