@@ -54,6 +54,7 @@ import {
   hidePauseMenu,
   isPauseMenuVisible,
 } from '../ui/pauseUI.js';
+import { ClickToStartOverlay } from '../ui/ClickToStartOverlay.js';
 
 export class BedroomScene implements Scene {
   private game: Game;
@@ -71,7 +72,7 @@ export class BedroomScene implements Scene {
   private awaitingBedroomStartClick = false;
   private isNightShiftStarting = false;
   private isReturningToDesktop = false;
-  private bedroomStartOverlayEl: HTMLDivElement | null = null;
+  private bedroomStartOverlay: ClickToStartOverlay | null = null;
   private showStartGateOnLoad: boolean;
   private shopScenePreload:
     | Promise<typeof import('./ShopScene.js') | null>
@@ -295,8 +296,8 @@ export class BedroomScene implements Scene {
     this.windowVoidAnimator = null;
     this.pauseController.dispose();
     this.disposeBedroomInteractIndicators();
-    this.bedroomStartOverlayEl?.remove();
-    this.bedroomStartOverlayEl = null;
+    this.bedroomStartOverlay?.dispose();
+    this.bedroomStartOverlay = null;
     this.awaitingBedroomStartClick = false;
     this.isNightShiftStarting = false;
     this.isReturningToDesktop = false;
@@ -326,7 +327,7 @@ export class BedroomScene implements Scene {
   }
 
   private showBedroomStartOverlay() {
-    if (this.awaitingBedroomStartClick || this.bedroomStartOverlayEl) return;
+    if (this.awaitingBedroomStartClick) return;
 
     this.awaitingBedroomStartClick = true;
     this.controller.setEnabled(false);
@@ -336,57 +337,25 @@ export class BedroomScene implements Scene {
       document.exitPointerLock();
     }
 
-    const overlay = document.createElement('div');
-    overlay.id = 'bedroom-shift-start-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      inset: 0;
-      z-index: 1300;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(10, 12, 18, 0.52);
-      backdrop-filter: blur(6px) saturate(0.72);
-      cursor: pointer;
-      user-select: none;
-      transition: opacity 0.16s ease;
-    `;
-
-    const title = document.createElement('div');
-    title.innerText = 'CLICK TO START';
-    title.style.cssText = `
-      color: #ffffff;
-      font-family: 'Segoe UI', sans-serif;
-      font-size: clamp(1.8rem, 4vw, 2.4rem);
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      text-shadow: 0 0 26px rgba(255, 255, 255, 0.22);
-    `;
-
-    overlay.appendChild(title);
-
     const beginFromOverlay = () => {
       if (!this.awaitingBedroomStartClick) return;
 
       gameAudio.play('ui');
       this.awaitingBedroomStartClick = false;
-      this.bedroomStartOverlayEl = null;
-
-      overlay.style.opacity = '0';
-      window.setTimeout(() => {
-        overlay.remove();
-      }, 160);
+      this.bedroomStartOverlay?.hide();
 
       this.controller.setEnabled(true);
       requestPointerLockSafely(this.game.canvas);
     };
 
-    overlay.addEventListener('pointerdown', beginFromOverlay);
-    overlay.addEventListener('click', beginFromOverlay);
-
-    this.bedroomStartOverlayEl = overlay;
-    document.body.appendChild(overlay);
+    if (!this.bedroomStartOverlay) {
+      this.bedroomStartOverlay = new ClickToStartOverlay({
+        id: 'bedroom-shift-start-overlay',
+        zIndex: 1300,
+        onActivate: beginFromOverlay,
+      });
+    }
+    this.bedroomStartOverlay.show();
   }
 
   private startNightShift() {
@@ -439,8 +408,7 @@ export class BedroomScene implements Scene {
     }
 
     this.awaitingBedroomStartClick = false;
-    this.bedroomStartOverlayEl?.remove();
-    this.bedroomStartOverlayEl = null;
+    this.bedroomStartOverlay?.hide();
 
     hidePCOverlay();
     hideCollectionOverlay();
