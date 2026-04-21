@@ -28,7 +28,6 @@ export class PauseSceneController {
 
   private clickToResumeVisible = false;
   private clickToResumeOverlay: HTMLDivElement | null = null;
-  private clickToResumeHint: HTMLParagraphElement | null = null;
   private clickToResumePending = false;
   private pauseOpenedAtMs = 0;
   private static readonly ESC_TOGGLE_DEBOUNCE_MS = 140;
@@ -80,7 +79,6 @@ export class PauseSceneController {
   dispose() {
     this.clickToResumeOverlay?.remove();
     this.clickToResumeOverlay = null;
-    this.clickToResumeHint = null;
     this.clickToResumeVisible = false;
     this.clickToResumePending = false;
   }
@@ -92,19 +90,16 @@ export class PauseSceneController {
     hidePauseMenu();
     this.setPaused(false);
     this.controller.setEnabled(false);
-    this.showClickToResumeOverlay('Click to lock cursor and continue');
+    this.showClickToResumeOverlay();
   }
 
-  private showClickToResumeOverlay(hint = 'Click to lock cursor and continue') {
+  private showClickToResumeOverlay() {
     const overlay = this.ensureClickToResumeOverlay();
     this.clickToResumeVisible = true;
     this.clickToResumePending = false;
     overlay.style.display = 'flex';
     overlay.style.opacity = '1';
     overlay.style.pointerEvents = 'auto';
-    if (this.clickToResumeHint) {
-      this.clickToResumeHint.innerText = hint;
-    }
   }
 
   private hideClickToResumeOverlay() {
@@ -133,42 +128,28 @@ export class PauseSceneController {
       display: none;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
-      gap: 0.55rem;
-      background: rgba(7, 9, 14, 0.68);
-      backdrop-filter: blur(7px);
+      background: rgba(10, 12, 18, 0.52);
+      backdrop-filter: blur(6px) saturate(0.72);
       color: #ffffff;
-      text-align: center;
       user-select: none;
       cursor: pointer;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.12s ease;
+      transition: opacity 0.16s ease;
       font-family: 'Segoe UI', sans-serif;
     `;
 
-    const title = document.createElement('h2');
-    title.innerText = 'CLICK TO RESUME';
+    const title = document.createElement('div');
+    title.innerText = 'CLICK TO START';
     title.style.cssText = `
       margin: 0;
-      font-size: clamp(1.5rem, 3.1vw, 2.25rem);
-      font-weight: 800;
-      letter-spacing: 0.1em;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      text-shadow: 0 0 24px rgba(255, 255, 255, 0.24);
+      text-shadow: 0 0 26px rgba(255, 255, 255, 0.22);
     `;
     overlay.appendChild(title);
-
-    const hint = document.createElement('p');
-    hint.innerText = 'Click to lock cursor and continue';
-    hint.style.cssText = `
-      margin: 0;
-      color: #c3cbdf;
-      font-size: 0.95rem;
-      letter-spacing: 0.02em;
-    `;
-    overlay.appendChild(hint);
-    this.clickToResumeHint = hint;
 
     const tryResume = () => {
       void this.resumeFromClick();
@@ -184,9 +165,6 @@ export class PauseSceneController {
   private async resumeFromClick() {
     if (!this.clickToResumeVisible || this.clickToResumePending) return;
     this.clickToResumePending = true;
-    if (this.clickToResumeHint) {
-      this.clickToResumeHint.innerText = 'Locking cursor...';
-    }
 
     this.hideClickToResumeOverlay();
     this.controller.resumeWithFreeCursor();
