@@ -109,7 +109,7 @@ export function buildShopFloor(
 
   // Walls
   const wallMat = new THREE.MeshStandardMaterial({
-    color: 0x1a1d28,
+    color: 0x241d18,
     roughness: 0.88,
     side: THREE.DoubleSide,
   });
@@ -141,7 +141,7 @@ export function buildShopFloor(
   const STORE_DEPTH = 3.5;    // how deep the storeroom extends behind the back wall
   const STORE_HEIGHT = 3.2;   // slightly lower ceiling than main shop
   const ARCHWAY_WIDTH = 1.28;  // opening in the back wall
-  const ARCHWAY_HEIGHT = 2.32; // opening height matched to door
+  const ARCHWAY_HEIGHT = 2.34; // opening height matched to door
   // Archway is positioned at the right side of the back wall
   const ARCHWAY_CENTER_X = HALF_W - STORE_WIDTH / 2; // = 7 - 2 = 5
   const STORE_LEFT_X = HALF_W - STORE_WIDTH;  // = 3
@@ -242,10 +242,10 @@ export function buildShopFloor(
   storeDoorPivot.add(storeDoorInset);
 
   const storeDoorKick = new THREE.Mesh(
-    new THREE.BoxGeometry(storeDoorWidth - 0.2, 0.24, 0.008),
+    new THREE.BoxGeometry(storeDoorWidth - 0.18, 0.24, 0.008),
     storeDoorMetalMat,
   );
-  storeDoorKick.position.set(storeDoorWidth / 2, 0.22, 0.03); // Fixed Z side
+  storeDoorKick.position.set(storeDoorWidth / 2, 0.22, 0.032); // Fixed Z side and Width
   storeDoorPivot.add(storeDoorKick);
 
   // Lever handle assembly (Bedroom door style, symmetrical)
@@ -309,7 +309,7 @@ export function buildShopFloor(
 
   // —— Storeroom geometry ——
   const storeWallMat = new THREE.MeshStandardMaterial({
-    color: 0x1d2230,
+    color: 0x241d18,
     roughness: 0.92,
     side: THREE.DoubleSide,
   });
@@ -665,6 +665,7 @@ export function buildShopFloor(
   storageCrate.spillCapsules.forEach((spill) => group.add(spill));
   interactables.push(storageCrate.interactable);
   colliders.push(storageCrate.collider);
+  colliders.push(...storageCrate.spillColliders);
 
   // Dedicated token refill crate near token terminal
   const tokenCrate = buildTokenCrate();

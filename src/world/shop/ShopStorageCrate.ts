@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { tagInteractable } from '../../core/InteractionTags.js';
-import type { BuiltShopInteractable } from './types.js';
+import type { BuiltShopInteractable, ShopCollider } from './types.js';
 
 export interface BuiltStorageCrate extends BuiltShopInteractable {
   spillCapsules: THREE.Object3D[];
+  spillColliders: ShopCollider[];
 }
 
 export function buildStorageCrate(): BuiltStorageCrate {
@@ -160,6 +161,8 @@ export function buildStorageCrate(): BuiltStorageCrate {
     side: THREE.DoubleSide
   });
 
+  const spillColliders: { name: string; x: number; z: number; halfW: number; halfD: number }[] = [];
+
   for (let i = 0; i < 8; i += 1) {
     const spillGroup = new THREE.Group();
     const colorMat = new THREE.MeshStandardMaterial({
@@ -177,8 +180,18 @@ export function buildStorageCrate(): BuiltStorageCrate {
     spillGroup.rotation.x = Math.random() * Math.PI;
     spillGroup.rotation.z = Math.random() * Math.PI;
 
-    spillGroup.position.set(4.78 + Math.random() * 0.58, 0.04, -8.72 + Math.random() * 0.34);
+    const px = 4.78 + Math.random() * 0.58;
+    const pz = -8.72 + Math.random() * 0.34;
+    spillGroup.position.set(px, 0.04, pz);
     spillCapsules.push(spillGroup);
+
+    spillColliders.push({
+      name: `spill-cap-${i}`,
+      x: px,
+      z: pz,
+      halfW: 0.04,
+      halfD: 0.04,
+    });
   }
 
   return {
@@ -186,5 +199,6 @@ export function buildStorageCrate(): BuiltStorageCrate {
     interactable: crate,
     collider: { name: 'storage-crate', x: 5.25, z: -9.0, halfW: 0.46, halfD: 0.34 },
     spillCapsules,
+    spillColliders,
   };
 }
