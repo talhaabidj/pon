@@ -358,6 +358,14 @@ export function showToast(message: string, duration = 3000) {
   const container = document.getElementById('shop-toasts');
   if (!container) return;
 
+  // Prevent duplicate spam if the user mashes interact keys
+  const existingToasts = Array.from(container.children);
+  for (const t of existingToasts) {
+    if (t.textContent === message && !t.classList.contains('fade-out')) {
+      return; // Already showing this identical message
+    }
+  }
+
   const toast = document.createElement('div');
   toast.className = 'toast';
   toast.textContent = message;
