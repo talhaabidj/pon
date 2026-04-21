@@ -97,6 +97,13 @@ describe('Input', () => {
     expect(input.isServicePressed()).toBe(true);
   });
 
+  it('detects performance HUD toggle press (F3) as just-pressed', () => {
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', { code: 'F3' }),
+    );
+    expect(input.isPerformanceTogglePressed()).toBe(true);
+  });
+
   it('clears just-pressed state after endFrame', () => {
     window.dispatchEvent(
       new KeyboardEvent('keydown', { code: 'KeyE' }),

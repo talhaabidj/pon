@@ -37,8 +37,8 @@ const ACCENT_COLORS: Record<string, number> = {
   'machine-hidden': 0x7c6ef0,
 };
 
-const CLEAN_GACHA_GLASS_COLOR = 0xf0f8ff;
-const DIRTY_GACHA_GLASS_COLOR = 0x3a3520;
+const CLEAN_GACHA_GLASS_COLOR = 0xf4fbff;
+const DIRTY_GACHA_GLASS_COLOR = 0x9a8b74;
 
 export function createCapsuleMachine(
   def: MachineDefinition,
@@ -80,11 +80,14 @@ export function createCapsuleMachine(
     const glassMat = new THREE.MeshStandardMaterial({
       // Keep all machine glass visually identical unless this machine is dirty.
       color: isDirty ? DIRTY_GACHA_GLASS_COLOR : CLEAN_GACHA_GLASS_COLOR,
+      emissive: isDirty ? 0x241d12 : 0x89b8d6,
+      emissiveIntensity: isDirty ? 0.03 : 0.14,
       transparent: true,
-      opacity: isDirty ? 0.7 : 0.25,
-      roughness: isDirty ? 0.8 : 0.05,
-      metalness: 0.1,
-      depthWrite: false, 
+      opacity: isDirty ? 0.36 : 0.11,
+      roughness: isDirty ? 0.58 : 0.04,
+      metalness: 0.0,
+      depthWrite: false,
+      side: THREE.FrontSide,
     });
 
     // —— Lower Cabinet (Base mechanics) ——

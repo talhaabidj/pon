@@ -3,9 +3,8 @@
  *
  * Flow:
  *   1. ESC pressed → game pauses, cursor unlocks, screen blurs, pause UI shown
- *   2. "Resume Game" clicked OR ESC pressed again → pause UI hides,
- *      but a "CLICK TO START" blurred overlay remains
- *   3. User clicks the overlay → cursor locks, game resumes
+ *   2. ESC pressed again → quick resume with free cursor (no blocking overlay)
+ *   3. "Resume Game" button → resume and attempt pointer lock immediately
  */
 
 import { FirstPersonController } from '../../core/FirstPersonController.js';
@@ -13,6 +12,8 @@ import { requestPointerLockSafely } from '../../core/PointerLock.js';
 import {
   hidePauseMenu,
   isPauseMenuVisible,
+  setPauseResumeMessage,
+  setPauseResumePending,
   showPauseMenu,
 } from '../../ui/pauseUI.js';
 
@@ -28,7 +29,6 @@ export class PauseSceneController {
   private readonly setPaused: (paused: boolean) => void;
 
   private pauseOpenedAtMs = 0;
-  private clickToStartEl: HTMLDivElement | null = null;
   private static readonly ESC_TOGGLE_DEBOUNCE_MS = 140;
 
   constructor(options: PauseSceneControllerOptions) {
@@ -49,8 +49,7 @@ export class PauseSceneController {
 
     showPauseMenu(
       () => {
-        // "Resume Game" button clicked
-        this.transitionToClickToStart();
+        void this.resumeFromButton();
       },
     );
   }
@@ -61,7 +60,7 @@ export class PauseSceneController {
       return;
     }
 
-    this.transitionToClickToStart();
+    this.resumeFromEscape();
   }
 
   handlePausedFrame() {
@@ -70,99 +69,38 @@ export class PauseSceneController {
     }
   }
 
-  /** True when the blurred "CLICK TO START" overlay is showing after resume. */
+  /** Kept for scene compatibility; click-to-start overlay flow is no longer used. */
   isClickToStartVisible(): boolean {
-    return this.clickToStartEl !== null;
+    return false;
   }
 
-  dispose() {
-    this.removeClickToStart();
-  }
+  dispose() {}
 
   // ——— Private ———
 
-  /**
-   * Hide the pause panel but show a blurred "CLICK TO START" overlay.
-   * The game stays paused until the user clicks.
-   */
-  private transitionToClickToStart() {
+  private resumeFromEscape() {
     hidePauseMenu();
-
-    // If already showing, don't duplicate
-    if (this.clickToStartEl) return;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'pause-click-to-start';
-    overlay.style.cssText = `
-      position: fixed;
-      inset: 0;
-      z-index: 1300;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(10, 12, 18, 0.52);
-      backdrop-filter: blur(6px) saturate(0.72);
-      cursor: pointer;
-      user-select: none;
-      opacity: 0;
-      transition: opacity 0.18s ease;
-    `;
-
-    const title = document.createElement('div');
-    title.innerText = 'CLICK TO START';
-    title.style.cssText = `
-      color: #ffffff;
-      font-family: 'Segoe UI', sans-serif;
-      font-size: clamp(1.8rem, 4vw, 2.4rem);
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      text-shadow: 0 0 26px rgba(255, 255, 255, 0.22);
-      animation: pulse-text 2s ease-in-out infinite;
-    `;
-
-    // Add the pulse animation if not already present
-    if (!document.getElementById('pause-cts-style')) {
-      const style = document.createElement('style');
-      style.id = 'pause-cts-style';
-      style.textContent = `
-        @keyframes pulse-text {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.6; }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    overlay.appendChild(title);
-
-    const resumeFromClick = () => {
-      overlay.style.opacity = '0';
-      window.setTimeout(() => {
-        this.removeClickToStart();
-      }, 180);
-
-      this.setPaused(false);
-      this.controller.setEnabled(true);
-      requestPointerLockSafely(this.canvas);
-    };
-
-    overlay.addEventListener('pointerdown', resumeFromClick);
-    overlay.addEventListener('click', resumeFromClick);
-
-    this.clickToStartEl = overlay;
-    document.body.appendChild(overlay);
-
-    // Fade in after a frame
-    requestAnimationFrame(() => {
-      overlay.style.opacity = '1';
-    });
+    this.setPaused(false);
+    this.controller.resumeWithFreeCursor();
   }
 
-  private removeClickToStart() {
-    if (this.clickToStartEl) {
-      this.clickToStartEl.remove();
-      this.clickToStartEl = null;
+  private async resumeFromButton() {
+    if (!isPauseMenuVisible()) return;
+
+    setPauseResumePending(true);
+    setPauseResumeMessage('Resuming...');
+    hidePauseMenu();
+    this.setPaused(false);
+
+    // Resume immediately and keep fallback usability even if lock fails.
+    this.controller.resumeWithFreeCursor();
+    const lockResult = await requestPointerLockSafely(this.canvas, { timeoutMs: 1200 });
+
+    if (lockResult === 'locked') {
+      setPauseResumeMessage('Resumed. Press ESC to pause.');
+    } else {
+      setPauseResumeMessage('Resumed with free cursor. Click in the game view to lock cursor.');
     }
+    setPauseResumePending(false);
   }
 }

@@ -73,6 +73,9 @@ export class BedroomScene implements Scene {
   private isReturningToDesktop = false;
   private bedroomStartOverlayEl: HTMLDivElement | null = null;
   private showStartGateOnLoad: boolean;
+  private shopScenePreload:
+    | Promise<typeof import('./ShopScene.js') | null>
+    | null = null;
 
   constructor(
     game: Game,
@@ -132,6 +135,7 @@ export class BedroomScene implements Scene {
     if (this.showStartGateOnLoad) {
       this.showBedroomStartOverlay();
     }
+    void this.preloadShopScene();
 
     // —— Pause Logic ——
     this.controller.onPause = () => {
@@ -296,6 +300,7 @@ export class BedroomScene implements Scene {
     this.awaitingBedroomStartClick = false;
     this.isNightShiftStarting = false;
     this.isReturningToDesktop = false;
+    this.shopScenePreload = null;
   }
 
   // —— Interaction handlers ——
@@ -405,7 +410,8 @@ export class BedroomScene implements Scene {
       this.gameState.secretsTriggered,
     );
 
-    const { ShopScene } = await import('./ShopScene.js');
+    const preloadedModule = await this.preloadShopScene();
+    const { ShopScene } = preloadedModule ?? await import('./ShopScene.js');
     await this.game.sceneManager.switchTo(
       new ShopScene(
         this.game,
@@ -457,6 +463,13 @@ export class BedroomScene implements Scene {
     if (isPauseMenuVisible()) return;
     if (this.pauseController.isClickToStartVisible()) return;
     this.pauseController.openPauseMenu();
+  }
+
+  private preloadShopScene() {
+    if (!this.shopScenePreload) {
+      this.shopScenePreload = import('./ShopScene.js').catch(() => null);
+    }
+    return this.shopScenePreload;
   }
 
   private createBedroomInteractIndicators(interactables: THREE.Object3D[]) {

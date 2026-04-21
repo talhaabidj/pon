@@ -30,16 +30,20 @@ function createCapsuleVisualState(
 
   const topMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
+    emissive: 0x8fbad6,
+    emissiveIntensity: 0.1,
     transparent: true,
-    opacity: 0.35,
-    roughness: 0.1,
-    metalness: 0.1,
-    side: THREE.DoubleSide,
+    opacity: 0.34,
+    roughness: 0.03,
+    metalness: 0.0,
+    depthWrite: false,
+    vertexColors: true,
+    side: THREE.FrontSide,
   });
   const bottomMat = new THREE.MeshStandardMaterial({
     color: 0xffffff, // Will be overridden per-instance
-    roughness: 0.3,
-    metalness: 0.1,
+    roughness: 0.2,
+    metalness: 0.0,
   });
 
   const meshTop = new THREE.InstancedMesh(topGeo, topMat, count);
@@ -48,6 +52,7 @@ function createCapsuleVisualState(
   const data: CapsuleData[] = [];
   const dummy = new THREE.Object3D();
   const color = new THREE.Color();
+  const topTint = new THREE.Color();
 
   let i = 0;
   if (spawnFromTop) {
@@ -76,8 +81,11 @@ function createCapsuleVisualState(
       meshTop.setMatrixAt(i, dummy.matrix);
       meshBottom.setMatrixAt(i, dummy.matrix);
 
-      color.setHSL(rng(), 0.75, 0.52);
+      const hue = rng();
+      color.setHSL(hue, 0.75, 0.52);
+      topTint.setHSL(hue, 0.32, 0.86);
       meshBottom.setColorAt(i, color);
+      meshTop.setColorAt(i, topTint);
     }
   } else {
     // Initial stocked machines start with a dense pile in the chamber.
@@ -110,8 +118,11 @@ function createCapsuleVisualState(
           meshTop.setMatrixAt(i, dummy.matrix);
           meshBottom.setMatrixAt(i, dummy.matrix);
 
-          color.setHSL(rng(), 0.8, 0.5);
+          const hue = rng();
+          color.setHSL(hue, 0.8, 0.5);
+          topTint.setHSL(hue, 0.3, 0.84);
           meshBottom.setColorAt(i, color);
+          meshTop.setColorAt(i, topTint);
           i += 1;
         }
       }
@@ -120,6 +131,7 @@ function createCapsuleVisualState(
 
   meshTop.instanceMatrix.needsUpdate = true;
   meshBottom.instanceMatrix.needsUpdate = true;
+  if (meshTop.instanceColor) meshTop.instanceColor.needsUpdate = true;
   if (meshBottom.instanceColor) meshBottom.instanceColor.needsUpdate = true;
 
   return { meshTop, meshBottom, data, matrixDummy: new THREE.Object3D() };

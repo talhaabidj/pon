@@ -14,7 +14,7 @@ import { createCapsuleMachine } from './machines/CapsuleMachine.js';
 import { buildShopSecrets } from './shop/ShopSecrets.js';
 import { buildStorageCrate } from './shop/ShopStorageCrate.js';
 import { buildTokenCrate } from './shop/ShopTokenCrate.js';
-import { buildTokenStation } from './shop/ShopTokenStation.js';
+import { buildTokenStation } from './shop/ShopTokenStation.ts';
 import type { ShopCollider } from './shop/types.js';
 
 export type { ShopCollider } from './shop/types.js';
@@ -706,6 +706,37 @@ export function buildShopFloor(
     roughness: 0.34,
     metalness: 0.74,
   });
+  const exitDoorMat = new THREE.MeshStandardMaterial({
+    color: 0x1b1f26,
+    roughness: 0.66,
+    metalness: 0.22,
+  });
+  const exitDoorInsetMat = new THREE.MeshStandardMaterial({
+    color: 0x252c36,
+    roughness: 0.7,
+    metalness: 0.16,
+  });
+  const exitGlassMat = new THREE.MeshStandardMaterial({
+    color: 0xcde6f4,
+    emissive: 0x1f2d39,
+    emissiveIntensity: 0.08,
+    transparent: true,
+    opacity: 0.28,
+    roughness: 0.12,
+    metalness: 0.16,
+    depthWrite: false,
+  });
+  const exitGlassSheenMat = new THREE.MeshStandardMaterial({
+    color: 0xf3fbff,
+    emissive: 0xe5f5ff,
+    emissiveIntensity: 0.14,
+    transparent: true,
+    opacity: 0.2,
+    roughness: 0.16,
+    metalness: 0.04,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
 
   const exitJambL = new THREE.Mesh(
     new THREE.BoxGeometry(0.08, 2.7, 0.14),
@@ -735,42 +766,96 @@ export function buildShopFloor(
   exitThreshold.position.set(0, 0.018, 0.03);
   exitGroup.add(exitThreshold);
 
-  // A solid elegant entrance door panel perfectly filling the frame gap (1.08 x 2.58)
-  const solidDoorMat = new THREE.MeshStandardMaterial({
-    color: 0x1d2128,
-    roughness: 0.85,
-    metalness: 0.15,
-  });
-  const exitDoorPanel = new THREE.Mesh(
-    new THREE.BoxGeometry(1.08, 2.58, 0.05),
-    solidDoorMat,
-  );
-  exitDoorPanel.position.set(0, 0.035 + 2.58 / 2, 0.05);
-  exitGroup.add(exitDoorPanel);
+  const exitDoorWidth = 1.08;
+  const exitDoorHeight = 2.58;
+  const exitDoorDepth = 0.05;
+  const exitDoorLeaf = new THREE.Group();
+  exitDoorLeaf.position.set(0, 0.035, 0.05);
+  exitGroup.add(exitDoorLeaf);
 
-  const detailMullion = new THREE.Mesh(
-    new THREE.BoxGeometry(0.04, 2.4, 0.02),
-    exitTrimMat,
+  const stileWidth = 0.1;
+  const topRailHeight = 0.14;
+  const midRailHeight = 0.12;
+  const bottomRailHeight = 0.28;
+
+  const leftStile = new THREE.Mesh(
+    new THREE.BoxGeometry(stileWidth, exitDoorHeight, exitDoorDepth),
+    exitDoorMat,
   );
-  detailMullion.position.set(0, 1.35, 0.07);
-  exitGroup.add(detailMullion);
+  leftStile.position.set(-exitDoorWidth / 2 + stileWidth / 2, exitDoorHeight / 2, 0);
+  exitDoorLeaf.add(leftStile);
+
+  const rightStile = new THREE.Mesh(
+    new THREE.BoxGeometry(stileWidth, exitDoorHeight, exitDoorDepth),
+    exitDoorMat,
+  );
+  rightStile.position.set(exitDoorWidth / 2 - stileWidth / 2, exitDoorHeight / 2, 0);
+  exitDoorLeaf.add(rightStile);
+
+  const topRail = new THREE.Mesh(
+    new THREE.BoxGeometry(exitDoorWidth - stileWidth * 2, topRailHeight, exitDoorDepth),
+    exitDoorMat,
+  );
+  topRail.position.set(0, exitDoorHeight - topRailHeight / 2, 0);
+  exitDoorLeaf.add(topRail);
+
+  const midRailY = 0.98;
+  const midRail = new THREE.Mesh(
+    new THREE.BoxGeometry(exitDoorWidth - stileWidth * 2, midRailHeight, exitDoorDepth),
+    exitDoorMat,
+  );
+  midRail.position.set(0, midRailY, 0);
+  exitDoorLeaf.add(midRail);
+
+  const bottomRail = new THREE.Mesh(
+    new THREE.BoxGeometry(exitDoorWidth - stileWidth * 2, bottomRailHeight, exitDoorDepth),
+    exitDoorMat,
+  );
+  bottomRail.position.set(0, bottomRailHeight / 2, 0);
+  exitDoorLeaf.add(bottomRail);
+
+  const lowerInset = new THREE.Mesh(
+    new THREE.BoxGeometry(exitDoorWidth - stileWidth * 2 - 0.08, 0.5, 0.012),
+    exitDoorInsetMat,
+  );
+  lowerInset.position.set(0, 0.57, 0.019);
+  exitDoorLeaf.add(lowerInset);
+
+  const glassWidth = exitDoorWidth - stileWidth * 2 - 0.06;
+  const glassHeight = 1.36;
+  const glassY = 1.72;
+  const doorGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(glassWidth, glassHeight, 0.012),
+    exitGlassMat,
+  );
+  doorGlass.position.set(0, glassY, 0.008);
+  exitDoorLeaf.add(doorGlass);
+
+  const glassSheen = new THREE.Mesh(
+    new THREE.PlaneGeometry(glassWidth * 0.18, glassHeight - 0.16),
+    exitGlassSheenMat,
+  );
+  glassSheen.position.set(glassWidth * 0.24, glassY, 0.014);
+  exitDoorLeaf.add(glassSheen);
 
   // Long vertical brushed metal handle bar
   const handleGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.7, 12);
+  const exitHandleX = 0.34;
+  const exitHandleY = 1.02;
   const handle = new THREE.Mesh(handleGeo, exitHardwareMat);
-  handle.position.set(0.2, 1.05, 0.09);
-  exitGroup.add(handle);
+  handle.position.set(exitHandleX, exitHandleY, 0.092);
+  exitDoorLeaf.add(handle);
   const backHandle = new THREE.Mesh(handleGeo, exitHardwareMat);
-  backHandle.position.set(0.2, 1.05, 0.045);
-  exitGroup.add(backHandle);
-  
+  backHandle.position.set(exitHandleX, exitHandleY, 0.008);
+  exitDoorLeaf.add(backHandle);
+
   // Handle standoff mounts
   const mountGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.06, 8);
   mountGeo.rotateX(Math.PI / 2);
   [-0.3, 0.3].forEach((yOffset) => {
     const mount = new THREE.Mesh(mountGeo, exitHardwareMat);
-    mount.position.set(0.2, 1.05 + yOffset, 0.065);
-    exitGroup.add(mount);
+    mount.position.set(exitHandleX, exitHandleY + yOffset, 0.052);
+    exitDoorLeaf.add(mount);
   });
 
   // Door closer removed as requested
@@ -779,8 +864,8 @@ export function buildShopFloor(
     new THREE.BoxGeometry(0.74, 0.18, 0.008),
     exitHardwareMat,
   );
-  exitKickPlate.position.set(0, 0.22, 0.07);
-  exitGroup.add(exitKickPlate);
+  exitKickPlate.position.set(0, 0.22, 0.078);
+  exitDoorLeaf.add(exitKickPlate);
 
   const frontTrimL = new THREE.Mesh(
     new THREE.BoxGeometry(0.06, EXIT_OPENING_HEIGHT, 0.08),

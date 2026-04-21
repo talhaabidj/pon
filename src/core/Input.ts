@@ -87,6 +87,10 @@ export class Input {
     return this.keysJustPressed.has('ControlLeft');
   }
 
+  isPerformanceTogglePressed(): boolean {
+    return this.keysJustPressed.has('F3');
+  }
+
   isKeyDown(code: string): boolean {
     return this.keysDown.has(code);
   }
