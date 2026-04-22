@@ -106,10 +106,12 @@ async function main() {
 
   await waitForPaint();
 
-  // Speed Insights is non-critical to first paint/input. Run after idle.
-  scheduleIdle(() => {
-    injectSpeedInsights();
-  }, 2500);
+  // Speed Insights runs in production; dev injection logs debug-mode notices.
+  if (import.meta.env.PROD) {
+    scheduleIdle(() => {
+      injectSpeedInsights();
+    }, 2500);
+  }
 
   // Warm chunks during idle without blocking first render or first click.
   scheduleIdle(() => {

@@ -49,7 +49,7 @@ export function createPoster(colorIndex = 0): THREE.Group {
     roughness: isCatPoster ? 0.86 : 0.8,
     emissive: isCatPoster ? 0x000000 : color,
     emissiveIntensity: isCatPoster ? 0 : 0.04,
-    map: isCatPoster ? catArtTexture : undefined,
+    ...(isCatPoster ? { map: catArtTexture } : {}),
   });
   const art = new THREE.Mesh(
     new THREE.BoxGeometry(0.318, 0.458, 0.002),
