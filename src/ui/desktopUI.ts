@@ -16,6 +16,26 @@ const DESKTOP_ID = 'desktop-ui';
 const SETTINGS_UPDATED_EVENT = 'catchapon:settings-updated';
 let howlerModulePromise: Promise<typeof import('howler') | null> | null = null;
 
+type RenderQuality = 'min' | 'medium' | 'high';
+
+const RENDER_QUALITY_BOUNDS: Record<
+  RenderQuality,
+  Pick<PlayerSettings, 'minRenderScale' | 'maxRenderScale'>
+> = {
+  min: {
+    minRenderScale: 0.58,
+    maxRenderScale: 0.78,
+  },
+  medium: {
+    minRenderScale: 0.68,
+    maxRenderScale: 0.9,
+  },
+  high: {
+    minRenderScale: 0.75,
+    maxRenderScale: 1.0,
+  },
+};
+
 function loadHowlerModule() {
   // Lazy-load Howler only when settings actually need it.
   // This keeps desktop boot JS lighter for better LCP/INP.
@@ -42,6 +62,12 @@ function broadcastSettings(settings: PlayerSettings) {
       detail: { settings },
     }),
   );
+}
+
+function getRenderQuality(settings: PlayerSettings): RenderQuality {
+  if (settings.maxRenderScale <= 0.8) return 'min';
+  if (settings.maxRenderScale < 0.95) return 'medium';
+  return 'high';
 }
 
 /** Mount the desktop UI into #ui-root */
@@ -136,14 +162,14 @@ export function mountDesktopUI(game: Game) {
             <input type="checkbox" id="settings-dynamic-resolution" />
           </label>
           <label style="display: flex; justify-content: space-between; max-width: 400px;">
-            <span>Min Render Scale</span>
-            <input type="range" id="settings-min-render-scale" min="60" max="100" value="75" />
+            <span>Render Quality</span>
+            <select id="settings-render-quality" style="min-width: 170px;">
+              <option value="min">Min</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
           </label>
-          <label style="display: flex; justify-content: space-between; max-width: 400px;">
-            <span>Max Render Scale</span>
-            <input type="range" id="settings-max-render-scale" min="70" max="100" value="100" />
-          </label>
-          <p style="margin-top: 0.6rem; color: #a9b0c7; font-size: 0.9rem; max-width: 480px;">Adaptive resolution automatically adjusts render scale to keep frame time stable.</p>
+          <p style="margin-top: 0.6rem; color: #a9b0c7; font-size: 0.9rem; max-width: 480px;">Adaptive resolution stays on by default. Quality controls the adaptive render scale range.</p>
         </div>
       </div>
 
@@ -196,14 +222,14 @@ export function mountDesktopUI(game: Game) {
     const dynamicResolutionInput = document.getElementById(
       'settings-dynamic-resolution',
     ) as HTMLInputElement;
-    const minScaleInput = document.getElementById('settings-min-render-scale') as HTMLInputElement;
-    const maxScaleInput = document.getElementById('settings-max-render-scale') as HTMLInputElement;
+    const renderQualityInput = document.getElementById(
+      'settings-render-quality',
+    ) as HTMLSelectElement;
 
     if (volInput) volInput.value = String(Math.round(settings.masterVolume * 100));
     if (invInput) invInput.checked = settings.invertY;
     if (dynamicResolutionInput) dynamicResolutionInput.checked = settings.dynamicResolution;
-    if (minScaleInput) minScaleInput.value = String(Math.round(settings.minRenderScale * 100));
-    if (maxScaleInput) maxScaleInput.value = String(Math.round(settings.maxRenderScale * 100));
+    if (renderQualityInput) renderQualityInput.value = getRenderQuality(settings);
   });
   document.getElementById('btn-faq')?.addEventListener('click', () => openOverlay('overlay-faq'));
 
@@ -217,8 +243,9 @@ export function mountDesktopUI(game: Game) {
   const dynamicResolutionInput = document.getElementById(
     'settings-dynamic-resolution',
   ) as HTMLInputElement;
-  const minScaleInput = document.getElementById('settings-min-render-scale') as HTMLInputElement;
-  const maxScaleInput = document.getElementById('settings-max-render-scale') as HTMLInputElement;
+  const renderQualityInput = document.getElementById(
+    'settings-render-quality',
+  ) as HTMLSelectElement;
 
   if (volInput) {
     volInput.addEventListener('change', (e) => {
@@ -256,36 +283,14 @@ export function mountDesktopUI(game: Game) {
     });
   }
 
-  if (minScaleInput) {
-    minScaleInput.addEventListener('change', (e) => {
-      const scale = parseInt((e.target as HTMLInputElement).value, 10) / 100;
+  if (renderQualityInput) {
+    renderQualityInput.addEventListener('change', (e) => {
+      const quality = (e.target as HTMLSelectElement).value as RenderQuality;
+      const bounds = RENDER_QUALITY_BOUNDS[quality] ?? RENDER_QUALITY_BOUNDS.medium;
       const nextSettings = updatePersistedSettings((settings) => {
-        settings.minRenderScale = scale;
-        if (settings.maxRenderScale < scale) {
-          settings.maxRenderScale = scale;
-        }
+        settings.minRenderScale = bounds.minRenderScale;
+        settings.maxRenderScale = bounds.maxRenderScale;
       });
-
-      if (maxScaleInput) {
-        maxScaleInput.value = String(Math.round(nextSettings.maxRenderScale * 100));
-      }
-      broadcastSettings(nextSettings);
-    });
-  }
-
-  if (maxScaleInput) {
-    maxScaleInput.addEventListener('change', (e) => {
-      const scale = parseInt((e.target as HTMLInputElement).value, 10) / 100;
-      const nextSettings = updatePersistedSettings((settings) => {
-        settings.maxRenderScale = scale;
-        if (settings.minRenderScale > scale) {
-          settings.minRenderScale = scale;
-        }
-      });
-
-      if (minScaleInput) {
-        minScaleInput.value = String(Math.round(nextSettings.minRenderScale * 100));
-      }
       broadcastSettings(nextSettings);
     });
   }

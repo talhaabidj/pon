@@ -58,6 +58,6 @@ export const DEFAULT_SETTINGS = {
   mouseSensitivity: MOUSE_SENSITIVITY,
   invertY: false,
   dynamicResolution: true,
-  minRenderScale: 0.75,
-  maxRenderScale: 1.0,
+  minRenderScale: 0.68,
+  maxRenderScale: 0.9,
 } as const;
