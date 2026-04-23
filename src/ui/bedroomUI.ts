@@ -10,6 +10,7 @@
 
 import type { Item, GameState } from '../data/types.js';
 import { requestPointerLockSafely } from '../core/PointerLock.js';
+import { formatCurrency } from '../core/Currency.js';
 import { SETS } from '../data/sets.js';
 import { getItemById } from '../data/items.js';
 
@@ -40,6 +41,7 @@ export function mountBedroomUI() {
   const uiRoot = document.getElementById('ui-root');
   if (!uiRoot) return;
 
+  const zeroCurrency = formatCurrency(0);
   const container = document.createElement('div');
   container.id = BEDROOM_UI_ID;
   container.innerHTML = `
@@ -50,7 +52,7 @@ export function mountBedroomUI() {
     <div class="bedroom-overlay hidden" id="pc-overlay">
       <div class="overlay-panel">
         <div class="overlay-header">
-          <h2>Catchapon Terminal</h2>
+          <h2>Profile</h2>
           <button class="overlay-close" id="pc-overlay-close">✕</button>
         </div>
         <div class="overlay-body">
@@ -60,12 +62,12 @@ export function mountBedroomUI() {
               <span class="stat-value" id="stat-nights">0</span>
             </div>
             <div class="profile-stat">
-              <span class="stat-label">Total Money Earned</span>
-              <span class="stat-value" id="stat-money">$0</span>
+              <span class="stat-label">Total Credits Earned</span>
+              <span class="stat-value" id="stat-money">${zeroCurrency}</span>
             </div>
             <div class="profile-stat">
-              <span class="stat-label">Current Balance</span>
-              <span class="stat-value" id="stat-wallet">$0</span>
+              <span class="stat-label">Current Credits</span>
+              <span class="stat-value" id="stat-wallet">${zeroCurrency}</span>
             </div>
             <div class="profile-stat">
               <span class="stat-label">Items Collected</span>
@@ -74,10 +76,6 @@ export function mountBedroomUI() {
             <div class="profile-stat">
               <span class="stat-label">Sets Completed</span>
               <span class="stat-value" id="stat-sets">0 / 4</span>
-            </div>
-            <div class="profile-stat">
-              <span class="stat-label">Secrets Found</span>
-              <span class="stat-value" id="stat-secrets">0</span>
             </div>
           </div>
           <div class="profile-hint">
@@ -158,11 +156,10 @@ export function updatePCStats(state: GameState) {
   const wallet = document.getElementById('stat-wallet');
   const pulls = document.getElementById('stat-pulls');
   const sets = document.getElementById('stat-sets');
-  const secrets = document.getElementById('stat-secrets');
 
   if (nights) nights.textContent = String(state.nightsWorked);
-  if (money) money.textContent = `$${state.totalMoneyEarned}`;
-  if (wallet) wallet.textContent = `$${state.money}`;
+  if (money) money.textContent = formatCurrency(state.totalMoneyEarned);
+  if (wallet) wallet.textContent = formatCurrency(state.money);
   if (pulls) pulls.textContent = `${state.ownedItemIds.length} / 25`;
 
   let completedSets = 0;
@@ -171,7 +168,6 @@ export function updatePCStats(state: GameState) {
     if (owned.length === set.itemIds.length) completedSets++;
   }
   if (sets) sets.textContent = `${completedSets} / ${SETS.length}`;
-  if (secrets) secrets.textContent = String(state.secretsTriggered.length);
 }
 
 // ————————————————————————————————

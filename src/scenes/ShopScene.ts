@@ -27,7 +27,12 @@ import '../styles/shop.css';
 import { FirstPersonController } from '../core/FirstPersonController.js';
 import { InteractionSystem } from '../core/InteractionSystem.js';
 import { requestPointerLockSafely } from '../core/PointerLock.js';
-import { PLAYER_HEIGHT, PULL_TIME_COST } from '../core/Config.js';
+import { formatCurrencyDelta } from '../core/Currency.js';
+import {
+  PLAYER_HEIGHT,
+  PULL_TIME_COST,
+  SECRET_DISCOVERY_BONUS,
+} from '../core/Config.js';
 import { loadGameState, saveGameState } from '../core/Save.js';
 
 // Systems
@@ -1096,13 +1101,13 @@ export class ShopScene implements Scene {
     if (mopResult.isCompleted) {
       this.tasks.completeTask(taskIndex);
       showToast(
-        `Mud cleaned ${mopResult.hitsDone}/${mopResult.hitsRequired} (+$${mopResult.rewardGained})`,
+        `Mud cleaned ${mopResult.hitsDone}/${mopResult.hitsRequired} (${formatCurrencyDelta(mopResult.rewardGained)})`,
         1400,
       );
       this.renderTasks();
     } else {
       showToast(
-        `Scrubbing mud ${mopResult.hitsDone}/${mopResult.hitsRequired} (+$${mopResult.rewardGained})`,
+        `Scrubbing mud ${mopResult.hitsDone}/${mopResult.hitsRequired} (${formatCurrencyDelta(mopResult.rewardGained)})`,
         1200,
       );
     }
@@ -1185,7 +1190,7 @@ export class ShopScene implements Scene {
         this.moneyEarnedThisNight += reward;
         this.time.advance(timeCost);
         gameAudio.play('success');
-        showToast(`+$${reward} earned`, 1800);
+        showToast(`${formatCurrencyDelta(reward)} earned`, 1800);
 
         // Update maintenance state based on task
         if (template.targetType === 'machine') {
@@ -1334,8 +1339,8 @@ export class ShopScene implements Scene {
       showToast(`🔍 Secret discovered: ${secretName}`, 4000);
 
       // Bonus money for finding secrets
-      this.economy.earnMoney(50);
-      this.moneyEarnedThisNight += 50;
+      this.economy.earnMoney(SECRET_DISCOVERY_BONUS);
+      this.moneyEarnedThisNight += SECRET_DISCOVERY_BONUS;
       this.updateHUD();
     }
   }

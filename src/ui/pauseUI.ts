@@ -1,4 +1,78 @@
+import { gameAudio } from '../core/Audio.js';
+import { loadGameState, saveGameState, createDefaultGameState } from '../core/Save.js';
+import { sanitizePlayerSettings } from '../core/PlayerSettings.js';
+import type { PlayerSettings } from '../data/types.js';
+
 let hideTimer: number | null = null;
+
+const SETTINGS_UPDATED_EVENT = 'catchapon:settings-updated';
+
+type RenderQuality = 'min' | 'medium' | 'high';
+
+const RENDER_QUALITY_BOUNDS: Record<
+  RenderQuality,
+  Pick<PlayerSettings, 'minRenderScale' | 'maxRenderScale'>
+> = {
+  min: {
+    minRenderScale: 0.58,
+    maxRenderScale: 0.78,
+  },
+  medium: {
+    minRenderScale: 0.68,
+    maxRenderScale: 0.9,
+  },
+  high: {
+    minRenderScale: 0.75,
+    maxRenderScale: 1.0,
+  },
+};
+
+function getRenderQuality(settings: PlayerSettings): RenderQuality {
+  if (settings.maxRenderScale <= 0.8) return 'min';
+  if (settings.maxRenderScale < 0.95) return 'medium';
+  return 'high';
+}
+
+function updatePersistedSettings(
+  update: (settings: PlayerSettings) => void,
+): PlayerSettings {
+  const state = loadGameState() || createDefaultGameState();
+  const settings = sanitizePlayerSettings(state.settings);
+  update(settings);
+  state.settings = sanitizePlayerSettings(settings);
+  saveGameState(state);
+  return state.settings;
+}
+
+function broadcastSettings(settings: PlayerSettings) {
+  window.dispatchEvent(
+    new CustomEvent<{ settings: PlayerSettings }>(SETTINGS_UPDATED_EVENT, {
+      detail: { settings },
+    }),
+  );
+}
+
+function syncPauseSettingsInputs() {
+  const state = loadGameState() || createDefaultGameState();
+  const settings = sanitizePlayerSettings(state.settings);
+  const volInput = document.getElementById('pause-settings-volume') as HTMLInputElement | null;
+  const volValue = document.getElementById('pause-settings-volume-value');
+  const invertInput = document.getElementById('pause-settings-invert') as HTMLInputElement | null;
+  const dynamicResolutionInput = document.getElementById(
+    'pause-settings-dynamic-resolution',
+  ) as HTMLInputElement | null;
+  const renderQualityInput = document.getElementById(
+    'pause-settings-render-quality',
+  ) as HTMLSelectElement | null;
+
+  if (volInput) volInput.value = String(Math.round(settings.masterVolume * 100));
+  if (volValue) volValue.textContent = `${Math.round(settings.masterVolume * 100)}%`;
+  if (invertInput) invertInput.checked = settings.invertY;
+  if (dynamicResolutionInput) {
+    dynamicResolutionInput.checked = settings.dynamicResolution;
+  }
+  if (renderQualityInput) renderQualityInput.value = getRenderQuality(settings);
+}
 
 function createInfoSection(title: string, lines: string[]) {
   const section = document.createElement('section');
@@ -128,6 +202,44 @@ export function mountPauseUI() {
     'Return home, check progress, and prepare for the next night.',
   ]));
 
+  const settingsSection = document.createElement('section');
+  settingsSection.style.cssText = `
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    min-width: 220px;
+  `;
+  settingsSection.innerHTML = `
+    <h2 style="margin: 0 0 0.6rem; font-size: 0.98rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: #f7f9ff;">Settings</h2>
+    <div style="display: flex; flex-direction: column; gap: 0.62rem;">
+      <label style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; color: #d8dfef; font-size: 0.87rem;">
+        <span>Master Volume</span>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <input type="range" id="pause-settings-volume" min="0" max="100" step="1" />
+          <span id="pause-settings-volume-value" style="min-width: 42px; text-align: right; font-family: monospace;">80%</span>
+        </div>
+      </label>
+      <label style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; color: #d8dfef; font-size: 0.87rem;">
+        <span>Mouse Invert Y</span>
+        <input type="checkbox" id="pause-settings-invert" />
+      </label>
+      <label style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; color: #d8dfef; font-size: 0.87rem;">
+        <span>Adaptive Resolution</span>
+        <input type="checkbox" id="pause-settings-dynamic-resolution" />
+      </label>
+      <label style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; color: #d8dfef; font-size: 0.87rem;">
+        <span>Render Quality</span>
+        <select id="pause-settings-render-quality" style="min-width: 132px;">
+          <option value="min">Min</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </label>
+    </div>
+  `;
+  sections.appendChild(settingsSection);
+
   const btnContainer = document.createElement('div');
   btnContainer.style.cssText = `
     display: flex;
@@ -190,6 +302,65 @@ export function mountPauseUI() {
   container.appendChild(panel);
 
   document.body.appendChild(container);
+
+  const volInput = document.getElementById('pause-settings-volume') as HTMLInputElement | null;
+  const volValue = document.getElementById('pause-settings-volume-value');
+  const invertInput = document.getElementById('pause-settings-invert') as HTMLInputElement | null;
+  const dynamicResolutionInput = document.getElementById(
+    'pause-settings-dynamic-resolution',
+  ) as HTMLInputElement | null;
+  const renderQualityInput = document.getElementById(
+    'pause-settings-render-quality',
+  ) as HTMLSelectElement | null;
+
+  if (volInput) {
+    volInput.addEventListener('input', (event) => {
+      const nextValue = parseInt((event.target as HTMLInputElement).value, 10);
+      if (volValue) volValue.textContent = `${nextValue}%`;
+    });
+    volInput.addEventListener('change', (event) => {
+      const nextValue = parseInt((event.target as HTMLInputElement).value, 10);
+      const nextSettings = updatePersistedSettings((settings) => {
+        settings.masterVolume = nextValue / 100;
+      });
+      gameAudio.syncSettings();
+      broadcastSettings(nextSettings);
+    });
+  }
+
+  if (invertInput) {
+    invertInput.addEventListener('change', (event) => {
+      const checked = (event.target as HTMLInputElement).checked;
+      const nextSettings = updatePersistedSettings((settings) => {
+        settings.invertY = checked;
+      });
+      broadcastSettings(nextSettings);
+    });
+  }
+
+  if (dynamicResolutionInput) {
+    dynamicResolutionInput.addEventListener('change', (event) => {
+      const checked = (event.target as HTMLInputElement).checked;
+      const nextSettings = updatePersistedSettings((settings) => {
+        settings.dynamicResolution = checked;
+      });
+      broadcastSettings(nextSettings);
+    });
+  }
+
+  if (renderQualityInput) {
+    renderQualityInput.addEventListener('change', (event) => {
+      const quality = (event.target as HTMLSelectElement).value as RenderQuality;
+      const bounds = RENDER_QUALITY_BOUNDS[quality] ?? RENDER_QUALITY_BOUNDS.medium;
+      const nextSettings = updatePersistedSettings((settings) => {
+        settings.minRenderScale = bounds.minRenderScale;
+        settings.maxRenderScale = bounds.maxRenderScale;
+      });
+      broadcastSettings(nextSettings);
+    });
+  }
+
+  syncPauseSettingsInputs();
 }
 
 export function unmountPauseUI() {
@@ -216,6 +387,7 @@ export function showPauseMenu(
   menu.setAttribute('aria-hidden', 'false');
   menu.style.visibility = 'visible';
   menu.style.pointerEvents = 'auto';
+  syncPauseSettingsInputs();
   setPauseResumePending(false);
   setPauseResumeMessage(
     'Press ESC again to close this menu, then click to lock cursor and continue.',

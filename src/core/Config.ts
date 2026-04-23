@@ -18,8 +18,10 @@ export const PLAYER_RADIUS = 0.3; // collision capsule radius
 // ————————————————————————————————
 // Economy
 // ————————————————————————————————
-export const TOKEN_PRICE = 50; // money per token
+export const TOKEN_PRICE = 12; // Catcha Credits per token
 export const PULL_COST = 1; // tokens per gacha pull
+export const SECRET_DISCOVERY_BONUS = 24; // Catcha Credits
+export const TOKEN_PACK_OPTIONS = [1, 3, 5] as const;
 
 // ————————————————————————————————
 // Time

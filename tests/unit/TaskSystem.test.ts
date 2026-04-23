@@ -61,8 +61,8 @@ describe('TaskSystem', () => {
   });
 
   it('getTaskReward returns correct value', () => {
-    expect(tasks.getTaskReward('task-clean-floor')).toBe(60);
-    expect(tasks.getTaskReward('task-rewire')).toBe(120);
+    expect(tasks.getTaskReward('task-clean-floor')).toBe(14);
+    expect(tasks.getTaskReward('task-rewire')).toBe(30);
     expect(tasks.getTaskReward('nonexistent')).toBe(0);
   });
 

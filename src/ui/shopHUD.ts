@@ -4,6 +4,9 @@
  * Displays: in-game clock, money, tokens, task list, pull result.
  */
 
+import { TOKEN_PACK_OPTIONS, TOKEN_PRICE } from '../core/Config.js';
+import { formatCurrency } from '../core/Currency.js';
+
 const SHOP_HUD_ID = 'shop-hud';
 let pullDismissHandler: ((e: KeyboardEvent) => void) | null = null;
 let lastPromptSignature = '';
@@ -23,6 +26,12 @@ export function mountShopHUD() {
   const uiRoot = document.getElementById('ui-root');
   if (!uiRoot) return;
 
+  const zeroCurrency = formatCurrency(0);
+  const tokenPriceLabel = formatCurrency(TOKEN_PRICE);
+  const tokenPackButtons = TOKEN_PACK_OPTIONS.map((count) => (
+    `<button class="token-buy-btn" data-count="${count}">Buy ${count} (${formatCurrency(count * TOKEN_PRICE)})</button>`
+  )).join('');
+
   const container = document.createElement('div');
   container.id = SHOP_HUD_ID;
   container.innerHTML = `
@@ -34,7 +43,7 @@ export function mountShopHUD() {
         <div class="shop-time-fill" id="shop-time-fill"></div>
       </div>
       <div class="shop-stats">
-        <span class="shop-stat" id="shop-money">$0</span>
+        <span class="shop-stat" id="shop-money">${zeroCurrency}</span>
         <span class="shop-stat-divider">|</span>
         <span class="shop-stat" id="shop-tokens">🪙 0</span>
       </div>
@@ -66,13 +75,11 @@ export function mountShopHUD() {
         </div>
         <div class="overlay-body">
           <div class="token-info">
-            <p>Each token costs <strong>$50</strong></p>
-            <p>Your balance: <span id="token-balance">$0</span></p>
+            <p>Each token costs <strong>${tokenPriceLabel}</strong></p>
+            <p>Your balance: <span id="token-balance">${zeroCurrency}</span></p>
           </div>
           <div class="token-buttons">
-            <button class="token-buy-btn" data-count="1">Buy 1 ($50)</button>
-            <button class="token-buy-btn" data-count="3">Buy 3 ($150)</button>
-            <button class="token-buy-btn" data-count="5">Buy 5 ($250)</button>
+            ${tokenPackButtons}
           </div>
         </div>
       </div>
@@ -120,7 +127,7 @@ export function updateTimeBar(progress: number) {
 
 export function updateMoney(amount: number) {
   const el = document.getElementById('shop-money');
-  if (el) el.textContent = `$${amount}`;
+  if (el) el.textContent = formatCurrency(amount);
 }
 
 export function updateTokens(count: number) {
@@ -130,7 +137,7 @@ export function updateTokens(count: number) {
 
 export function updateTokenBalance(amount: number) {
   const el = document.getElementById('token-balance');
-  if (el) el.textContent = `$${amount}`;
+  if (el) el.textContent = formatCurrency(amount);
 }
 
 export function renderTaskList(
@@ -329,8 +336,8 @@ export function showNightEndOverlay(summary: {
         <span>${summary.tasksCompleted} / ${summary.tasksTotal}</span>
       </div>
       <div class="summary-stat">
-        <span>Money Earned</span>
-        <span>$${summary.moneyEarned}</span>
+        <span>Credits Earned</span>
+        <span>${formatCurrency(summary.moneyEarned)}</span>
       </div>
       <div class="summary-stat">
         <span>Items Obtained</span>

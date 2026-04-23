@@ -23,6 +23,9 @@ import {
 } from './Config.js';
 import { loadGameState } from './Save.js';
 import { sanitizePlayerSettings } from './PlayerSettings.js';
+import type { PlayerSettings } from '../data/types.js';
+
+const SETTINGS_UPDATED_EVENT = 'catchapon:settings-updated';
 
 export class FirstPersonController {
   private camera: THREE.PerspectiveCamera | null = null;
@@ -60,6 +63,10 @@ export class FirstPersonController {
     document.addEventListener(
       'pointerlockchange',
       this.onPointerLockChange,
+    );
+    window.addEventListener(
+      SETTINGS_UPDATED_EVENT,
+      this.onSettingsUpdated as EventListener,
     );
   }
 
@@ -177,11 +184,26 @@ export class FirstPersonController {
     }
   };
 
+  private onSettingsUpdated = (
+    event: CustomEvent<{ settings?: Partial<PlayerSettings> }>,
+  ) => {
+    const incoming = event.detail?.settings;
+    if (!incoming) return;
+
+    const settings = sanitizePlayerSettings(incoming);
+    this.invertY = settings.invertY;
+    this.sensitivity = settings.mouseSensitivity;
+  };
+
   dispose() {
     this.domElement.removeEventListener('click', this.requestPointerLock);
     document.removeEventListener(
       'pointerlockchange',
       this.onPointerLockChange,
+    );
+    window.removeEventListener(
+      SETTINGS_UPDATED_EVENT,
+      this.onSettingsUpdated as EventListener,
     );
   }
 }
