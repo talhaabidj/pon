@@ -6,7 +6,7 @@ A cozy first-person browser game where you work the night shift at a Japanese ga
 
 ## 🎮 Play
 
-**[Play on Vercel →](#)** | **[Play on itch.io →](#)**
+**[Play on Vercel →](#https://catchapon.vercel.app/)** | **[Play on itch.io →](#)**
 
 ## ✨ Features
 
