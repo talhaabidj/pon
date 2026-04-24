@@ -1,122 +1,14 @@
 import { gameAudio } from '../core/Audio.js';
-import { loadGameState, saveGameState, createDefaultGameState } from '../core/Save.js';
-import { sanitizePlayerSettings } from '../core/PlayerSettings.js';
-import type { PlayerSettings } from '../data/types.js';
+import { createPauseInfoSection } from './pause/pauseInfoSection.js';
+import {
+  getRenderQualityBounds,
+  notifyPauseSettingsUpdated,
+  persistPauseSettings,
+  syncPauseSettingsInputs,
+  type RenderQuality,
+} from './pause/pauseSettings.js';
 
 let hideTimer: number | null = null;
-
-const SETTINGS_UPDATED_EVENT = 'catchapon:settings-updated';
-
-type RenderQuality = 'min' | 'medium' | 'high';
-
-const RENDER_QUALITY_BOUNDS: Record<
-  RenderQuality,
-  Pick<PlayerSettings, 'minRenderScale' | 'maxRenderScale'>
-> = {
-  min: {
-    minRenderScale: 0.58,
-    maxRenderScale: 0.78,
-  },
-  medium: {
-    minRenderScale: 0.68,
-    maxRenderScale: 0.9,
-  },
-  high: {
-    minRenderScale: 0.75,
-    maxRenderScale: 1.0,
-  },
-};
-
-function getRenderQuality(settings: PlayerSettings): RenderQuality {
-  if (settings.maxRenderScale <= 0.8) return 'min';
-  if (settings.maxRenderScale < 0.95) return 'medium';
-  return 'high';
-}
-
-function updatePersistedSettings(
-  update: (settings: PlayerSettings) => void,
-): PlayerSettings {
-  const state = loadGameState() || createDefaultGameState();
-  const settings = sanitizePlayerSettings(state.settings);
-  update(settings);
-  state.settings = sanitizePlayerSettings(settings);
-  saveGameState(state);
-  return state.settings;
-}
-
-function broadcastSettings(settings: PlayerSettings) {
-  window.dispatchEvent(
-    new CustomEvent<{ settings: PlayerSettings }>(SETTINGS_UPDATED_EVENT, {
-      detail: { settings },
-    }),
-  );
-}
-
-function syncPauseSettingsInputs() {
-  const state = loadGameState() || createDefaultGameState();
-  const settings = sanitizePlayerSettings(state.settings);
-  const volInput = document.getElementById('pause-settings-volume') as HTMLInputElement | null;
-  const volValue = document.getElementById('pause-settings-volume-value');
-  const invertInput = document.getElementById('pause-settings-invert') as HTMLInputElement | null;
-  const dynamicResolutionInput = document.getElementById(
-    'pause-settings-dynamic-resolution',
-  ) as HTMLInputElement | null;
-  const renderQualityInput = document.getElementById(
-    'pause-settings-render-quality',
-  ) as HTMLSelectElement | null;
-
-  if (volInput) volInput.value = String(Math.round(settings.masterVolume * 100));
-  if (volValue) volValue.textContent = `${Math.round(settings.masterVolume * 100)}%`;
-  if (invertInput) invertInput.checked = settings.invertY;
-  if (dynamicResolutionInput) {
-    dynamicResolutionInput.checked = settings.dynamicResolution;
-  }
-  if (renderQualityInput) renderQualityInput.value = getRenderQuality(settings);
-}
-
-function createInfoSection(title: string, lines: string[]) {
-  const section = document.createElement('section');
-  section.style.cssText = `
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 0.9rem 1rem;
-    min-width: 220px;
-  `;
-
-  const heading = document.createElement('h2');
-  heading.innerText = title;
-  heading.style.cssText = `
-    margin: 0 0 0.55rem;
-    font-size: 0.98rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: #f7f9ff;
-  `;
-  section.appendChild(heading);
-
-  const list = document.createElement('ul');
-  list.style.cssText = `
-    margin: 0;
-    padding-left: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.36rem;
-    color: #d8dfef;
-    font-size: 0.87rem;
-    line-height: 1.35;
-  `;
-
-  for (const line of lines) {
-    const item = document.createElement('li');
-    item.innerText = line;
-    list.appendChild(item);
-  }
-
-  section.appendChild(list);
-  return section;
-}
 
 export function mountPauseUI() {
   if (document.getElementById('pause-menu')) return;
@@ -186,7 +78,7 @@ export function mountPauseUI() {
     margin-bottom: 1.15rem;
   `;
 
-  sections.appendChild(createInfoSection('Controls', [
+  sections.appendChild(createPauseInfoSection('Controls', [
     'WASD / Arrow Keys: Move',
     'Mouse: Look around',
     'E: Interact with objects',
@@ -195,7 +87,7 @@ export function mountPauseUI() {
     'ESC: Open pause menu',
   ]));
 
-  sections.appendChild(createInfoSection('How To Play', [
+  sections.appendChild(createPauseInfoSection('How To Play', [
     'Explore your room and interact with the PC, collection wall, and door.',
     'Start your shift in the shop to earn money and complete tasks.',
     'Spend tokens on machines and expand your gacha collection.',
@@ -320,43 +212,43 @@ export function mountPauseUI() {
     });
     volInput.addEventListener('change', (event) => {
       const nextValue = parseInt((event.target as HTMLInputElement).value, 10);
-      const nextSettings = updatePersistedSettings((settings) => {
+      const nextSettings = persistPauseSettings((settings) => {
         settings.masterVolume = nextValue / 100;
       });
       gameAudio.syncSettings();
-      broadcastSettings(nextSettings);
+      notifyPauseSettingsUpdated(nextSettings);
     });
   }
 
   if (invertInput) {
     invertInput.addEventListener('change', (event) => {
       const checked = (event.target as HTMLInputElement).checked;
-      const nextSettings = updatePersistedSettings((settings) => {
+      const nextSettings = persistPauseSettings((settings) => {
         settings.invertY = checked;
       });
-      broadcastSettings(nextSettings);
+      notifyPauseSettingsUpdated(nextSettings);
     });
   }
 
   if (dynamicResolutionInput) {
     dynamicResolutionInput.addEventListener('change', (event) => {
       const checked = (event.target as HTMLInputElement).checked;
-      const nextSettings = updatePersistedSettings((settings) => {
+      const nextSettings = persistPauseSettings((settings) => {
         settings.dynamicResolution = checked;
       });
-      broadcastSettings(nextSettings);
+      notifyPauseSettingsUpdated(nextSettings);
     });
   }
 
   if (renderQualityInput) {
     renderQualityInput.addEventListener('change', (event) => {
       const quality = (event.target as HTMLSelectElement).value as RenderQuality;
-      const bounds = RENDER_QUALITY_BOUNDS[quality] ?? RENDER_QUALITY_BOUNDS.medium;
-      const nextSettings = updatePersistedSettings((settings) => {
+      const bounds = getRenderQualityBounds(quality);
+      const nextSettings = persistPauseSettings((settings) => {
         settings.minRenderScale = bounds.minRenderScale;
         settings.maxRenderScale = bounds.maxRenderScale;
       });
-      broadcastSettings(nextSettings);
+      notifyPauseSettingsUpdated(nextSettings);
     });
   }
 

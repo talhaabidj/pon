@@ -15,6 +15,27 @@ import { buildShopSecrets } from './shop/ShopSecrets.js';
 import { buildStorageCrate } from './shop/ShopStorageCrate.js';
 import { buildTokenCrate } from './shop/ShopTokenCrate.js';
 import { buildTokenStation } from './shop/ShopTokenStation.ts';
+import { createMachineCollider } from './shop/colliders/MachineColliders.js';
+import { buildShopExitDoor } from './shop/fixtures/ShopExitDoor.js';
+import {
+  ARCHWAY_CENTER_X,
+  ARCHWAY_HEIGHT,
+  ARCHWAY_WIDTH,
+  EXIT_OPENING_HEIGHT,
+  EXIT_OPENING_WIDTH,
+  HALF_D,
+  HALF_W,
+  SHOP_DEPTH,
+  SHOP_HEIGHT,
+  SHOP_WIDTH,
+  STORE_BACK_Z,
+  STORE_DEPTH,
+  STORE_HEIGHT,
+  STORE_LEFT_X,
+  STORE_RIGHT_X,
+  STORE_WIDTH,
+} from './shop/layout/constants.js';
+import { addShopCeilingLighting } from './shop/lighting/ShopCeilingLighting.js';
 import type { ShopCollider } from './shop/types.js';
 
 export type { ShopCollider } from './shop/types.js';
@@ -25,14 +46,6 @@ export interface ShopLayout {
   interactables: THREE.Object3D[];
   colliders: ShopCollider[];
 }
-
-const SHOP_WIDTH = 14;
-const SHOP_HEIGHT = 4;
-const SHOP_DEPTH = 12;
-const HALF_W = SHOP_WIDTH / 2;
-const HALF_D = SHOP_DEPTH / 2;
-const EXIT_OPENING_WIDTH = 1.24;
-const EXIT_OPENING_HEIGHT = 2.70;
 
 export function buildShopFloor(
   machines: MachineDefinition[],
@@ -137,16 +150,7 @@ export function buildShopFloor(
   // ————————————————————————————————
   // Storeroom constants
   // ————————————————————————————————
-  const STORE_WIDTH = 4.0;    // how wide the storeroom is (along X)
-  const STORE_DEPTH = 3.5;    // how deep the storeroom extends behind the back wall
-  const STORE_HEIGHT = 3.2;   // slightly lower ceiling than main shop
-  const ARCHWAY_WIDTH = 1.28;  // opening in the back wall
-  const ARCHWAY_HEIGHT = 2.34; // opening height matched to door
-  // Archway is positioned at the right side of the back wall
-  const ARCHWAY_CENTER_X = HALF_W - STORE_WIDTH / 2; // = 7 - 2 = 5
-  const STORE_LEFT_X = HALF_W - STORE_WIDTH;  // = 3
-  const STORE_RIGHT_X = HALF_W;               // = 7
-  const STORE_BACK_Z = -HALF_D - STORE_DEPTH; // = -6 - 3.5 = -9.5
+  // Archway is positioned at the right side of the back wall.
 
   // —— Back wall (with archway cut-out) ——
   // Left section of back wall (from left edge to archway)
@@ -640,17 +644,7 @@ export function buildShopFloor(
     group.add(machineGroup);
     machineGroups.set(def.id, machineGroup);
     interactables.push(machineGroup);
-
-    const rotated = Math.abs(def.rotation) % Math.PI > 0.01;
-    const machineHalfW = 0.48;
-    const machineHalfD = 0.42;
-    colliders.push({
-      name: `machine-${def.id}`,
-      x: def.position[0],
-      z: def.position[2],
-      halfW: rotated ? machineHalfD : machineHalfW,
-      halfD: rotated ? machineHalfW : machineHalfD,
-    });
+    colliders.push(createMachineCollider(def));
   }
 
   // ————————————————————————————————
@@ -684,255 +678,18 @@ export function buildShopFloor(
   // ————————————————————————————————
   // Exit door (front wall)
   // ————————————————————————————————
-  const exitGroup = new THREE.Group();
-  exitGroup.name = 'shop-exit';
-  tagInteractable(exitGroup, {
-    type: 'shop-exit',
-    prompt: 'End Shift',
+  const exitGroup = buildShopExitDoor({
+    exitOpeningWidth: EXIT_OPENING_WIDTH,
+    exitOpeningHeight: EXIT_OPENING_HEIGHT,
+    halfDepth: HALF_D,
   });
-
-  const exitFrameMat = new THREE.MeshStandardMaterial({
-    color: 0x2a2421,
-    roughness: 0.78,
-    metalness: 0.14,
-  });
-  const exitTrimMat = new THREE.MeshStandardMaterial({
-    color: 0x322a24,
-    roughness: 0.72,
-    metalness: 0.1,
-  });
-  const exitHardwareMat = new THREE.MeshStandardMaterial({
-    color: 0xc7ced8,
-    roughness: 0.34,
-    metalness: 0.74,
-  });
-  const exitDoorMat = new THREE.MeshStandardMaterial({
-    color: 0x1b1f26,
-    roughness: 0.66,
-    metalness: 0.22,
-  });
-  const exitDoorInsetMat = new THREE.MeshStandardMaterial({
-    color: 0x252c36,
-    roughness: 0.7,
-    metalness: 0.16,
-  });
-  const exitGlassMat = new THREE.MeshStandardMaterial({
-    color: 0xcde6f4,
-    emissive: 0x1f2d39,
-    emissiveIntensity: 0.08,
-    transparent: true,
-    opacity: 0.28,
-    roughness: 0.12,
-    metalness: 0.16,
-    depthWrite: false,
-  });
-
-  const exitJambL = new THREE.Mesh(
-    new THREE.BoxGeometry(0.08, 2.7, 0.14),
-    exitFrameMat,
-  );
-  exitJambL.position.set(-0.58, 1.35, 0);
-  exitGroup.add(exitJambL);
-
-  const exitJambR = new THREE.Mesh(
-    new THREE.BoxGeometry(0.08, 2.7, 0.14),
-    exitFrameMat,
-  );
-  exitJambR.position.set(0.58, 1.35, 0);
-  exitGroup.add(exitJambR);
-
-  const exitHeader = new THREE.Mesh(
-    new THREE.BoxGeometry(1.24, 0.08, 0.14),
-    exitFrameMat,
-  );
-  exitHeader.position.set(0, 2.66, 0);
-  exitGroup.add(exitHeader);
-
-  const exitThreshold = new THREE.Mesh(
-    new THREE.BoxGeometry(1.12, 0.035, 0.18),
-    exitTrimMat,
-  );
-  exitThreshold.position.set(0, 0.018, 0.03);
-  exitGroup.add(exitThreshold);
-
-  const exitDoorWidth = 1.08;
-  const exitDoorHeight = 2.58;
-  const exitDoorDepth = 0.05;
-  const exitDoorLeaf = new THREE.Group();
-  exitDoorLeaf.position.set(0, 0.035, 0.05);
-  exitGroup.add(exitDoorLeaf);
-
-  const stileWidth = 0.1;
-  const topRailHeight = 0.14;
-  const midRailHeight = 0.12;
-  const bottomRailHeight = 0.28;
-
-  const leftStile = new THREE.Mesh(
-    new THREE.BoxGeometry(stileWidth, exitDoorHeight, exitDoorDepth),
-    exitDoorMat,
-  );
-  leftStile.position.set(-exitDoorWidth / 2 + stileWidth / 2, exitDoorHeight / 2, 0);
-  exitDoorLeaf.add(leftStile);
-
-  const rightStile = new THREE.Mesh(
-    new THREE.BoxGeometry(stileWidth, exitDoorHeight, exitDoorDepth),
-    exitDoorMat,
-  );
-  rightStile.position.set(exitDoorWidth / 2 - stileWidth / 2, exitDoorHeight / 2, 0);
-  exitDoorLeaf.add(rightStile);
-
-  const topRail = new THREE.Mesh(
-    new THREE.BoxGeometry(exitDoorWidth - stileWidth * 2, topRailHeight, exitDoorDepth),
-    exitDoorMat,
-  );
-  topRail.position.set(0, exitDoorHeight - topRailHeight / 2, 0);
-  exitDoorLeaf.add(topRail);
-
-  const midRailY = 0.98;
-  const midRail = new THREE.Mesh(
-    new THREE.BoxGeometry(exitDoorWidth - stileWidth * 2, midRailHeight, exitDoorDepth),
-    exitDoorMat,
-  );
-  midRail.position.set(0, midRailY, 0);
-  exitDoorLeaf.add(midRail);
-
-  const bottomRail = new THREE.Mesh(
-    new THREE.BoxGeometry(exitDoorWidth - stileWidth * 2, bottomRailHeight, exitDoorDepth),
-    exitDoorMat,
-  );
-  bottomRail.position.set(0, bottomRailHeight / 2, 0);
-  exitDoorLeaf.add(bottomRail);
-
-  const lowerInset = new THREE.Mesh(
-    new THREE.BoxGeometry(exitDoorWidth - stileWidth * 2 - 0.08, 0.5, 0.012),
-    exitDoorInsetMat,
-  );
-  lowerInset.position.set(0, 0.57, 0.019);
-  exitDoorLeaf.add(lowerInset);
-
-  const glassWidth = exitDoorWidth - stileWidth * 2 - 0.06;
-  const glassHeight = 1.36;
-  const glassY = 1.72;
-  const doorGlass = new THREE.Mesh(
-    new THREE.BoxGeometry(glassWidth, glassHeight, 0.012),
-    exitGlassMat,
-  );
-  doorGlass.position.set(0, glassY, 0.008);
-  exitDoorLeaf.add(doorGlass);
-
-  // Long vertical brushed metal handle bar
-  const handleGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.7, 12);
-  const exitHandleX = 0.34;
-  const exitHandleY = 1.02;
-  const handle = new THREE.Mesh(handleGeo, exitHardwareMat);
-  handle.position.set(exitHandleX, exitHandleY, 0.092);
-  exitDoorLeaf.add(handle);
-
-  // Handle standoff mounts
-  const mountGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.06, 8);
-  mountGeo.rotateX(Math.PI / 2);
-  [-0.3, 0.3].forEach((yOffset) => {
-    const mount = new THREE.Mesh(mountGeo, exitHardwareMat);
-    mount.position.set(exitHandleX, exitHandleY + yOffset, 0.052);
-    exitDoorLeaf.add(mount);
-  });
-
-  // Door closer removed as requested
-
-  const frontTrimL = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06, EXIT_OPENING_HEIGHT, 0.08),
-    exitTrimMat,
-  );
-  frontTrimL.position.set(-EXIT_OPENING_WIDTH / 2, EXIT_OPENING_HEIGHT / 2, -0.02);
-  exitGroup.add(frontTrimL);
-
-  const frontTrimR = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06, EXIT_OPENING_HEIGHT, 0.08),
-    exitTrimMat,
-  );
-  frontTrimR.position.set(EXIT_OPENING_WIDTH / 2, EXIT_OPENING_HEIGHT / 2, -0.02);
-  exitGroup.add(frontTrimR);
-
-  const frontTrimTop = new THREE.Mesh(
-    new THREE.BoxGeometry(EXIT_OPENING_WIDTH + 0.08, 0.06, 0.08),
-    exitTrimMat,
-  );
-  frontTrimTop.position.set(0, EXIT_OPENING_HEIGHT, -0.02);
-  exitGroup.add(frontTrimTop);
-
-  exitGroup.position.set(0, 0, HALF_D - 0.06);
-  exitGroup.rotation.y = Math.PI;
   group.add(exitGroup);
   interactables.push(exitGroup);
 
   // ————————————————————————————————
   // Lighting
   // ————————————————————————————————
-
-  const ambient = new THREE.AmbientLight(0xfff1de, 0.58);
-  group.add(ambient);
-
-  const hemi = new THREE.HemisphereLight(0xffead2, 0x1a1620, 0.3);
-  group.add(hemi);
-
-  const addCeilingFixture = (x: number, z: number, length = 2.4, rotationY = 0) => {
-    // Flush mount base (was body)
-    const base = new THREE.Mesh(
-      new THREE.BoxGeometry(length, 0.08, 0.44),
-      fixtureCanopyMat,
-    );
-    base.position.set(x, 3.96, z); // Ceiling is at 4.0
-    base.rotation.y = rotationY;
-    group.add(base);
-
-    // Main rectangular diffuser
-    const diffuser = new THREE.Mesh(
-      new THREE.BoxGeometry(length - 0.06, 0.04, 0.38),
-      fixtureDiffuserMat,
-    );
-    diffuser.position.set(x, 3.9, z);
-    diffuser.rotation.y = rotationY;
-    group.add(diffuser);
-
-    // Warm, cozy realistic uniform panel light (RectAreaLight)
-    const light = new THREE.RectAreaLight(0xffdec2, 7.2, length - 0.08, 0.36);
-    light.position.set(x, 3.88, z);
-    light.rotation.x = -Math.PI / 2;
-    light.rotation.z = -rotationY;
-    group.add(light);
-  };
-
-  const fixturePositions: Array<[number, number, number]> = [
-    [-4.8, -2.65, 0],
-    [-1.6, -2.65, 0],
-    [1.6, -2.65, 0],
-    [4.8, -2.65, 0],
-    [-4.8, 1.05, 0],
-    [-1.6, 1.05, 0],
-    [1.6, 1.05, 0],
-    [4.8, 1.05, 0],
-    [-4.8, 4.75, 0],
-    [-1.6, 4.75, 0],
-    [1.6, 4.75, 0],
-    [4.8, 4.75, 0],
-  ];
-  fixturePositions
-    .filter(([, z]) => z <= 1.05)
-    .forEach(([x, z, rot]) => {
-    addCeilingFixture(x, z, 2.4, rot);
-  });
-
-  const bounceLights = [
-    { power: 700, position: [-4.8, 2.2, -1.9] as const },
-    { power: 680, position: [4.3, 2.18, -1.3] as const },
-    { power: 520, position: [0, 2.2, 3.0] as const },
-  ];
-  bounceLights.forEach((spec) => {
-    const bounce = new THREE.PointLight(0xffd7ad, 1.0, 0, 2);
-    bounce.power = spec.power;
-    bounce.position.set(spec.position[0], spec.position[1], spec.position[2]);
-    group.add(bounce);
-  });
+  addShopCeilingLighting(group, fixtureCanopyMat, fixtureDiffuserMat);
 
   // Exit door sconce light removed as requested
 

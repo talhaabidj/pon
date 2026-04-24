@@ -19,6 +19,8 @@ import {
   addSideStarLayer,
   addSideStarScatter,
 } from './window/VoidSkyPrimitives.js';
+import { addCornerCactus } from './window/CornerCactus.js';
+import { addWindowCurtains } from './window/WindowCurtains.js';
 
 export function createWindow(): THREE.Group {
   const win = new THREE.Group();
@@ -45,11 +47,6 @@ export function createWindow(): THREE.Group {
     color: 0xd9c8ab,
     roughness: 0.76,
     metalness: 0.03,
-  });
-  const blindRailMat = new THREE.MeshStandardMaterial({
-    color: 0xb9c8da,
-    roughness: 0.76,
-    metalness: 0.04,
   });
 
   const glassMat = new THREE.MeshPhysicalMaterial({
@@ -504,226 +501,18 @@ export function createWindow(): THREE.Group {
   sideSill.position.set(-0.062, sillY, sidePaneW / 2);
   win.add(sideSill);
 
-  // Curtains on both open edges.
-  const curtainMat = new THREE.MeshStandardMaterial({
-    color: 0x6f7883,
-    roughness: 0.92,
-    metalness: 0.02,
-    side: THREE.DoubleSide,
-  });
-  const curtainFoldMat = new THREE.MeshStandardMaterial({
-    color: 0x606a75,
-    roughness: 0.9,
-  });
-  const curtainAccentMat = new THREE.MeshStandardMaterial({
-    color: 0x525b66,
-    roughness: 0.88,
-  });
-  const curtainHighlightMat = new THREE.MeshStandardMaterial({
-    color: 0x7c8793,
-    roughness: 0.86,
-  });
-  const curtainFineLineMat = new THREE.MeshStandardMaterial({
-    color: 0x454d57,
-    roughness: 0.9,
-  });
-  const curtainHeight = paneH + frameT * 2;
-  const curtainFoldHeight = curtainHeight - 0.01;
-  const curtainCenterY = 0;
-  const curtainCapY = paneH / 2 + frameT + 0.01;
-
-  const backCurtainCenterX = -backPaneW - frameT - 0.06;
-  const backCurtain = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.3, curtainHeight),
-    curtainMat,
-  );
-  backCurtain.position.set(backCurtainCenterX, curtainCenterY, 0.05);
-  win.add(backCurtain);
-
-  for (const dx of [-0.11, -0.056, 0, 0.056, 0.11]) {
-    const fold = new THREE.Mesh(
-      new THREE.BoxGeometry(0.01, curtainFoldHeight, 0.014),
-      curtainFoldMat,
-    );
-    fold.position.set(backCurtainCenterX + dx, curtainCenterY, 0.056);
-    win.add(fold);
-  }
-
-  const backCurtainCap = new THREE.Mesh(
-    new THREE.BoxGeometry(0.32, 0.02, 0.018),
-    blindRailMat,
-  );
-  backCurtainCap.position.set(backCurtainCenterX, curtainCapY, 0.05);
-  win.add(backCurtainCap);
-
-  const sideCurtainCenterZ = sidePaneW + frameT + 0.06;
-  const sideCurtain = new THREE.Mesh(
-    new THREE.BoxGeometry(0.013, curtainHeight, 0.178),
-    curtainMat,
-  );
-  sideCurtain.position.set(-0.054, curtainCenterY, sideCurtainCenterZ);
-  win.add(sideCurtain);
-
-  const sideCurtainInner = new THREE.Mesh(
-    new THREE.BoxGeometry(0.008, curtainHeight - 0.032, 0.148),
-    curtainAccentMat,
-  );
-  sideCurtainInner.position.set(-0.046, curtainCenterY, sideCurtainCenterZ);
-  win.add(sideCurtainInner);
-
-  const sideFoldOffsets = [-0.072, -0.048, -0.024, 0, 0.024, 0.048, 0.072] as const;
-  sideFoldOffsets.forEach((dz, idx) => {
-    const deeperFold = idx % 2 === 0;
-    const fold = new THREE.Mesh(
-      new THREE.BoxGeometry(deeperFold ? 0.013 : 0.011, curtainFoldHeight, deeperFold ? 0.012 : 0.01),
-      curtainFoldMat,
-    );
-    fold.position.set(deeperFold ? -0.047 : -0.044, curtainCenterY, sideCurtainCenterZ + dz);
-    win.add(fold);
+  addWindowCurtains(win, {
+    backPaneW,
+    sidePaneW,
+    paneH,
+    frameT,
   });
 
-  for (const dz of [-0.06, -0.036, -0.012, 0.012, 0.036, 0.06] as const) {
-    const seam = new THREE.Mesh(
-      new THREE.BoxGeometry(0.005, curtainHeight - 0.028, 0.007),
-      curtainAccentMat,
-    );
-    seam.position.set(-0.0415, curtainCenterY, sideCurtainCenterZ + dz);
-    win.add(seam);
-
-    const seamHighlight = new THREE.Mesh(
-      new THREE.BoxGeometry(0.002, curtainHeight - 0.036, 0.005),
-      curtainHighlightMat,
-    );
-    seamHighlight.position.set(-0.039, curtainCenterY, sideCurtainCenterZ + dz);
-    win.add(seamHighlight);
-  }
-
-  for (const dz of [-0.074, -0.06, -0.046, -0.032, -0.018, -0.004, 0.01, 0.024, 0.038, 0.052, 0.066] as const) {
-    const fineLine = new THREE.Mesh(
-      new THREE.BoxGeometry(0.003, curtainHeight - 0.036, 0.004),
-      curtainFineLineMat,
-    );
-    fineLine.position.set(-0.0365, curtainCenterY, sideCurtainCenterZ + dz);
-    win.add(fineLine);
-  }
-
-  for (const dz of [-0.067, -0.039, -0.011, 0.017, 0.045, 0.073] as const) {
-    const fineHighlight = new THREE.Mesh(
-      new THREE.BoxGeometry(0.0017, curtainHeight - 0.05, 0.003),
-      curtainHighlightMat,
-    );
-    fineHighlight.position.set(-0.0345, curtainCenterY, sideCurtainCenterZ + dz);
-    win.add(fineHighlight);
-  }
-
-  const sideCurtainValance = new THREE.Mesh(
-    new THREE.BoxGeometry(0.016, 0.03, 0.19),
-    curtainAccentMat,
-  );
-  sideCurtainValance.position.set(-0.049, curtainCapY - 0.01, sideCurtainCenterZ);
-  win.add(sideCurtainValance);
-
-  const sideCurtainTie = new THREE.Mesh(
-    new THREE.BoxGeometry(0.014, 0.04, 0.108),
-    blindRailMat,
-  );
-  sideCurtainTie.position.set(-0.044, 0.02, sideCurtainCenterZ);
-  win.add(sideCurtainTie);
-
-  const sideCurtainTieKnot = new THREE.Mesh(
-    new THREE.BoxGeometry(0.01, 0.022, 0.03),
-    blindRailMat,
-  );
-  sideCurtainTieKnot.position.set(-0.038, 0.02, sideCurtainCenterZ);
-  win.add(sideCurtainTieKnot);
-
-  const sideCurtainHem = new THREE.Mesh(
-    new THREE.BoxGeometry(0.014, 0.018, 0.172),
-    curtainAccentMat,
-  );
-  sideCurtainHem.position.set(-0.051, -curtainHeight / 2 + 0.009, sideCurtainCenterZ);
-  win.add(sideCurtainHem);
-
-  const sideCurtainCap = new THREE.Mesh(
-    new THREE.BoxGeometry(0.022, 0.028, 0.206),
-    blindRailMat,
-  );
-  sideCurtainCap.position.set(-0.055, curtainCapY - 0.004, sideCurtainCenterZ);
-  win.add(sideCurtainCap);
-
-  // Matching cactus from ladder shelf placed on corner sill.
-  const cactusBaseX = -0.056;
-  const cactusBaseY = sillY + 0.034;
-  const cactusBaseZ = 0.22;
-
-  const pot = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.041, 0.047, 0.058, 14),
-    new THREE.MeshStandardMaterial({ color: 0x8a6347, roughness: 0.88 }),
-  );
-  pot.position.set(cactusBaseX, cactusBaseY, cactusBaseZ);
-  win.add(pot);
-
-  const potRim = new THREE.Mesh(
-    new THREE.TorusGeometry(0.041, 0.004, 8, 14),
-    new THREE.MeshStandardMaterial({ color: 0x9b7354, roughness: 0.84 }),
-  );
-  potRim.position.set(cactusBaseX, cactusBaseY + 0.027, cactusBaseZ);
-  potRim.rotation.x = Math.PI / 2;
-  win.add(potRim);
-
-  const soil = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.033, 0.035, 0.012, 10),
-    new THREE.MeshStandardMaterial({ color: 0x5a4739, roughness: 0.94 }),
-  );
-  soil.position.set(cactusBaseX, cactusBaseY + 0.027, cactusBaseZ);
-  win.add(soil);
-
-  const cactusBodyMat = new THREE.MeshStandardMaterial({ color: 0x4c9a64, roughness: 0.76 });
-  const cactusShadeMat = new THREE.MeshStandardMaterial({ color: 0x3f8655, roughness: 0.8 });
-
-  const cactusCore = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.015, 0.018, 0.092, 6),
-    cactusBodyMat,
-  );
-  cactusCore.position.set(cactusBaseX, cactusBaseY + 0.073, cactusBaseZ);
-  win.add(cactusCore);
-
-  const leftArm = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.009, 0.011, 0.06, 6),
-    cactusShadeMat,
-  );
-  leftArm.position.set(cactusBaseX - 0.017, cactusBaseY + 0.063, cactusBaseZ + 0.003);
-  leftArm.rotation.z = 0.56;
-  win.add(leftArm);
-
-  const rightArm = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.008, 0.01, 0.052, 6),
-    cactusShadeMat,
-  );
-  rightArm.position.set(cactusBaseX + 0.016, cactusBaseY + 0.06, cactusBaseZ - 0.003);
-  rightArm.rotation.z = -0.5;
-  win.add(rightArm);
-
-  for (const offset of [-0.008, 0, 0.008] as const) {
-    const rib = new THREE.Mesh(
-      new THREE.BoxGeometry(0.003, 0.082, 0.003),
-      cactusShadeMat,
-    );
-    rib.position.set(cactusBaseX + offset, cactusBaseY + 0.073, cactusBaseZ + 0.013);
-    win.add(rib);
-  }
-
-  const spikeMat = new THREE.MeshStandardMaterial({ color: 0xd9d3c6, roughness: 0.8 });
-  for (const [sx, sy, sz] of [
-    [cactusBaseX, cactusBaseY + 0.108, cactusBaseZ + 0.011],
-    [cactusBaseX - 0.013, cactusBaseY + 0.08, cactusBaseZ + 0.016],
-    [cactusBaseX + 0.013, cactusBaseY + 0.076, cactusBaseZ + 0.014],
-    [cactusBaseX, cactusBaseY + 0.063, cactusBaseZ + 0.02],
-  ] as const) {
-    const spike = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.008, 0.002), spikeMat);
-    spike.position.set(sx, sy, sz);
-    win.add(spike);
-  }
+  addCornerCactus(win, {
+    baseX: -0.056,
+    baseY: sillY + 0.034,
+    baseZ: 0.22,
+  });
 
   const animatedStars: THREE.Mesh[] = [];
   const animatedNebulae: THREE.Mesh[] = [];

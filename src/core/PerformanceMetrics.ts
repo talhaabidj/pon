@@ -1,90 +1,17 @@
 import type { WebGLRenderer } from 'three';
-import {
-  LONG_TASK_MIN_DURATION_MS,
-  LONG_TASK_WINDOW_MS,
-} from './PerformanceBudget.js';
+import { bytesToMB, percentile, round } from './perf/math.js';
+import { LongTaskTracker } from './perf/longTaskTracker.js';
+import type {
+  BrowserPerformance,
+  NavigatorWithConnection,
+  PerformanceSnapshot,
+} from './perf/types.js';
 
 const SAMPLE_WINDOW_SIZE = 240;
 const PING_SAMPLE_INTERVAL_MS = 2000;
 const PING_TIMEOUT_MS = 1600;
 
-interface BrowserMemoryStats {
-  usedJSHeapSize: number;
-  totalJSHeapSize: number;
-  jsHeapSizeLimit: number;
-}
-
-interface BrowserPerformance extends Performance {
-  memory?: BrowserMemoryStats;
-}
-
-interface NetworkInformationLike {
-  effectiveType?: string;
-  downlink?: number;
-  rtt?: number;
-}
-
-interface NavigatorWithConnection extends Navigator {
-  connection?: NetworkInformationLike;
-  mozConnection?: NetworkInformationLike;
-  webkitConnection?: NetworkInformationLike;
-}
-
-export interface PerformanceSnapshot {
-  sceneName: string;
-  fps: number;
-  fpsSmoothed: number;
-  fpsLow1: number;
-  frameTimeMs: number;
-  frameTimeAvgMs: number;
-  frameTimeP95Ms: number;
-  frameTimeWorstMs: number;
-  frameBudgetUsagePercent: number;
-  stepTimeMs: number;
-  drawCalls: number;
-  triangles: number;
-  lines: number;
-  points: number;
-  geometries: number;
-  textures: number;
-  programs: number;
-  pixelRatio: number;
-  canvasWidth: number;
-  canvasHeight: number;
-  viewportWidth: number;
-  viewportHeight: number;
-  visibility: DocumentVisibilityState;
-  paused: boolean;
-  pingMs: number | null;
-  pingJitterMs: number | null;
-  networkType: string | null;
-  downlinkMbps: number | null;
-  heapUsedMB: number | null;
-  heapTotalMB: number | null;
-  heapLimitMB: number | null;
-  longTaskCount: number;
-  longTaskRatePerMin: number;
-  longTaskTotalMs: number;
-  longTaskWorstMs: number;
-}
-
-function round(value: number, precision = 2): number {
-  const factor = 10 ** precision;
-  return Math.round(value * factor) / factor;
-}
-
-function bytesToMB(bytes: number): number {
-  return bytes / (1024 * 1024);
-}
-
-function percentile(sortedValues: number[], p: number): number {
-  if (sortedValues.length === 0) return 0;
-  const index = Math.min(
-    sortedValues.length - 1,
-    Math.max(0, Math.floor(sortedValues.length * p)),
-  );
-  return sortedValues[index] ?? 0;
-}
+export type { PerformanceSnapshot } from './perf/types.js';
 
 export class PerformanceMetricsTracker {
   private readonly frameTimes = new Float32Array(SAMPLE_WINDOW_SIZE);
@@ -95,9 +22,7 @@ export class PerformanceMetricsTracker {
   private pingProbeInFlight = false;
   private pingSmoothedMs: number | null = null;
   private pingJitterMs: number | null = null;
-  private readonly longTaskDurations: number[] = [];
-  private readonly longTaskStartTimes: number[] = [];
-  private longTaskObserver: PerformanceObserver | null = null;
+  private readonly longTaskTracker = new LongTaskTracker();
 
   private snapshot: PerformanceSnapshot = {
     sceneName: 'None',
@@ -138,14 +63,11 @@ export class PerformanceMetricsTracker {
   };
 
   constructor() {
-    this.initLongTaskObserver();
+    // Long task observer lifecycle now lives in LongTaskTracker.
   }
 
   dispose() {
-    this.longTaskObserver?.disconnect();
-    this.longTaskObserver = null;
-    this.longTaskDurations.length = 0;
-    this.longTaskStartTimes.length = 0;
+    this.longTaskTracker.dispose();
   }
 
   sample(
@@ -206,7 +128,7 @@ export class PerformanceMetricsTracker {
     const browserPerformance = performance as BrowserPerformance;
     const heap = browserPerformance.memory;
     const pingMs = this.pingSmoothedMs ?? connectionRtt ?? null;
-    const longTaskStats = this.getLongTaskStats(nowMs);
+    const longTaskStats = this.longTaskTracker.getStats(nowMs);
 
     this.snapshot = {
       sceneName: sceneName ?? 'None',
@@ -307,64 +229,4 @@ export class PerformanceMetricsTracker {
     }
   }
 
-  private initLongTaskObserver() {
-    if (typeof window === 'undefined') return;
-    if (typeof PerformanceObserver === 'undefined') return;
-
-    const supportedTypes = PerformanceObserver.supportedEntryTypes;
-    if (!Array.isArray(supportedTypes) || !supportedTypes.includes('longtask')) {
-      return;
-    }
-
-    this.longTaskObserver = new PerformanceObserver((list) => {
-      const entries = list.getEntries();
-      if (!entries.length) return;
-
-      for (const entry of entries) {
-        if (entry.duration < LONG_TASK_MIN_DURATION_MS) continue;
-        this.longTaskStartTimes.push(entry.startTime);
-        this.longTaskDurations.push(entry.duration);
-      }
-    });
-
-    try {
-      this.longTaskObserver.observe({ type: 'longtask', buffered: true });
-    } catch {
-      this.longTaskObserver = null;
-    }
-  }
-
-  private getLongTaskStats(nowMs: number): {
-    count: number;
-    ratePerMin: number;
-    totalMs: number;
-    worstMs: number;
-  } {
-    const cutoffMs = nowMs - LONG_TASK_WINDOW_MS;
-
-    while (
-      this.longTaskStartTimes.length > 0 &&
-      (this.longTaskStartTimes[0] ?? nowMs) < cutoffMs
-    ) {
-      this.longTaskStartTimes.shift();
-      this.longTaskDurations.shift();
-    }
-
-    let totalMs = 0;
-    let worstMs = 0;
-    for (const duration of this.longTaskDurations) {
-      totalMs += duration;
-      if (duration > worstMs) worstMs = duration;
-    }
-
-    const count = this.longTaskDurations.length;
-    const ratePerMin = count * (60000 / LONG_TASK_WINDOW_MS);
-
-    return {
-      count,
-      ratePerMin,
-      totalMs,
-      worstMs,
-    };
-  }
 }

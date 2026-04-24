@@ -6,6 +6,7 @@
 
 import { TOKEN_PACK_OPTIONS, TOKEN_PRICE } from '../core/Config.js';
 import { formatCurrency } from '../core/Currency.js';
+import { renderPromptActions } from './shopHud/promptActions.js';
 
 const SHOP_HUD_ID = 'shop-hud';
 let pullDismissHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -182,26 +183,7 @@ export function showShopPrompt(prompt: string | ShopPromptPayload, keyLabel = 'E
     if (signature !== lastPromptSignature) {
       txt.textContent = payload.text;
       if (actionsEl) {
-        actionsEl.innerHTML = '';
-        actionsEl.classList.toggle('hidden', actions.length === 0);
-
-        actions.forEach((action) => {
-          const actionEl = document.createElement('div');
-          actionEl.className = 'shop-prompt-action';
-          actionEl.setAttribute('data-key', action.key);
-
-          const keyEl = document.createElement('kbd');
-          keyEl.className = 'shop-prompt-key';
-          keyEl.textContent = action.key;
-
-          const labelEl = document.createElement('span');
-          labelEl.className = 'shop-prompt-label';
-          labelEl.textContent = action.label;
-
-          actionEl.appendChild(keyEl);
-          actionEl.appendChild(labelEl);
-          actionsEl.appendChild(actionEl);
-        });
+        renderPromptActions(actionsEl, actions);
       }
       el.classList.toggle('has-multi-actions', actions.length > 1);
       lastPromptSignature = signature;

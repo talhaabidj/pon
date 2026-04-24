@@ -7,6 +7,8 @@
 
 import type { Scene } from '../data/types.js';
 import type { Game } from '../core/Game.js';
+import { configureSceneRouter } from './SceneRouter.js';
+import { createDefaultSceneRouter } from './SceneRouterDefaults.js';
 
 export class BootScene implements Scene {
   private game: Game;
@@ -18,6 +20,8 @@ export class BootScene implements Scene {
   }
 
   async init() {
+    configureSceneRouter(createDefaultSceneRouter());
+
     const loadingBar = document.querySelector(
       '.loading-bar-fill',
     ) as HTMLElement | null;

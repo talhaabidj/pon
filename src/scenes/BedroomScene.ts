@@ -19,7 +19,6 @@ import '../styles/bedroom.css';
 import { FirstPersonController } from '../core/FirstPersonController.js';
 import { InteractionSystem } from '../core/InteractionSystem.js';
 import { requestPointerLockSafely } from '../core/PointerLock.js';
-import { getInteractType } from '../core/InteractionTags.js';
 import { PLAYER_HEIGHT } from '../core/Config.js';
 import type { BedroomCollider } from '../world/Bedroom.js';
 import { buildBedroom } from '../world/Bedroom.js';
@@ -30,7 +29,11 @@ import { CollectionSystem } from '../systems/CollectionSystem.js';
 import { EconomySystem } from '../systems/EconomySystem.js';
 import { ProgressionSystem } from '../systems/ProgressionSystem.js';
 import { PauseSceneController } from './shared/PauseSceneController.js';
+import { getSceneRouter } from './SceneRouter.js';
 import { clampBedroomPosition } from './bedroom/BedroomCollision.js';
+import { BedroomInteractIndicators } from './bedroom/BedroomInteractIndicators.js';
+import { routeBedroomInteraction } from './bedroom/BedroomInteractionRouter.js';
+import { BedroomStartGate } from './bedroom/BedroomStartGate.js';
 import {
   createBlackFadeOverlay,
   fadeToBlack,
@@ -55,7 +58,6 @@ import {
   hidePauseMenu,
   isPauseMenuVisible,
 } from '../ui/pauseUI.js';
-import { ClickToStartOverlay } from '../ui/ClickToStartOverlay.js';
 
 export class BedroomScene implements Scene {
   private game: Game;
@@ -68,16 +70,12 @@ export class BedroomScene implements Scene {
   // Persisted state
   private gameState: GameState;
   private colliders: BedroomCollider[] = [];
-  private bedroomInteractIndicators: THREE.Group[] = [];
+  private interactIndicators: BedroomInteractIndicators;
   private windowVoidAnimator: ((timeSeconds: number) => void) | null = null;
-  private awaitingBedroomStartClick = false;
+  private startGate: BedroomStartGate;
   private isNightShiftStarting = false;
   private isReturningToDesktop = false;
-  private bedroomStartOverlay: ClickToStartOverlay | null = null;
   private showStartGateOnLoad: boolean;
-  private shopScenePreload:
-    | Promise<typeof import('./ShopScene.js') | null>
-    | null = null;
 
   constructor(
     game: Game,
@@ -104,6 +102,19 @@ export class BedroomScene implements Scene {
       },
     });
     this.interaction = new InteractionSystem();
+    this.interactIndicators = new BedroomInteractIndicators(this.scene3d);
+    this.startGate = new BedroomStartGate({
+      canvas: this.game.canvas,
+      setControllerEnabled: (enabled) => {
+        this.controller.setEnabled(enabled);
+      },
+      onShown: () => {
+        hideInteractPrompt();
+      },
+      onStarted: () => {
+        gameAudio.play('ui');
+      },
+    });
 
     // Load game state: use passed-in (from shop return) or load from save
     this.gameState = gameState ?? loadGameState() ?? createDefaultGameState();
@@ -124,7 +135,7 @@ export class BedroomScene implements Scene {
 
     // —— Register interactables ——
     this.interaction.setInteractables(interactables);
-    this.createBedroomInteractIndicators(interactables);
+    this.interactIndicators.sync(interactables);
 
     // —— Camera start position (center of room, facing door) ——
     this.camera.position.set(0.5, PLAYER_HEIGHT, 0.5);
@@ -144,11 +155,11 @@ export class BedroomScene implements Scene {
     };
     if (win.requestIdleCallback) {
       win.requestIdleCallback(() => {
-        void this.preloadShopScene();
+        void getSceneRouter().warmShopRoute();
       }, { timeout: 2200 });
     } else {
       setTimeout(() => {
-        void this.preloadShopScene();
+        void getSceneRouter().warmShopRoute();
       }, 450);
     }
 
@@ -181,9 +192,9 @@ export class BedroomScene implements Scene {
     const input = this.game.input;
     const timeNow = performance.now() * 0.001;
     this.windowVoidAnimator?.(timeNow);
-    this.updateBedroomInteractIndicators(timeNow);
+    this.interactIndicators.update(timeNow);
 
-    if (this.awaitingBedroomStartClick) {
+    if (this.startGate.isWaiting()) {
       // Guard against pointer-lock races from scene enter; if lock is active,
       // the browser can keep routing clicks to canvas instead of the overlay.
       if (document.pointerLockElement === this.game.canvas) {
@@ -309,67 +320,34 @@ export class BedroomScene implements Scene {
     this.colliders = [];
     this.windowVoidAnimator = null;
     this.pauseController.dispose();
-    this.disposeBedroomInteractIndicators();
-    this.bedroomStartOverlay?.dispose();
-    this.bedroomStartOverlay = null;
-    this.awaitingBedroomStartClick = false;
+    this.interactIndicators.dispose();
+    this.startGate.dispose();
     this.isNightShiftStarting = false;
     this.isReturningToDesktop = false;
-    this.shopScenePreload = null;
   }
 
   // —— Interaction handlers ——
 
   private handleInteraction(type: string) {
-    switch (type) {
-      case 'pc':
+    routeBedroomInteraction(type, {
+      onPc: () => {
         hideInteractPrompt();
         void this.returnToDesktopStart();
-        break;
-
-      case 'collection':
+      },
+      onCollection: () => {
         gameAudio.play('ui');
         openCollectionViewer(this.gameState.ownedItemIds);
         this.controller.setEnabled(true);
         requestPointerLockSafely(this.game.canvas);
-        break;
-
-      case 'door':
+      },
+      onDoor: () => {
         this.startNightShift();
-        break;
-    }
+      },
+    });
   }
 
   private showBedroomStartOverlay() {
-    if (this.awaitingBedroomStartClick) return;
-
-    this.awaitingBedroomStartClick = true;
-    this.controller.setEnabled(false);
-    hideInteractPrompt();
-
-    if (document.pointerLockElement === this.game.canvas) {
-      document.exitPointerLock();
-    }
-
-    const beginFromOverlay = () => {
-      if (!this.awaitingBedroomStartClick) return;
-
-      gameAudio.play('ui');
-      this.awaitingBedroomStartClick = false;
-      this.bedroomStartOverlay?.hide();
-
-      this.controller.setEnabled(true);
-      requestPointerLockSafely(this.game.canvas);
-    };
-
-    if (!this.bedroomStartOverlay) {
-      this.bedroomStartOverlay = new ClickToStartOverlay({
-        id: 'bedroom-shift-start-overlay',
-        zIndex: 1300,
-        onActivate: beginFromOverlay,
-      });
-    }
-    this.bedroomStartOverlay.show();
+    this.startGate.show();
   }
 
   private startNightShift() {
@@ -393,16 +371,12 @@ export class BedroomScene implements Scene {
       this.gameState.secretsTriggered,
     );
 
-    const preloadedModule = await this.preloadShopScene();
-    const { ShopScene } = preloadedModule ?? await import('./ShopScene.js');
-    await this.game.sceneManager.switchTo(
-      new ShopScene(
-        this.game,
-        economy,
-        collection,
-        progression,
-        this.gameState.totalMoneyEarned,
-      ),
+    await getSceneRouter().toShop(
+      this.game,
+      economy,
+      collection,
+      progression,
+      this.gameState.totalMoneyEarned,
     );
 
     // Remove fade (the new scene will handle its own visuals)
@@ -421,8 +395,7 @@ export class BedroomScene implements Scene {
       document.exitPointerLock();
     }
 
-    this.awaitingBedroomStartClick = false;
-    this.bedroomStartOverlay?.hide();
+    this.startGate.hide();
 
     hidePCOverlay();
     hideCollectionOverlay();
@@ -430,8 +403,7 @@ export class BedroomScene implements Scene {
     this.game.isPaused = false;
     saveGameState(this.gameState);
 
-    const { DesktopScene } = await import('./DesktopScene.js');
-    await this.game.sceneManager.switchTo(new DesktopScene(this.game));
+    await getSceneRouter().toDesktop(this.game);
 
     transitionOverlay.style.opacity = '0';
     window.setTimeout(() => {
@@ -445,164 +417,6 @@ export class BedroomScene implements Scene {
     if (isPauseMenuVisible()) return;
     if (this.pauseController.isClickToStartVisible()) return;
     this.pauseController.openPauseMenu();
-  }
-
-  private preloadShopScene() {
-    if (!this.shopScenePreload) {
-      this.shopScenePreload = import('./ShopScene.js').catch(() => null);
-    }
-    return this.shopScenePreload;
-  }
-
-  private createBedroomInteractIndicators(interactables: THREE.Object3D[]) {
-    this.disposeBedroomInteractIndicators();
-
-    for (const obj of interactables) {
-      const type = getInteractType(obj);
-      let color = 0x7c6ef0;
-      if (type === 'pc') color = 0x6ebeff;
-      if (type === 'collection') color = 0xd890ff;
-      if (type === 'door') color = 0xffc66e;
-
-      const bounds = new THREE.Box3().setFromObject(obj);
-      if (!Number.isFinite(bounds.min.x) || !Number.isFinite(bounds.max.y)) {
-        continue;
-      }
-
-      const marker = new THREE.Group();
-      const glowTex = this.createSoftGlowTexture(color);
-      const glowMat = new THREE.MeshBasicMaterial({
-        map: glowTex,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        opacity: 0.62,
-      });
-      const glow = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), glowMat);
-      glow.name = 'interact-glow';
-      glow.rotation.x = -Math.PI / 2;
-      marker.add(glow);
-
-      const beaconMat = new THREE.MeshStandardMaterial({
-        color: 0xecf6ff,
-        emissive: color,
-        emissiveIntensity: 0.9,
-        roughness: 0.2,
-        metalness: 0.1,
-      });
-      const beacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), beaconMat);
-      beacon.name = 'interact-beacon';
-      marker.add(beacon);
-
-      const stem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.007, 0.009, 0.1, 8),
-        new THREE.MeshStandardMaterial({
-          color: 0xaedfff,
-          emissive: color,
-          emissiveIntensity: 0.45,
-          roughness: 0.35,
-          metalness: 0.2,
-          transparent: true,
-          opacity: 0.85,
-        }),
-      );
-      stem.name = 'interact-stem';
-      marker.add(stem);
-
-      const centerX = (bounds.min.x + bounds.max.x) * 0.5;
-      const centerZ = (bounds.min.z + bounds.max.z) * 0.5;
-      const floorY = bounds.min.y + 0.025;
-      const topY = bounds.max.y + 0.17;
-
-      marker.position.set(centerX, 0, centerZ);
-      glow.position.y = floorY;
-      beacon.position.y = topY;
-      stem.position.y = topY - 0.06;
-
-      marker.userData['baseY'] = topY;
-      marker.userData['floorY'] = floorY;
-      marker.userData['phase'] = this.bedroomInteractIndicators.length * 0.72;
-
-      this.scene3d.add(marker);
-      this.bedroomInteractIndicators.push(marker);
-    }
-  }
-
-  private updateBedroomInteractIndicators(timeSeconds: number) {
-    this.bedroomInteractIndicators.forEach((marker) => {
-      const baseY = (marker.userData['baseY'] as number | undefined) ?? 1;
-      const floorY = (marker.userData['floorY'] as number | undefined) ?? 0.05;
-      const phase = (marker.userData['phase'] as number | undefined) ?? 0;
-
-      const bob = Math.sin(timeSeconds * 1.95 + phase) * 0.026;
-      const pulse = 0.72 + (Math.sin(timeSeconds * 2.6 + phase) * 0.28);
-
-      const beacon = marker.getObjectByName('interact-beacon') as THREE.Mesh | undefined;
-      if (beacon) {
-        beacon.position.y = baseY + bob;
-        beacon.rotation.y += 0.013;
-        const scale = 0.86 + pulse * 0.22;
-        beacon.scale.set(scale, scale, scale);
-      }
-
-      const stem = marker.getObjectByName('interact-stem') as THREE.Mesh | undefined;
-      if (stem) {
-        stem.position.y = (baseY - 0.06) + bob * 0.6;
-      }
-
-      const glow = marker.getObjectByName('interact-glow') as THREE.Mesh | undefined;
-      if (glow) {
-        glow.position.y = floorY;
-        glow.rotation.z += 0.004;
-        const glowScale = 0.92 + pulse * 0.22;
-        glow.scale.set(glowScale, glowScale, glowScale);
-        if (glow.material instanceof THREE.MeshBasicMaterial) {
-          glow.material.opacity = 0.42 + pulse * 0.22;
-        }
-      }
-    });
-  }
-
-  private createSoftGlowTexture(colorHex: number): THREE.CanvasTexture {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      const color = new THREE.Color(colorHex);
-      const r = Math.round(color.r * 255);
-      const g = Math.round(color.g * 255);
-      const b = Math.round(color.b * 255);
-      const grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 56);
-      grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.92)`);
-      grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, 0.45)`);
-      grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 128, 128);
-    }
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.needsUpdate = true;
-    return texture;
-  }
-
-  private disposeBedroomInteractIndicators() {
-    this.bedroomInteractIndicators.forEach((marker) => {
-      marker.removeFromParent();
-      marker.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          child.geometry.dispose();
-          if (Array.isArray(child.material)) {
-            child.material.forEach((m) => m.dispose());
-          } else {
-            child.material.dispose();
-          }
-        }
-      });
-    });
-    this.bedroomInteractIndicators = [];
   }
 
   private onResize = () => {

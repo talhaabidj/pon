@@ -29,7 +29,6 @@ import { InteractionSystem } from '../core/InteractionSystem.js';
 import { requestPointerLockSafely } from '../core/PointerLock.js';
 import { formatCurrencyDelta } from '../core/Currency.js';
 import {
-  PLAYER_HEIGHT,
   PULL_TIME_COST,
   SECRET_DISCOVERY_BONUS,
 } from '../core/Config.js';
@@ -45,7 +44,7 @@ import { CollectionSystem } from '../systems/CollectionSystem.js';
 import { ProgressionSystem } from '../systems/ProgressionSystem.js';
 
 // Data
-import { MACHINES, getAvailableMachines } from '../data/machines.js';
+import { MACHINES } from '../data/machines.js';
 import { TASK_TEMPLATES } from '../data/tasks.js';
 import { getItemById, ITEMS } from '../data/items.js';
 import {
@@ -54,8 +53,6 @@ import {
   triggerMachinePowerPulse,
 } from '../world/machines/CapsuleMachine.js';
 import { MudSplashTaskSystem } from './shop/MudSplashTaskSystem.ts';
-import { reduceBlockingIssuesToBudget } from './shop/ServiceStateBalancer.js';
-import { getNightlyBlockingIssueBudget } from './shop/BlockingIssueBudget.js';
 import {
   hasAnyRestockNeedInWorld,
 } from './shop/RestockFallback.js';
@@ -69,16 +66,16 @@ import {
 } from './shop/NightEndSnapshot.js';
 import {
   canUseTokenStation,
-  createTokenStationState,
-  ensureTokenStationIssueTask,
 } from './shop/TokenStationFlow.js';
 import {
-  getMachineIssuePrompt,
   getMachineOutOfOrderPrompt,
 } from './shop/MachineIssuePrompts.js';
 import { ShopHudPresenter } from './shop/ShopHudPresenter.js';
 import {
-  getInteractType,
+  getContextualActions as getShopContextualActions,
+  getContextualPrompt as getShopContextualPrompt,
+} from './shop/ShopPromptRules.js';
+import {
   getMachineId,
   getSecretId,
   getSecretName,
@@ -87,9 +84,13 @@ import {
 import {
   ARCADE_STATUS_TEXT,
 } from './shop/ArcadeStatusText.js';
+import { clampShopPosition } from './shop/ShopCollision.js';
+import { updateShopTaskMarkers } from './shop/ShopTaskMarkers.js';
 
 // World
-import { buildShopFloor, type ShopCollider } from '../world/ShopFloor.js';
+import type { ShopCollider } from '../world/ShopFloor.js';
+import { bindRuntimeToShopScene } from './shop/ShopSceneOrchestrator.js';
+import { createShopRuntimeContext } from './shop/ShopRuntimeContext.js';
 
 // UI
 import {
@@ -117,10 +118,7 @@ import {
   isPauseMenuVisible,
 } from '../ui/pauseUI.js';
 import { PauseSceneController } from './shared/PauseSceneController.js';
-
-// Bounds
-const SHOP_HALF_W = 7.0;
-const SHOP_HALF_D = 6.0;
+import { getSceneRouter } from './SceneRouter.js';
 
 export class ShopScene implements Scene {
   private game: Game;
@@ -222,68 +220,31 @@ export class ShopScene implements Scene {
     );
     RectAreaLightUniformsLib.init();
 
-    // —— Get progression data for this night ——
-    const prog = this.progression.getCurrentProgression();
-    const nightsWorked = this.progression.getNightsWorked();
+    const runtime = createShopRuntimeContext({
+      progression: this.progression,
+      maintenance: this.maintenance,
+      tasks: this.tasks,
+    });
+    this.availableMachines = runtime.availableMachines;
+    this.tokenStationState = runtime.tokenStationState;
 
-    // Available machines based on progression
-    this.availableMachines = getAvailableMachines(nightsWorked);
-
-    // —— Initialize maintenance states ——
-    const machineIds = this.availableMachines.map((m) => m.id);
-    this.maintenance.initializeForNight(machineIds, prog.difficultyModifier);
-    this.tokenStationState = createTokenStationState(prog.difficultyModifier);
-    this.tokenStationState.isPowered = true;
-    if (this.tokenStationState.stockLevel === 'empty') {
-      this.tokenStationState.stockLevel = 'low';
-    }
-
-    // —— Generate tasks ——
-    const [minTasks, maxTasks] = prog.taskCount;
-    const taskCount =
-      minTasks + Math.floor(Math.random() * (maxTasks - minTasks + 1));
-
-    // —— Build shop floor ——
-    const stateMap = new Map<string, MachineState>();
-    for (const id of machineIds) {
-      const st = this.maintenance.getState(id);
-      if (st) stateMap.set(id, st);
-    }
-    stateMap.set('token-station', this.tokenStationState);
-
-    // Randomized blocker pressure keeps nights dynamic while preventing all-machine lockouts.
-    const maxBlockingIssues = getNightlyBlockingIssueBudget(stateMap.size);
-    reduceBlockingIssuesToBudget([...stateMap.values()], maxBlockingIssues);
-
-    const activeTasks = this.tasks.generateTasksFromMaintenance(taskCount, stateMap);
-    const curatedTasks = ensureTokenStationIssueTask(
-      activeTasks,
-      taskCount,
-      this.tokenStationState,
+    const runtimeBinding = bindRuntimeToShopScene(
+      this.scene3d,
+      this.interaction,
+      this.camera,
+      runtime,
     );
-    this.tasks.setTasks(curatedTasks);
-
-    const { group, interactables, machineGroups, colliders } = buildShopFloor(
-      this.availableMachines,
-      stateMap,
-    );
-    this.machineGroups = machineGroups;
-    const tokenStationObj = interactables.find(
-      (obj) => getInteractType(obj) === 'token-station',
-    );
-    this.tokenStationGroup = (tokenStationObj as THREE.Group | undefined) ?? null;
-    this.colliders = colliders;
-    this.scene3d.add(group);
+    this.machineGroups = runtimeBinding.machineGroups;
+    this.tokenStationGroup = runtimeBinding.tokenStationGroup;
+    this.colliders = runtimeBinding.colliders;
 
     // —— Spawn Task Targets (Mud Splashes) ——
     this.mudSplashTasks = new MudSplashTaskSystem(this.scene3d, this.colliders);
-    this.mudSplashTasks.spawn(curatedTasks, interactables);
+    this.mudSplashTasks.spawn(runtime.curatedTasks, runtimeBinding.interactables);
+    // Mud splashes are appended after initial interactable binding, so refresh
+    // the interaction cache to include floor-spot meshes for mop prompts.
+    this.interaction.setInteractables(runtimeBinding.interactables);
 
-    // —— Register interactables ——
-    this.interaction.setInteractables(interactables);
-
-    // —— Camera ——
-    this.camera.position.set(0, PLAYER_HEIGHT, 4);
     this.controller.attach(this.camera);
 
     // —— Mount HUD ——
@@ -530,125 +491,45 @@ export class ShopScene implements Scene {
   // ————————————————————————————————
 
   private getContextualPrompt(type: string, defaultPrompt: string, object?: THREE.Object3D): string {
-    if (type === 'machine') {
-      const machineId = object ? getMachineId(object) : undefined;
-      if (machineId) {
-        const machineState = this.maintenance.getState(machineId);
-        const outOfOrderPrompt = getMachineOutOfOrderPrompt(
-          machineState,
-          this.hasCapsuleRefill,
-        );
-        if (outOfOrderPrompt) return outOfOrderPrompt;
+    const machineId = type === 'machine' && object ? getMachineId(object) : undefined;
+    const machineState = machineId ? this.maintenance.getState(machineId) : undefined;
 
-        const issuePrompt = getMachineIssuePrompt({
-          machineId,
-          machineState,
-          hasCapsuleRefill: this.hasCapsuleRefill,
-          tasks: this.tasks.getTasks(),
-        });
-        if (issuePrompt) {
-          const isLowStock = machineState?.stockLevel === 'low';
-          if (isLowStock) {
-            if (!this.economy.canPull()) {
-              return this.hasCapsuleRefill
-                ? 'LOW STOCK - Need tokens to pull'
-                : 'LOW STOCK - Need tokens or refill canister';
-            }
-            return this.hasCapsuleRefill
-              ? 'LOW STOCK - Pull or restock'
-              : 'LOW STOCK - Pull now or grab refill canister';
-          }
-          return issuePrompt;
-        }
-      }
-
-      if (!this.economy.canPull()) return `${defaultPrompt} (need tokens)`;
-      return `Pull — ${defaultPrompt}`;
-    }
-    if (type === 'storage-crate') {
-      if (this.hasCapsuleRefill) return 'Refill canister ready — service restock task';
-      if (this.hasAnyCapsuleRestockNeed()) return 'Take refill canister from crate';
-      return 'Storage crate';
-    }
-    if (type === 'token-crate') {
-      if (this.hasTokenRefill) return 'Token refill pack ready — service terminal';
-      if (this.hasAnyTokenRestockNeed()) return 'Take token refill pack';
-      return 'Token refill crate';
-    }
-    if (type === 'token-station') {
-      if (!this.tokenStationState.isPowered) return ARCADE_STATUS_TEXT.outOfOrderRequiresPower;
-      if (this.tokenStationState.isJammed) return ARCADE_STATUS_TEXT.outOfOrderJammed;
-      if (this.tokenStationState.stockLevel === 'empty') {
-        if (this.hasTokenRefill) return 'OUT OF ORDER - Ready to restock';
-        return ARCADE_STATUS_TEXT.outOfOrderRestockNeeded;
-      }
-      if (this.tokenStationState.stockLevel === 'low') {
-        if (this.hasTokenRefill) return 'LOW STOCK - Buy now or restock';
-        return 'LOW STOCK - Buy now or get token refill pack';
-      }
-      if (this.tokenStationState.cleanliness === 'dirty') return ARCADE_STATUS_TEXT.serviceCleanScreen;
-      return ARCADE_STATUS_TEXT.buyTokens;
-    }
-    if (type === 'shop-exit') return 'End Shift';
-    if (type === 'wondertrade') {
-      const status = getWondertradeStatus(this.collection.getDuplicateCandidates(), ITEMS);
-      if (!status.canTrade && status.reason === 'need-owned-items') {
-        return 'Wonder Exchange (need collected items)';
-      }
-      if (!status.canTrade && status.reason === 'collection-complete') {
-        return 'Wonder Exchange (collection complete)';
-      }
-      return 'Wonder Exchange';
-    }
-    return defaultPrompt;
+    return getShopContextualPrompt({
+      type,
+      defaultPrompt,
+      machineId,
+      machineState,
+      tasks: this.tasks.getTasks(),
+      hasCapsuleRefill: this.hasCapsuleRefill,
+      hasTokenRefill: this.hasTokenRefill,
+      canPullNow: this.economy.canPull(),
+      tokenStationState: this.tokenStationState,
+      hasAnyCapsuleRestockNeed: this.hasAnyCapsuleRestockNeed(),
+      hasAnyTokenRestockNeed: this.hasAnyTokenRestockNeed(),
+      wondertradeOwnedIds: this.collection.getDuplicateCandidates(),
+      items: [...ITEMS],
+    });
   }
 
   private getContextualActions(type: string, object?: THREE.Object3D): ShopPromptAction[] {
-    if (type === 'machine') {
-      const machineId = object ? getMachineId(object) : undefined;
-      if (!machineId) return [{ key: 'E', label: 'Pull' }];
+    const machineId = type === 'machine' && object ? getMachineId(object) : undefined;
+    const machineState = machineId ? this.maintenance.getState(machineId) : undefined;
 
-      const state = this.maintenance.getState(machineId);
-      const canPullNow = this.maintenance.canPull(machineId);
-      const hasServiceNeed = this.hasMachineServiceNeed(state);
-
-      if (canPullNow && hasServiceNeed) {
-        return [{ key: 'E', label: 'Pull' }, { key: 'R', label: 'Service' }];
-      }
-      if (!canPullNow && hasServiceNeed) {
-        return [{ key: 'R', label: 'Service' }];
-      }
-      return [{ key: 'E', label: 'Pull' }];
-    }
-
-    if (type === 'token-crate') {
-      return [{ key: 'R', label: 'Take Pack' }];
-    }
-
-    if (type === 'storage-crate') {
-      return [{ key: 'R', label: 'Take Refill' }];
-    }
-
-    if (type === 'token-station') {
-      const canUseStation = canUseTokenStation(this.tokenStationState);
-      const hasServiceNeed = this.hasMachineServiceNeed(this.tokenStationState);
-
-      if (canUseStation && hasServiceNeed) {
-        return [{ key: 'E', label: 'Buy Tokens' }, { key: 'R', label: 'Service' }];
-      }
-      if (!canUseStation && hasServiceNeed) {
-        return [{ key: 'R', label: 'Service' }];
-      }
-
-      return [{ key: 'E', label: 'Buy Tokens' }];
-    }
-
-    if (type === 'floor-spot') return [{ key: 'R', label: 'Mop' }];
-    if (type === 'wondertrade') return [{ key: 'E', label: 'Trade' }];
-    if (type === 'shop-exit') return [{ key: 'E', label: 'End Shift' }];
-    if (type === 'secret') return [{ key: 'E', label: 'Inspect' }];
-
-    return [{ key: 'E', label: 'Interact' }];
+    return getShopContextualActions({
+      type,
+      defaultPrompt: '',
+      machineId,
+      machineState,
+      tasks: this.tasks.getTasks(),
+      hasCapsuleRefill: this.hasCapsuleRefill,
+      hasTokenRefill: this.hasTokenRefill,
+      canPullNow: machineId ? this.maintenance.canPull(machineId) : this.economy.canPull(),
+      tokenStationState: this.tokenStationState,
+      hasAnyCapsuleRestockNeed: this.hasAnyCapsuleRestockNeed(),
+      hasAnyTokenRestockNeed: this.hasAnyTokenRestockNeed(),
+      wondertradeOwnedIds: this.collection.getDuplicateCandidates(),
+      items: [...ITEMS],
+    });
   }
 
   private handleServiceInput(type: string, object: THREE.Object3D): boolean {
@@ -991,16 +872,6 @@ export class ShopScene implements Scene {
   private getServiceState(targetId: string): MachineState | undefined {
     if (targetId === 'token-station') return this.tokenStationState;
     return this.maintenance.getState(targetId);
-  }
-
-  private hasMachineServiceNeed(state: MachineState | undefined): boolean {
-    if (!state) return false;
-    return (
-      state.cleanliness === 'dirty' ||
-      !state.isPowered ||
-      state.isJammed ||
-      state.stockLevel !== 'ok'
-    );
   }
 
   private handleStorageCrate() {
@@ -1417,10 +1288,7 @@ export class ShopScene implements Scene {
     await new Promise((r) => setTimeout(r, 700));
 
     // Transition back to bedroom with updated state
-    const { BedroomScene } = await import('./BedroomScene.js');
-    await this.game.sceneManager.switchTo(
-      new BedroomScene(this.game, gameState, { showStartGateOnLoad: false }),
-    );
+    await getSceneRouter().toBedroom(this.game, gameState, { showStartGateOnLoad: false });
     fade.remove();
   }
 
@@ -1435,105 +1303,11 @@ export class ShopScene implements Scene {
   }
 
   private updateMachineTaskMarkers() {
-    this.machineGroups.forEach((group) => {
-      const existing = group.getObjectByName('task-indicator');
-      existing?.removeFromParent();
+    updateShopTaskMarkers({
+      machineGroups: this.machineGroups,
+      tokenStationGroup: this.tokenStationGroup,
+      tasks: this.tasks.getTasks(),
     });
-    const tokenMarker = this.tokenStationGroup?.getObjectByName('task-indicator');
-    tokenMarker?.removeFromParent();
-
-    const pendingMachineTasks = this.tasks.getTasks().filter((t) => {
-      if (t.isCompleted) return false;
-      const template = TASK_TEMPLATES.find((tt) => tt.id === t.templateId);
-      return template?.targetType === 'machine';
-    });
-
-    for (const task of pendingMachineTasks) {
-      const machine = this.machineGroups.get(task.targetId)
-        ?? (task.targetId === 'token-station' ? this.tokenStationGroup ?? undefined : undefined);
-      if (!machine) continue;
-
-      const template = TASK_TEMPLATES.find((tt) => tt.id === task.templateId);
-      if (!template) continue;
-
-      let color = 0xf2d65c;
-      if (template.type === 'wipe_glass') color = 0x7ac7ff;
-      if (template.type === 'restock') color = 0xf2d65c;
-      if (template.type === 'fix_jam') color = 0xff8b4a;
-      if (template.type === 'rewire') color = 0xff5f5f;
-
-      const marker = new THREE.Group();
-      marker.name = 'task-indicator';
-
-      const glowTex = this.createMarkerGlowTexture(color);
-      const floorGlow = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.36, 0.36),
-        new THREE.MeshBasicMaterial({
-          map: glowTex,
-          transparent: true,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
-          opacity: 0.58,
-        }),
-      );
-      floorGlow.rotation.x = -Math.PI / 2;
-      floorGlow.position.set(0, 0.05, 0);
-      marker.add(floorGlow);
-
-      const beacon = new THREE.Mesh(
-        new THREE.OctahedronGeometry(0.05, 0),
-        new THREE.MeshStandardMaterial({
-          color: 0xf8fcff,
-          emissive: color,
-          emissiveIntensity: 0.88,
-          roughness: 0.22,
-          metalness: 0.12,
-        }),
-      );
-      beacon.position.set(0, 2.14, 0);
-      marker.add(beacon);
-
-      const stem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.01, 0.012, 0.12, 8),
-        new THREE.MeshStandardMaterial({
-          color: 0xd7e9ff,
-          emissive: color,
-          emissiveIntensity: 0.45,
-          roughness: 0.35,
-          metalness: 0.18,
-        }),
-      );
-      stem.position.set(0, 2.06, 0);
-      marker.add(stem);
-
-      machine.add(marker);
-    }
-  }
-
-  private createMarkerGlowTexture(colorHex: number): THREE.CanvasTexture {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      const color = new THREE.Color(colorHex);
-      const r = Math.round(color.r * 255);
-      const g = Math.round(color.g * 255);
-      const b = Math.round(color.b * 255);
-
-      const grad = ctx.createRadialGradient(64, 64, 6, 64, 64, 56);
-      grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
-      grad.addColorStop(0.48, `rgba(${r}, ${g}, ${b}, 0.46)`);
-      grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 128, 128);
-    }
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
-    return tex;
   }
 
   private updateHUD() {
@@ -1554,76 +1328,7 @@ export class ShopScene implements Scene {
   // ————————————————————————————————
 
   private clampPosition() {
-    const pos = this.camera.position;
-    const wallCollisionPadding = 0.34;
-    const getColliderPadding = (colliderName: string): number => {
-      if (colliderName.includes('wall')) return wallCollisionPadding;
-      if (colliderName.includes('shelf')) return 0.12;
-      if (colliderName.includes('crate')) return 0.16;
-      if (colliderName.startsWith('machine-') || colliderName === 'token-station') return 0.32;
-      if (colliderName.includes('counter') || colliderName === 'vending-machine') return 0.28;
-      return 0.24;
-    };
-
-    // Storeroom geometry constants (must match ShopFloor.ts)
-    const STORE_WIDTH = 4.0;
-    const STORE_DEPTH = 3.5;
-    const STORE_LEFT_X = SHOP_HALF_W - STORE_WIDTH; // 3
-    const STORE_BACK_Z = -SHOP_HALF_D - STORE_DEPTH; // -9.5
-
-    // Broad storeroom X acceptance: allows touching side walls without snap-ejecting.
-    const inStoreroomXRange =
-      pos.x > STORE_LEFT_X + 0.02 &&
-      pos.x < SHOP_HALF_W - 0.02;
-
-    // X clamp: always within main shop width
-    pos.x = Math.max(
-      -SHOP_HALF_W + wallCollisionPadding,
-      Math.min(SHOP_HALF_W - wallCollisionPadding, pos.x),
-    );
-
-    // Z clamp: depends on whether the player is in/near the storeroom
-    if (pos.z < -SHOP_HALF_D + wallCollisionPadding) {
-      // Player is behind the back wall line — only allowed if in storeroom bounds
-      if (inStoreroomXRange) {
-        // Clamp within storeroom
-        pos.z = Math.max(STORE_BACK_Z + wallCollisionPadding, pos.z);
-        pos.x = Math.max(
-          STORE_LEFT_X + wallCollisionPadding,
-          Math.min(SHOP_HALF_W - wallCollisionPadding, pos.x),
-        );
-      } else {
-        // Push back to main shop
-        pos.z = -SHOP_HALF_D + wallCollisionPadding;
-      }
-    } else {
-      // Normal main shop Z clamp
-      pos.z = Math.min(SHOP_HALF_D - wallCollisionPadding, pos.z);
-    }
-
-    pos.y = PLAYER_HEIGHT;
-
-    // Collision against all major shop objects from world colliders.
-    for (const collider of this.colliders) {
-      const colliderPadding = getColliderPadding(collider.name);
-      const boundX = collider.halfW + colliderPadding;
-      const boundZ = collider.halfD + colliderPadding;
-
-      const dx = pos.x - collider.x;
-      const dz = pos.z - collider.z;
-
-      if (Math.abs(dx) < boundX && Math.abs(dz) < boundZ) {
-        // Resolve collision by pushing out along the axis of shallowest penetration
-        const overlapX = boundX - Math.abs(dx);
-        const overlapZ = boundZ - Math.abs(dz);
-
-        if (overlapX < overlapZ) {
-          pos.x += Math.sign(dx) * overlapX;
-        } else {
-          pos.z += Math.sign(dz) * overlapZ;
-        }
-      }
-    }
+    clampShopPosition(this.camera.position, this.colliders);
   }
 
   private onResize = () => {

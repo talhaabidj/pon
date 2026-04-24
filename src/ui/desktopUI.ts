@@ -5,7 +5,6 @@
  * styled as a cozy dark OS with neon accent highlights.
  */
 
-import type { Game } from '../core/Game.js';
 import { gameAudio } from '../core/Audio.js';
 import { formatCurrency } from '../core/Currency.js';
 import { loadGameState, saveGameState, createDefaultGameState } from '../core/Save.js';
@@ -16,6 +15,10 @@ import { SETS } from '../data/sets.js';
 const DESKTOP_ID = 'desktop-ui';
 const SETTINGS_UPDATED_EVENT = 'catchapon:settings-updated';
 let howlerModulePromise: Promise<typeof import('howler') | null> | null = null;
+
+export interface DesktopUIIntents {
+  onStartNightShift: () => Promise<void> | void;
+}
 
 type RenderQuality = 'min' | 'medium' | 'high';
 
@@ -72,7 +75,7 @@ function getRenderQuality(settings: PlayerSettings): RenderQuality {
 }
 
 /** Mount the desktop UI into #ui-root */
-export function mountDesktopUI(game: Game) {
+export function mountDesktopUI(intents: DesktopUIIntents) {
   const uiRoot = document.getElementById('ui-root');
   if (!uiRoot) return;
 
@@ -192,7 +195,7 @@ export function mountDesktopUI(game: Game) {
   // —— Transition effect on Start Shift ——
   const startBtn = document.getElementById('btn-start-shift');
   startBtn?.addEventListener('click', () => {
-    handleStartShift(game, container);
+    void handleStartShift(intents.onStartNightShift, container);
   });
 
   // —— Overlay Routing ——
@@ -314,18 +317,19 @@ export function unmountDesktopUI() {
 
 // —— Internal helpers ——
 
-function handleStartShift(game: Game, container: HTMLElement) {
+async function handleStartShift(
+  onStartNightShift: () => Promise<void> | void,
+  container: HTMLElement,
+) {
   gameAudio.play('transition');
 
   // Add dive animation class
   container.classList.add('desktop-dive');
 
-  // After animation, transition to BedroomScene
-  setTimeout(async () => {
-    // Dynamic import to avoid circular dependency
-    const { BedroomScene } = await import('../scenes/BedroomScene.js');
-    await game.sceneManager.switchTo(new BedroomScene(game));
-  }, 800);
+  await new Promise((resolve) => {
+    setTimeout(resolve, 800);
+  });
+  await onStartNightShift();
 }
 
 function updateClock() {

@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import type { Scene } from '../data/types.js';
 import type { Game } from '../core/Game.js';
 import { mountDesktopUI, unmountDesktopUI } from '../ui/desktopUI.js';
+import { getSceneRouter } from './SceneRouter.js';
 import '../styles/desktop.css';
 
 export class DesktopScene implements Scene {
@@ -19,6 +20,7 @@ export class DesktopScene implements Scene {
 
   // Animated background elements
   private particles: THREE.Points | null = null;
+  private isStartingNightShift = false;
 
   constructor(game: Game) {
     this.game = game;
@@ -62,7 +64,9 @@ export class DesktopScene implements Scene {
     this.scene3d.add(this.particles);
 
     // —— Mount HTML UI ——
-    mountDesktopUI(this.game);
+    mountDesktopUI({
+      onStartNightShift: () => this.startNightShift(),
+    });
 
     // —— Handle resize ——
     window.addEventListener('resize', this.onResize);
@@ -95,4 +99,10 @@ export class DesktopScene implements Scene {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
   };
+
+  private async startNightShift() {
+    if (this.isStartingNightShift) return;
+    this.isStartingNightShift = true;
+    await getSceneRouter().toBedroom(this.game);
+  }
 }
