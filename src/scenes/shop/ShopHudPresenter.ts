@@ -36,7 +36,7 @@ export class ShopHudPresenter {
 
       let description = template?.description ?? 'Unknown task';
       if (template?.targetType === 'floor') {
-        description = 'Scrub mud splash (multi-pass)';
+        description = 'Scrub mud splash until clean';
       } else if (machine) {
         description = `${template?.description ?? 'Service machine'} - ${machine.name}`;
       } else if (t.targetId === 'token-station') {

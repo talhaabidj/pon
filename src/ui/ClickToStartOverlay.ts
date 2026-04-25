@@ -58,25 +58,21 @@ export class ClickToStartOverlay {
       justify-content: center;
       background: rgba(10, 12, 18, 0.52);
       backdrop-filter: blur(6px) saturate(0.72);
-      color: #ffffff;
+      color: var(--info-heading);
       user-select: none;
       cursor: pointer;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.16s ease;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: var(--font-primary);
     `;
 
     const title = document.createElement('div');
+    title.className = 'info-heading';
     title.innerText = this.options.titleText ?? 'CLICK TO START';
-    title.style.cssText = `
-      margin: 0;
-      font-size: clamp(1.8rem, 4vw, 2.4rem);
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      text-shadow: 0 0 26px rgba(255, 255, 255, 0.22);
-    `;
+    title.style.margin = '0';
+    title.style.textTransform = 'uppercase';
+    title.style.textShadow = '0 0 26px rgba(255, 255, 255, 0.22)';
     overlay.appendChild(title);
 
     overlay.addEventListener('click', this.options.onActivate);

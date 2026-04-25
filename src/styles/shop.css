@@ -366,7 +366,8 @@
 .night-summary-panel h2 {
   padding: var(--space-4) 0;
   font-size: var(--text-xl);
-  color: var(--color-accent);
+  color: var(--info-heading);
+  letter-spacing: var(--info-heading-letter-spacing);
 }
 
 .night-summary {

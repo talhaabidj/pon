@@ -29,6 +29,12 @@ export class EconomySystem {
     this.money += amount;
   }
 
+  /** Grant tokens directly (e.g., jackpot bonus) — no money cost. */
+  addTokens(amount: number) {
+    if (amount <= 0) return;
+    this.tokens += amount;
+  }
+
   /**
    * Buy tokens with money.
    * Returns the number of tokens purchased.

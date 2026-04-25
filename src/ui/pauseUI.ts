@@ -43,33 +43,25 @@ export function mountPauseUI() {
     max-height: 90vh;
     overflow-y: auto;
     background: linear-gradient(145deg, rgba(22, 26, 38, 0.96), rgba(16, 19, 28, 0.94));
-    border: 1px solid rgba(200, 214, 255, 0.15);
-    border-radius: 16px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--info-card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
     padding: 1.4rem 1.5rem;
     transform: translateY(16px) scale(0.985);
     transition: transform 0.2s ease;
   `;
 
   const title = document.createElement('h1');
+  title.className = 'info-heading';
   title.innerText = 'Paused';
-  title.style.cssText = `
-    margin: 0;
-    font-size: clamp(2rem, 3.4vw, 2.9rem);
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #f4f7ff;
-  `;
+  title.style.textTransform = 'uppercase';
+  title.style.margin = '0';
 
   const subtitle = document.createElement('p');
   subtitle.id = 'pause-status';
+  subtitle.className = 'info-card-body';
   subtitle.innerText = 'Press ESC again to close this menu, then click to lock cursor and continue.';
-  subtitle.style.cssText = `
-    margin: 0.35rem 0 1rem;
-    color: #b7c0d6;
-    font-size: 0.95rem;
-  `;
+  subtitle.style.margin = '0.35rem 0 1rem';
 
   const sections = document.createElement('div');
   sections.style.cssText = `
@@ -83,6 +75,7 @@ export function mountPauseUI() {
     'WASD / Arrow Keys: Move',
     'Mouse: Look around',
     'E: Interact with objects',
+    'R: Service machines',
     'Q: Close active overlay',
     'Left Ctrl: Toggle free cursor',
     'ESC: Open pause menu',
@@ -96,46 +89,37 @@ export function mountPauseUI() {
   ]));
 
   const settingsSection = document.createElement('section');
-  settingsSection.style.cssText = `
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 0.9rem 1rem;
-    min-width: 220px;
-  `;
+  settingsSection.className = 'info-card';
   settingsSection.innerHTML = `
-    <h2 style="margin: 0 0 0.6rem; font-size: 0.98rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: #f7f9ff;">Settings</h2>
-    <div style="display: flex; flex-direction: column; gap: 0.62rem;">
-      <label style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; color: #d8dfef; font-size: 0.87rem;">
+    <h2 class="info-section-heading">Settings</h2>
+    <div class="settings-control-list">
+      <label class="settings-row">
         <span>Master Volume</span>
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="settings-row-value">
           <input type="range" id="pause-settings-volume" min="0" max="100" step="1" />
-          <span id="pause-settings-volume-value" style="min-width: 42px; text-align: right; font-family: monospace;">80%</span>
+          <span id="pause-settings-volume-value" class="info-card-mono settings-row-readout">80%</span>
         </div>
       </label>
-      <label style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; color: #d8dfef; font-size: 0.87rem;">
+      <label class="settings-row">
         <span>Mouse Invert Y</span>
         <input type="checkbox" id="pause-settings-invert" />
       </label>
-      <label style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; color: #d8dfef; font-size: 0.87rem;">
+      <label class="settings-row">
         <span>Adaptive Resolution</span>
         <input type="checkbox" id="pause-settings-dynamic-resolution" />
       </label>
-      <label style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; color: #d8dfef; font-size: 0.87rem;">
+      <label class="settings-row">
         <span>Render Quality</span>
-        <select id="pause-settings-render-quality" style="min-width: 132px;">
+        <select id="pause-settings-render-quality" class="settings-row-select">
           <option value="min">Min</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
       </label>
-      <button
-        id="pause-settings-reset-data"
-        style="margin-top: 0.25rem; width: fit-content; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid rgba(255,120,120,0.5); background: rgba(120,20,20,0.26); color: #ffd2d2; cursor: pointer; font-size: 0.82rem;"
-      >
+      <button id="pause-settings-reset-data" class="settings-danger-btn">
         Reset Player Data
       </button>
-      <p style="margin: 0.1rem 0 0; color: #c8a7a7; font-size: 0.76rem;">Clears all progress and restarts the game.</p>
+      <p class="info-card-body settings-danger-note">Clears all progress and restarts the game.</p>
     </div>
   `;
   sections.appendChild(settingsSection);
@@ -148,46 +132,15 @@ export function mountPauseUI() {
     width: 100%;
   `;
 
-  const btnStyle = `
-    flex: 1 1 220px;
-    padding: 0.9rem 1.2rem;
-    font-size: 1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    color: #f8fbff;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: transform 0.14s ease, background-color 0.14s ease;
-  `;
-
   const resumeBtn = document.createElement('button');
   resumeBtn.innerText = 'Resume Game';
   resumeBtn.id = 'pause-resume-btn';
-  resumeBtn.style.cssText = btnStyle;
-  resumeBtn.onmouseenter = () => {
-    resumeBtn.style.background = 'rgba(203, 225, 255, 0.2)';
-    resumeBtn.style.transform = 'translateY(-1px)';
-  };
-  resumeBtn.onmouseleave = () => {
-    resumeBtn.style.background = 'rgba(255, 255, 255, 0.06)';
-    resumeBtn.style.transform = 'none';
-  };
+  resumeBtn.className = 'pause-action-btn';
 
   const quitBtn = document.createElement('button');
   quitBtn.innerText = 'Quit to Start';
   quitBtn.id = 'pause-quit-btn';
-  quitBtn.style.cssText = btnStyle;
-  quitBtn.onmouseenter = () => {
-    quitBtn.style.background = 'rgba(255, 90, 90, 0.2)';
-    quitBtn.style.transform = 'translateY(-1px)';
-  };
-  quitBtn.onmouseleave = () => {
-    quitBtn.style.background = 'rgba(255, 255, 255, 0.06)';
-    quitBtn.style.transform = 'none';
-  };
+  quitBtn.className = 'pause-action-btn pause-action-btn--danger';
   quitBtn.onclick = () => {
     window.location.reload();
   };

@@ -29,8 +29,14 @@ import { InteractionSystem } from '../core/InteractionSystem.js';
 import { requestPointerLockSafely } from '../core/PointerLock.js';
 import { formatCurrencyDelta } from '../core/Currency.js';
 import {
+  JACKPOT_CAPSULE_CHANCE,
+  JACKPOT_TOKEN_BONUS,
+  JACKPOT_TOKEN_CHANCE,
+  JAM_SERVICE_BONUS_CAPSULE_CHANCE,
   PULL_TIME_COST,
   SECRET_DISCOVERY_BONUS,
+  SHINY_ACCENT_COLOR,
+  SHINY_PULL_CHANCE,
 } from '../core/Config.js';
 import { loadGameState, saveGameState } from '../core/Save.js';
 
@@ -593,6 +599,7 @@ export class ShopScene implements Scene {
 
       if (state.isJammed && this.maintenance.fixJam(machineId)) {
         showToast('Machine jam cleared', 1300);
+        this.maybeAwardJamServiceBonus(machineId);
         this.updateMachineTaskMarkers();
         this.updateHUD();
         return true;
@@ -813,15 +820,20 @@ export class ShopScene implements Scene {
         legendary: '#ffcc00',
       };
 
-      const displayName = isDuplicate
+      const isShiny = Math.random() < SHINY_PULL_CHANCE;
+      const baseName = isDuplicate
         ? `${result.item.name} (DUPLICATE)`
         : result.item.name;
+      const displayName = isShiny ? `★ Shiny ${baseName}` : baseName;
+      const accentColor = isShiny
+        ? SHINY_ACCENT_COLOR
+        : accentColors[result.item.rarity] ?? '#7c6ef0';
 
       showPullResult(
         displayName,
         result.item.rarity,
         result.item.flavorText,
-        accentColors[result.item.rarity] ?? '#7c6ef0',
+        accentColor,
         'KeyQ',
         () => {
           hidePullResult();
@@ -830,7 +842,7 @@ export class ShopScene implements Scene {
       );
       gameAudio.play('reveal');
 
-      // Screen shake — scales with rarity
+      // Screen shake — scales with rarity, bumped slightly when shiny.
       const shakeMap: Record<string, number> = {
         common: 0.01,
         uncommon: 0.015,
@@ -838,11 +850,56 @@ export class ShopScene implements Scene {
         epic: 0.04,
         legendary: 0.06,
       };
-      this.triggerShake(shakeMap[result.item.rarity] ?? 0.01, 0.3);
+      const shakeBase = shakeMap[result.item.rarity] ?? 0.01;
+      this.triggerShake(isShiny ? shakeBase + 0.02 : shakeBase, 0.3);
+
+      // Rare jackpot: a paid pull occasionally drops a second free capsule
+      // from the same machine.
+      if (Math.random() < JACKPOT_CAPSULE_CHANCE) {
+        this.awardFreeCapsule(result.machineId, 'Jackpot capsule');
+      }
 
       this.updateHUD();
     }, 1500);
 
+  }
+
+  /**
+   * On a successful jam fix, roll a rare chance to drop a free bonus capsule
+   * from the serviced machine's pool.
+   */
+  private maybeAwardJamServiceBonus(machineId: string): void {
+    if (Math.random() >= JAM_SERVICE_BONUS_CAPSULE_CHANCE) return;
+    this.awardFreeCapsule(machineId, 'Bonus capsule');
+  }
+
+  /**
+   * Pull a free capsule from the given machine, add it to the collection, and
+   * surface lightweight feedback (toast + reveal cue, no full overlay or
+   * screen shake). Used by both the jam-service bonus and the post-pull
+   * jackpot reward. Returns true if a capsule was actually awarded.
+   */
+  private awardFreeCapsule(machineId: string, label: string): boolean {
+    const machineDef = MACHINES.find((m) => m.id === machineId);
+    if (!machineDef) return false;
+
+    const machineState = this.maintenance.getState(machineId);
+    const result = this.capsule.pull(
+      machineDef,
+      machineState,
+      this.time.getCurrentHour(),
+    );
+    if (!result) return false;
+
+    this.collection.addItem(result.item.id);
+    this.itemsObtainedThisNight.push(result.item.id);
+
+    const isShiny = Math.random() < SHINY_PULL_CHANCE;
+    const itemLabel = isShiny ? `★ Shiny ${result.item.name}` : result.item.name;
+
+    gameAudio.play('reveal');
+    showToast(`${label}: ${itemLabel}`, isShiny ? 2600 : 2200);
+    return true;
   }
 
   private handleTokenStation() {
@@ -1016,6 +1073,14 @@ export class ShopScene implements Scene {
     const bought = this.economy.buyTokens(count);
     if (bought > 0) {
       gameAudio.play('coin');
+      // Rare jackpot: a successful purchase occasionally grants an extra token.
+      if (Math.random() < JACKPOT_TOKEN_CHANCE) {
+        this.economy.addTokens(JACKPOT_TOKEN_BONUS);
+        showToast(
+          `Jackpot! +${JACKPOT_TOKEN_BONUS} bonus token`,
+          2000,
+        );
+      }
       this.updateHUD();
       updateTokenBalance(this.economy.getMoney());
     } else {

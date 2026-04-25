@@ -22,6 +22,21 @@ export const TOKEN_PRICE = 12; // Catcha Credits per token
 export const PULL_COST = 1; // tokens per gacha pull
 export const SECRET_DISCOVERY_BONUS = 24; // Catcha Credits
 export const TOKEN_PACK_OPTIONS = [1, 3, 5] as const;
+// Rare reward: when the player services a jammed machine, this probability
+// triggers a free bonus capsule pulled from that machine's pool.
+export const JAM_SERVICE_BONUS_CAPSULE_CHANCE = 0.15;
+// Rare reward: after a normal paid pull, this probability triggers a second
+// free capsule from the same machine — the "jackpot" feel.
+export const JACKPOT_CAPSULE_CHANCE = 0.05;
+// Rare reward: every successful token purchase has this chance to grant a
+// bonus token on top of the paid amount.
+export const JACKPOT_TOKEN_CHANCE = 0.08;
+export const JACKPOT_TOKEN_BONUS = 1;
+// Shiny: every drawn capsule has this chance to spawn as a shiny variant —
+// purely cosmetic flair (name prefix + accent override). No collection-schema
+// change; the shiny status is not persisted across reloads.
+export const SHINY_PULL_CHANCE = 0.012;
+export const SHINY_ACCENT_COLOR = '#7ef0d4';
 
 // ————————————————————————————————
 // Time

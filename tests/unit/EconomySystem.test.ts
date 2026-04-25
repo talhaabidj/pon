@@ -29,6 +29,18 @@ describe('EconomySystem', () => {
     expect(economy.getMoney()).toBe(500);
   });
 
+  it('adds bonus tokens without changing money', () => {
+    economy.addTokens(2);
+    expect(economy.getTokens()).toBe(5);
+    expect(economy.getMoney()).toBe(500);
+  });
+
+  it('ignores non-positive token grants', () => {
+    economy.addTokens(0);
+    economy.addTokens(-3);
+    expect(economy.getTokens()).toBe(3);
+  });
+
   it('buys tokens with money', () => {
     const bought = economy.buyTokens(2);
     expect(bought).toBe(2);

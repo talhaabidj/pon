@@ -33,12 +33,15 @@ const ACCENT_COLORS: Record<string, number> = {
   'machine-pixel': 0xf0c06e,
   'machine-mix-a': 0xcc88ff,
   'machine-mix-b': 0xff88cc,
-  'machine-wondertrade': 0xffffff,
+  'machine-wondertrade': 0xffd66e,
   'machine-hidden': 0x7c6ef0,
 };
 
 const CLEAN_GACHA_GLASS_COLOR = 0xf4fbff;
 const DIRTY_GACHA_GLASS_COLOR = 0x9a8b74;
+
+const WONDERTRADE_BODY_COLOR = 0x3a2154;
+const WONDERTRADE_TRIM_COLOR = 0xffd66e;
 
 export function createCapsuleMachine(
   def: MachineDefinition,
@@ -53,6 +56,7 @@ export function createCapsuleMachine(
   });
 
   const accentColor = ACCENT_COLORS[def.id] ?? 0x7c6ef0;
+  const isWondertrade = def.id === 'machine-wondertrade';
   const isDirty = state?.cleanliness === 'dirty';
   const isJammed = state?.isJammed ?? false;
   const isPowered = state?.isPowered ?? true;
@@ -68,9 +72,9 @@ export function createCapsuleMachine(
       metalness: 0.8,
     });
     const plasticMat = new THREE.MeshStandardMaterial({
-      color: 0xeaeaea,
-      roughness: 0.5,
-      metalness: 0.1,
+      color: isWondertrade ? WONDERTRADE_BODY_COLOR : 0xeaeaea,
+      roughness: isWondertrade ? 0.42 : 0.5,
+      metalness: isWondertrade ? 0.22 : 0.1,
     });
     const darkMat = new THREE.MeshStandardMaterial({
       color: 0x222222,
@@ -133,6 +137,44 @@ export function createCapsuleMachine(
     coinSlit.position.set(-0.2, 0.75 + yOffset, 0.39);
     machine.add(coinSlit);
 
+    // —— Front poster / flyer ——
+    // Small themed banner on the cabinet face above the action area,
+    // tinted by the machine's accent color so each unit reads as a distinct brand.
+    const posterFrameMat = new THREE.MeshStandardMaterial({
+      color: 0x1a1520,
+      roughness: 0.82,
+      metalness: 0.08,
+    });
+    const posterFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.42, 0.17, 0.008),
+      posterFrameMat,
+    );
+    posterFrame.position.set(0, 0.95 + yOffset, 0.378);
+    machine.add(posterFrame);
+
+    const posterArtMat = new THREE.MeshStandardMaterial({
+      color: accentColor,
+      emissive: accentColor,
+      emissiveIntensity: 0.28,
+      roughness: 0.6,
+    });
+    const posterArt = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.13), posterArtMat);
+    posterArt.position.set(0, 0.95 + yOffset, 0.383);
+    machine.add(posterArt);
+
+    const posterStripeMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.18,
+      roughness: 0.9,
+    });
+    const posterStripe = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.38, 0.026),
+      posterStripeMat,
+    );
+    posterStripe.position.set(0, 0.905 + yOffset, 0.3835);
+    machine.add(posterStripe);
+
     // —— Display Box (The transparent acrylic upper housing) ——
     const displayFloor = new THREE.Mesh(new THREE.BoxGeometry(0.81, 0.02, 0.71), metalMat);
     displayFloor.position.set(0, 1.06 + yOffset, 0);
@@ -193,6 +235,37 @@ export function createCapsuleMachine(
     marqueeLabel.position.set(0, 1.85 + yOffset, 0.282);
     marqueeLabel.rotation.x = -0.15;
     machine.add(marqueeLabel);
+
+    // —— Wondertrade-only trim: halo ring emblem on the marquee ——
+    // Scoped visual override so Wondertrade reads distinctly from the 6 capsule
+    // machines without needing a new machine class.
+    if (isWondertrade) {
+      const trimMat = new THREE.MeshStandardMaterial({
+        color: WONDERTRADE_TRIM_COLOR,
+        emissive: WONDERTRADE_TRIM_COLOR,
+        emissiveIntensity: 0.55,
+        roughness: 0.28,
+        metalness: 0.4,
+      });
+      const halo = new THREE.Mesh(
+        new THREE.TorusGeometry(0.095, 0.014, 10, 32),
+        trimMat,
+      );
+      halo.position.set(0, 1.85 + yOffset, 0.292);
+      halo.rotation.x = -0.15;
+      machine.add(halo);
+
+      // Two short diagonal bars inside the ring to evoke an "exchange" glyph.
+      const barGeo = new THREE.BoxGeometry(0.11, 0.018, 0.018);
+      const barA = new THREE.Mesh(barGeo, trimMat);
+      barA.position.set(0, 1.855 + yOffset, 0.298);
+      barA.rotation.set(-0.15, 0, Math.PI / 6);
+      machine.add(barA);
+      const barB = new THREE.Mesh(barGeo, trimMat);
+      barB.position.set(0, 1.845 + yOffset, 0.298);
+      barB.rotation.set(-0.15, 0, -Math.PI / 6);
+      machine.add(barB);
+    }
 
     // —— Maintenance LED Clusters ——
     const ledColor = isPowered ? 0x44ff44 : 0xff2222;

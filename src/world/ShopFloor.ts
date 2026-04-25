@@ -12,6 +12,7 @@ import type { MachineDefinition, MachineState } from '../data/types.js';
 import { tagInteractable } from '../core/InteractionTags.js';
 import { createCapsuleMachine } from './machines/CapsuleMachine.js';
 import { buildShopSecrets } from './shop/ShopSecrets.js';
+import { buildShopTrash } from './shop/ShopTrash.js';
 import { buildStorageCrate } from './shop/ShopStorageCrate.js';
 import { buildTokenCrate } from './shop/ShopTokenCrate.js';
 import { buildTokenStation } from './shop/ShopTokenStation.ts';
@@ -699,6 +700,12 @@ export function buildShopFloor(
   const secrets = buildShopSecrets();
   secrets.groups.forEach((secret) => group.add(secret));
   interactables.push(...secrets.interactables);
+
+  // ————————————————————————————————
+  // Ambient trash props (decorative only — no colliders)
+  // ————————————————————————————————
+  const trash = buildShopTrash();
+  group.add(trash.group);
 
   return { group, machineGroups, interactables, colliders };
 }
