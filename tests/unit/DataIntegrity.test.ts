@@ -10,8 +10,8 @@ import { TASK_TEMPLATES } from '../../src/data/tasks.js';
 import { PROGRESSION, getProgressionForNight } from '../../src/data/progression.js';
 
 describe('Data: Items', () => {
-  it('has at least 24 items', () => {
-    expect(ITEMS.length).toBeGreaterThanOrEqual(24);
+  it('has exactly 36 items', () => {
+    expect(ITEMS.length).toBe(36);
   });
 
   it('all items have unique IDs', () => {
@@ -27,20 +27,20 @@ describe('Data: Items', () => {
   });
 
   it('getItemById works', () => {
-    const item = getItemById('neko-macaron');
+    const item = getItemById('kitty-cupcake-cat');
     expect(item).toBeDefined();
-    expect(item!.name).toBe('Macaron Mew');
+    expect(item!.name).toBe('Cupcake Cat');
   });
 
-  it('getItemsBySet returns correct count for neko-patisserie', () => {
-    const items = getItemsBySet('neko-patisserie');
+  it('getItemsBySet returns correct count for kitty-cakes', () => {
+    const items = getItemsBySet('kitty-cakes');
     expect(items.length).toBe(6);
   });
 });
 
 describe('Data: Sets', () => {
-  it('has exactly 4 sets', () => {
-    expect(SETS.length).toBe(4);
+  it('has exactly 6 sets', () => {
+    expect(SETS.length).toBe(6);
   });
 
   it('each set references existing items', () => {

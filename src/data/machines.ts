@@ -1,121 +1,172 @@
 /**
  * machines.ts — Gacha machine definitions.
  *
- * 6 standard machines + 1 hidden machine + 1 Wondertrade = 8 total.
+ * 6 themed machines + 1 wonder exchange + 1 hidden machine.
  */
 
 import type { MachineDefinition } from './types.js';
 
 export const MACHINES: readonly MachineDefinition[] = [
-  // ————————————————————————————————
-  // Wall Row (Z = -4.2): Main set-specific machines
-  // ————————————————————————————————
+  // Themed machines
   {
     id: 'machine-neko',
-    name: 'Pâtisserie Neko',
+    name: 'Kitty Cakes',
     position: [-4.8, 0, -4.2],
     rotation: 0,
     itemPoolIds: [
-      'neko-macaron', 'neko-croissant', 'neko-donut',
-      'neko-eclair', 'neko-cake', 'neko-souffle',
+      'kitty-cupcake-cat',
+      'kitty-tart-tabby',
+      'kitty-mille-feuille',
+      'kitty-chiffon-whiskers',
+      'kitty-royal-velvet',
+      'kitty-celestial-cheesecake',
     ],
     rarityWeights: {
-      common: 40, uncommon: 30, rare: 20, epic: 9, legendary: 1,
+      common: 40,
+      uncommon: 24,
+      rare: 16,
+      epic: 10,
+      legendary: 7,
+      mythical: 3,
     },
     maintenanceDifficulty: 2,
     quirks: ['generous-when-clean'],
   },
   {
     id: 'machine-train',
-    name: 'Express Line Depot',
+    name: 'If I Fits I Sits',
     position: [-2.4, 0, -4.2],
     rotation: 0,
     itemPoolIds: [
-      'train-local', 'train-rapid', 'train-express',
-      'train-limited', 'train-shinkansen', 'train-phantom',
+      'fits-cardboard-box',
+      'fits-basket',
+      'fits-plant-pot',
+      'fits-glass-bowl',
+      'fits-tea-kettle',
+      'fits-quantum-crate',
     ],
     rarityWeights: {
-      common: 38, uncommon: 30, rare: 20, epic: 11, legendary: 1,
+      common: 38,
+      uncommon: 25,
+      rare: 17,
+      epic: 10,
+      legendary: 7,
+      mythical: 3,
     },
     maintenanceDifficulty: 3,
     quirks: ['jams-often'],
   },
   {
     id: 'machine-moon',
-    name: 'Lunar Greenhouse',
+    name: 'Cats Vs Cucumbers',
     position: [0, 0, -4.2],
     rotation: 0,
     itemPoolIds: [
-      'moon-fern', 'moon-moss', 'moon-lily',
-      'moon-vine', 'moon-orchid', 'moon-tree',
+      'cucumber-lounge',
+      'cucumber-sniffer',
+      'cucumber-side-eye',
+      'cucumber-terrified',
+      'cucumber-rider',
+      'cucumber-hybrid',
     ],
     rarityWeights: {
-      common: 35, uncommon: 32, rare: 22, epic: 10, legendary: 1,
+      common: 36,
+      uncommon: 24,
+      rare: 18,
+      epic: 11,
+      legendary: 7,
+      mythical: 4,
     },
     maintenanceDifficulty: 2,
     quirks: ['generous-when-clean'],
   },
   {
     id: 'machine-pixel',
-    name: 'Pixel Arcade',
+    name: 'Cat Memes',
     position: [2.4, 0, -4.2],
     rotation: 0,
     itemPoolIds: [
-      'pixel-knight', 'pixel-mage', 'pixel-thief',
-      'pixel-healer', 'pixel-dragon',
+      'meme-keyboard',
+      'meme-grumpy',
+      'meme-ceiling',
+      'meme-nyan',
+      'meme-longcat',
+      'meme-overlord',
     ],
     rarityWeights: {
-      common: 40, uncommon: 28, rare: 22, epic: 9, legendary: 1,
+      common: 34,
+      uncommon: 24,
+      rare: 18,
+      epic: 12,
+      legendary: 8,
+      mythical: 4,
     },
     maintenanceDifficulty: 3,
     quirks: [],
   },
-
-  // ————————————————————————————————
-  // Center Row (Z = -1.6): Mixed + specialty
-  // ————————————————————————————————
   {
     id: 'machine-mix-a',
-    name: 'Lucky Mix α',
+    name: 'Midnight Zoomies',
     position: [-4.8, 0, -1.6],
     rotation: 0,
     itemPoolIds: [
-      'neko-macaron', 'train-local', 'moon-fern', 'pixel-knight',
-      'neko-donut', 'train-express', 'moon-lily', 'pixel-thief',
+      'zoomies-sofa-sprint',
+      'zoomies-curtain-climber',
+      'zoomies-hallway-drift',
+      'zoomies-fridge-parkour',
+      'zoomies-sonic',
+      'zoomies-timewarp',
     ],
     rarityWeights: {
-      common: 45, uncommon: 30, rare: 18, epic: 6, legendary: 1,
+      common: 42,
+      uncommon: 24,
+      rare: 16,
+      epic: 9,
+      legendary: 6,
+      mythical: 3,
     },
-    maintenanceDifficulty: 1,
+    maintenanceDifficulty: 2,
     quirks: [],
   },
   {
     id: 'machine-mix-b',
-    name: 'Lucky Mix β',
+    name: 'Cosmic Cat Club',
     position: [-2.4, 0, -1.6],
     rotation: 0,
     itemPoolIds: [
-      'neko-eclair', 'train-limited', 'moon-vine', 'pixel-healer',
-      'neko-cake', 'train-shinkansen', 'moon-orchid', 'pixel-dragon',
+      'cosmic-stardust',
+      'cosmic-orbit',
+      'cosmic-nebula',
+      'cosmic-comet',
+      'cosmic-supernova',
+      'cosmic-void-empress',
     ],
     rarityWeights: {
-      common: 30, uncommon: 30, rare: 25, epic: 13, legendary: 2,
+      common: 30,
+      uncommon: 24,
+      rare: 20,
+      epic: 13,
+      legendary: 8,
+      mythical: 5,
     },
     maintenanceDifficulty: 4,
     quirks: ['jams-often'],
   },
 
-  // ————————————————————————————————
-  // Wondertrade (trade duplicates)
-  // ————————————————————————————————
+  // Trade machine
   {
     id: 'machine-wondertrade',
     name: 'Wonder Exchange',
     position: [0, 0, -1.6],
     rotation: 0,
-    itemPoolIds: [], // Special: uses CollectionSystem for trade logic
+    itemPoolIds: [],
     rarityWeights: {
-      common: 30, uncommon: 30, rare: 25, epic: 12, legendary: 3,
+      common: 28,
+      uncommon: 24,
+      rare: 20,
+      epic: 14,
+      legendary: 10,
+      mythical: 4,
     },
     maintenanceDifficulty: 2,
     quirks: [],
@@ -126,20 +177,33 @@ export const MACHINES: readonly MachineDefinition[] = [
     },
   },
 
-  // ————————————————————————————————
-  // Hidden machine (secret)
-  // ————————————————————————————————
+  // Secret machine with higher-tier drops
   {
     id: 'machine-hidden',
-    name: '???',
+    name: 'Mythic Backroom',
     position: [2.4, 0, -1.6],
     rotation: 0,
     itemPoolIds: [
-      'pixel-dev', 'neko-souffle', 'train-phantom',
-      'moon-tree', 'secret-golden-capsule',
+      'kitty-royal-velvet',
+      'kitty-celestial-cheesecake',
+      'fits-tea-kettle',
+      'fits-quantum-crate',
+      'cucumber-rider',
+      'cucumber-hybrid',
+      'meme-longcat',
+      'meme-overlord',
+      'zoomies-sonic',
+      'zoomies-timewarp',
+      'cosmic-supernova',
+      'cosmic-void-empress',
     ],
     rarityWeights: {
-      common: 0, uncommon: 10, rare: 30, epic: 40, legendary: 20,
+      common: 0,
+      uncommon: 8,
+      rare: 17,
+      epic: 26,
+      legendary: 29,
+      mythical: 20,
     },
     maintenanceDifficulty: 5,
     quirks: ['generous-when-clean', 'jams-often'],

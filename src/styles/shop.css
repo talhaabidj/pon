@@ -251,6 +251,11 @@
   border: 1px solid #aa8800;
   text-shadow: 0 0 10px #ffcc0066;
 }
+.rarity-mythical {
+  color: #ff8bc7;
+  border: 1px solid #b3477a;
+  text-shadow: 0 0 10px #ff8bc766;
+}
 
 .pull-item-flavor {
   font-size: var(--text-sm);

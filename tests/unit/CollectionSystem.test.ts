@@ -18,50 +18,54 @@ describe('CollectionSystem', () => {
   });
 
   it('adds a new item and returns true', () => {
-    const isNew = collection.addItem('neko-macaron');
+    const isNew = collection.addItem('kitty-cupcake-cat');
     expect(isNew).toBe(true);
-    expect(collection.hasItem('neko-macaron')).toBe(true);
+    expect(collection.hasItem('kitty-cupcake-cat')).toBe(true);
     expect(collection.getOwnedCount()).toBe(1);
   });
 
   it('returns false when adding a duplicate', () => {
-    collection.addItem('neko-macaron');
-    const isNew = collection.addItem('neko-macaron');
+    collection.addItem('kitty-cupcake-cat');
+    const isNew = collection.addItem('kitty-cupcake-cat');
     expect(isNew).toBe(false);
     expect(collection.getOwnedCount()).toBe(1);
   });
 
   it('tracks set progress', () => {
-    collection.addItem('neko-macaron');
-    collection.addItem('neko-croissant');
+    collection.addItem('kitty-cupcake-cat');
+    collection.addItem('kitty-tart-tabby');
 
-    const progress = collection.getSetProgress('neko-patisserie');
+    const progress = collection.getSetProgress('kitty-cakes');
     expect(progress).not.toBeNull();
     expect(progress!.ownedCount).toBe(2);
     expect(progress!.totalCount).toBe(6);
     expect(progress!.isComplete).toBe(false);
-    expect(progress!.ownedItemIds).toContain('neko-macaron');
-    expect(progress!.missingItemIds).toContain('neko-donut');
+    expect(progress!.ownedItemIds).toContain('kitty-cupcake-cat');
+    expect(progress!.missingItemIds).toContain('kitty-mille-feuille');
   });
 
   it('detects set completion', () => {
-    const nekoItems = [
-      'neko-macaron', 'neko-croissant', 'neko-donut',
-      'neko-eclair', 'neko-cake', 'neko-souffle',
+    const kittyItems = [
+      'kitty-cupcake-cat',
+      'kitty-tart-tabby',
+      'kitty-mille-feuille',
+      'kitty-chiffon-whiskers',
+      'kitty-royal-velvet',
+      'kitty-celestial-cheesecake',
     ];
-    for (const id of nekoItems) {
+    for (const id of kittyItems) {
       collection.addItem(id);
     }
 
-    const progress = collection.getSetProgress('neko-patisserie');
+    const progress = collection.getSetProgress('kitty-cakes');
     expect(progress!.isComplete).toBe(true);
     expect(collection.getCompletedSetCount()).toBe(1);
   });
 
   it('detects duplicates', () => {
-    collection.addItem('neko-macaron');
-    expect(collection.isDuplicate('neko-macaron')).toBe(true);
-    expect(collection.isDuplicate('neko-cake')).toBe(false);
+    collection.addItem('kitty-cupcake-cat');
+    expect(collection.isDuplicate('kitty-cupcake-cat')).toBe(true);
+    expect(collection.isDuplicate('kitty-royal-velvet')).toBe(false);
   });
 
   it('returns null for unknown set', () => {
@@ -69,13 +73,13 @@ describe('CollectionSystem', () => {
   });
 
   it('loads state', () => {
-    collection.loadState(['train-local', 'train-rapid']);
+    collection.loadState(['fits-cardboard-box', 'fits-basket']);
     expect(collection.getOwnedCount()).toBe(2);
-    expect(collection.hasItem('train-local')).toBe(true);
+    expect(collection.hasItem('fits-cardboard-box')).toBe(true);
   });
 
-  it('getAllSetProgress returns all 4 sets', () => {
+  it('getAllSetProgress returns all 6 sets', () => {
     const all = collection.getAllSetProgress();
-    expect(all.length).toBe(4);
+    expect(all.length).toBe(6);
   });
 });

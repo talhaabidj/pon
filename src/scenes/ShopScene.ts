@@ -818,6 +818,7 @@ export class ShopScene implements Scene {
         rare: '#4488ff',
         epic: '#cc44ff',
         legendary: '#ffcc00',
+        mythical: '#ff72bd',
       };
 
       const isShiny = Math.random() < SHINY_PULL_CHANCE;
@@ -849,6 +850,7 @@ export class ShopScene implements Scene {
         rare: 0.025,
         epic: 0.04,
         legendary: 0.06,
+        mythical: 0.075,
       };
       const shakeBase = shakeMap[result.item.rarity] ?? 0.01;
       this.triggerShake(isShiny ? shakeBase + 0.02 : shakeBase, 0.3);
@@ -1254,6 +1256,7 @@ export class ShopScene implements Scene {
         rare: '#4488ff',
         epic: '#cc44ff',
         legendary: '#ffcc00',
+        mythical: '#ff72bd',
       };
 
       const tradeItem = getItemById(tradeAwayId);

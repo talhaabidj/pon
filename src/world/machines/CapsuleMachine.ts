@@ -33,15 +33,64 @@ const ACCENT_COLORS: Record<string, number> = {
   'machine-pixel': 0xf0c06e,
   'machine-mix-a': 0xcc88ff,
   'machine-mix-b': 0xff88cc,
-  'machine-wondertrade': 0xffd66e,
+  'machine-wondertrade': 0xffffff,
   'machine-hidden': 0x7c6ef0,
 };
 
 const CLEAN_GACHA_GLASS_COLOR = 0xf4fbff;
 const DIRTY_GACHA_GLASS_COLOR = 0x9a8b74;
 
-const WONDERTRADE_BODY_COLOR = 0x3a2154;
-const WONDERTRADE_TRIM_COLOR = 0xffd66e;
+function buildNameLines(name: string): string[] {
+  const words = name.toUpperCase().split(/\s+/).filter(Boolean);
+  if (words.length <= 2) return [words.join(' ')];
+
+  const midpoint = Math.ceil(words.length / 2);
+  return [words.slice(0, midpoint).join(' '), words.slice(midpoint).join(' ')];
+}
+
+function createTopMarqueeTexture(label: string, accentColor: number): THREE.CanvasTexture | null {
+  if (typeof document === 'undefined') return null;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const accentHex = `#${new THREE.Color(accentColor).getHexString()}`;
+  ctx.fillStyle = '#12131c';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = accentHex;
+  ctx.lineWidth = 10;
+  ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+
+  ctx.fillStyle = accentHex;
+  ctx.globalAlpha = 0.22;
+  ctx.fillRect(16, 16, canvas.width - 32, 38);
+  ctx.globalAlpha = 1;
+
+  const lines = buildNameLines(label);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f2f5ff';
+  ctx.font = `700 ${lines.length > 1 ? 70 : 82}px "Segoe UI", sans-serif`;
+
+  if (lines.length > 1) {
+    ctx.fillText(lines[0]!, canvas.width / 2, canvas.height * 0.42);
+    ctx.fillText(lines[1]!, canvas.width / 2, canvas.height * 0.71);
+  } else {
+    ctx.fillText(lines[0] ?? label.toUpperCase(), canvas.width / 2, canvas.height * 0.56);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
 
 export function createCapsuleMachine(
   def: MachineDefinition,
@@ -56,7 +105,6 @@ export function createCapsuleMachine(
   });
 
   const accentColor = ACCENT_COLORS[def.id] ?? 0x7c6ef0;
-  const isWondertrade = def.id === 'machine-wondertrade';
   const isDirty = state?.cleanliness === 'dirty';
   const isJammed = state?.isJammed ?? false;
   const isPowered = state?.isPowered ?? true;
@@ -72,9 +120,9 @@ export function createCapsuleMachine(
       metalness: 0.8,
     });
     const plasticMat = new THREE.MeshStandardMaterial({
-      color: isWondertrade ? WONDERTRADE_BODY_COLOR : 0xeaeaea,
-      roughness: isWondertrade ? 0.42 : 0.5,
-      metalness: isWondertrade ? 0.22 : 0.1,
+      color: 0xeaeaea,
+      roughness: 0.5,
+      metalness: 0.1,
     });
     const darkMat = new THREE.MeshStandardMaterial({
       color: 0x222222,
@@ -137,44 +185,6 @@ export function createCapsuleMachine(
     coinSlit.position.set(-0.2, 0.75 + yOffset, 0.39);
     machine.add(coinSlit);
 
-    // —— Front poster / flyer ——
-    // Small themed banner on the cabinet face above the action area,
-    // tinted by the machine's accent color so each unit reads as a distinct brand.
-    const posterFrameMat = new THREE.MeshStandardMaterial({
-      color: 0x1a1520,
-      roughness: 0.82,
-      metalness: 0.08,
-    });
-    const posterFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(0.42, 0.17, 0.008),
-      posterFrameMat,
-    );
-    posterFrame.position.set(0, 0.95 + yOffset, 0.378);
-    machine.add(posterFrame);
-
-    const posterArtMat = new THREE.MeshStandardMaterial({
-      color: accentColor,
-      emissive: accentColor,
-      emissiveIntensity: 0.28,
-      roughness: 0.6,
-    });
-    const posterArt = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.13), posterArtMat);
-    posterArt.position.set(0, 0.95 + yOffset, 0.383);
-    machine.add(posterArt);
-
-    const posterStripeMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.18,
-      roughness: 0.9,
-    });
-    const posterStripe = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.38, 0.026),
-      posterStripeMat,
-    );
-    posterStripe.position.set(0, 0.905 + yOffset, 0.3835);
-    machine.add(posterStripe);
-
     // —— Display Box (The transparent acrylic upper housing) ——
     const displayFloor = new THREE.Mesh(new THREE.BoxGeometry(0.81, 0.02, 0.71), metalMat);
     displayFloor.position.set(0, 1.06 + yOffset, 0);
@@ -215,57 +225,37 @@ export function createCapsuleMachine(
       setMachineCapsules(machine, false, initialCapsules);
     }
 
-    // —— Header / Marquee Sign (The Cap) ——
+    // —— Header / Top marquee sign ——
     const topLid = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.15, 0.75), plasticMat);
     topLid.position.set(0, 1.725 + yOffset, 0);
     machine.add(topLid);
 
-    // Glowing Marquee Billboard Face
-    const marqueeBase = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.25, 0.06), metalMat);
-    marqueeBase.position.set(0, 1.85 + yOffset, 0.25);
-    marqueeBase.rotation.x = -0.15; // Angled back gracefully
-    machine.add(marqueeBase);
+    const topMarqueeBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.62, 0.3, 0.08),
+      metalMat,
+    );
+    topMarqueeBody.position.set(0, 1.97 + yOffset, 0);
+    machine.add(topMarqueeBody);
 
-    const labelMat = new THREE.MeshStandardMaterial({
-      color: accentColor,
+    const labelTexture = createTopMarqueeTexture(def.name, accentColor);
+    const labelMatParams: THREE.MeshStandardMaterialParameters = {
+      color: 0xffffff,
       emissive: accentColor,
-      emissiveIntensity: 0.4,
-    });
-    const marqueeLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.68, 0.23), labelMat);
-    marqueeLabel.position.set(0, 1.85 + yOffset, 0.282);
-    marqueeLabel.rotation.x = -0.15;
-    machine.add(marqueeLabel);
-
-    // —— Wondertrade-only trim: halo ring emblem on the marquee ——
-    // Scoped visual override so Wondertrade reads distinctly from the 6 capsule
-    // machines without needing a new machine class.
-    if (isWondertrade) {
-      const trimMat = new THREE.MeshStandardMaterial({
-        color: WONDERTRADE_TRIM_COLOR,
-        emissive: WONDERTRADE_TRIM_COLOR,
-        emissiveIntensity: 0.55,
-        roughness: 0.28,
-        metalness: 0.4,
-      });
-      const halo = new THREE.Mesh(
-        new THREE.TorusGeometry(0.095, 0.014, 10, 32),
-        trimMat,
-      );
-      halo.position.set(0, 1.85 + yOffset, 0.292);
-      halo.rotation.x = -0.15;
-      machine.add(halo);
-
-      // Two short diagonal bars inside the ring to evoke an "exchange" glyph.
-      const barGeo = new THREE.BoxGeometry(0.11, 0.018, 0.018);
-      const barA = new THREE.Mesh(barGeo, trimMat);
-      barA.position.set(0, 1.855 + yOffset, 0.298);
-      barA.rotation.set(-0.15, 0, Math.PI / 6);
-      machine.add(barA);
-      const barB = new THREE.Mesh(barGeo, trimMat);
-      barB.position.set(0, 1.845 + yOffset, 0.298);
-      barB.rotation.set(-0.15, 0, -Math.PI / 6);
-      machine.add(barB);
+      emissiveIntensity: 0.35,
+      roughness: 0.35,
+      metalness: 0.05,
+    };
+    if (labelTexture) {
+      labelMatParams.map = labelTexture;
     }
+    const labelMat = new THREE.MeshStandardMaterial(labelMatParams);
+
+    const topMarqueeFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.56, 0.24),
+      labelMat,
+    );
+    topMarqueeFace.position.set(0, 1.97 + yOffset, 0.041);
+    machine.add(topMarqueeFace);
 
     // —— Maintenance LED Clusters ——
     const ledColor = isPowered ? 0x44ff44 : 0xff2222;
@@ -335,12 +325,22 @@ export function updateMachineVisuals(
 }
 
 function disposeMachineGroup(group: THREE.Group) {
+  const disposeTextureRefs = (material: THREE.Material) => {
+    const standardMat = material as THREE.MeshStandardMaterial;
+    if (standardMat.map) standardMat.map.dispose();
+    if (standardMat.emissiveMap) standardMat.emissiveMap.dispose();
+  };
+
   group.traverse((obj) => {
     if (obj instanceof THREE.Mesh) {
       obj.geometry.dispose();
       if (Array.isArray(obj.material)) {
-        obj.material.forEach((m) => m.dispose());
+        obj.material.forEach((m) => {
+          disposeTextureRefs(m);
+          m.dispose();
+        });
       } else {
+        disposeTextureRefs(obj.material);
         obj.material.dispose();
       }
     }

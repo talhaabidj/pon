@@ -76,8 +76,31 @@ export function deleteSave(): void {
 /** Reset all player data to a fresh default state */
 export function resetPlayerData(): boolean {
   try {
-    deleteSave();
-    return saveGameState(createDefaultGameState());
+    const keysToClear: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (key === SAVE_KEY || key.startsWith('pon_save') || key.startsWith('catchapon:')) {
+        keysToClear.push(key);
+      }
+    }
+
+    for (const key of keysToClear) {
+      localStorage.removeItem(key);
+    }
+
+    const resetState = createDefaultGameState();
+    if (!saveGameState(resetState)) return false;
+
+    const persisted = loadGameState();
+    return Boolean(
+      persisted &&
+      persisted.nightsWorked === 0 &&
+      persisted.money === 0 &&
+      persisted.tokens === 0 &&
+      persisted.ownedItemIds.length === 0 &&
+      persisted.secretsTriggered.length === 0,
+    );
   } catch {
     console.error('Failed to reset save data');
     return false;

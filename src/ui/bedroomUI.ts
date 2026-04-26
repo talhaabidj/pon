@@ -12,7 +12,7 @@ import type { Item, GameState } from '../data/types.js';
 import { requestPointerLockSafely } from '../core/PointerLock.js';
 import { formatCurrency } from '../core/Currency.js';
 import { SETS } from '../data/sets.js';
-import { getItemById } from '../data/items.js';
+import { ITEMS, getItemById } from '../data/items.js';
 
 const BEDROOM_UI_ID = 'bedroom-ui';
 
@@ -23,6 +23,7 @@ const RARITY_COLORS: Record<string, string> = {
   rare: '#60a5fa',
   epic: '#a78bfa',
   legendary: '#fbbf24',
+  mythical: '#f472b6',
 };
 
 // ————————————————————————————————
@@ -71,11 +72,11 @@ export function mountBedroomUI() {
             </div>
             <div class="profile-stat">
               <span class="stat-label">Items Collected</span>
-              <span class="stat-value" id="stat-pulls">0 / 25</span>
+              <span class="stat-value" id="stat-pulls">0 / ${ITEMS.length}</span>
             </div>
             <div class="profile-stat">
               <span class="stat-label">Sets Completed</span>
-              <span class="stat-value" id="stat-sets">0 / 4</span>
+              <span class="stat-value" id="stat-sets">0 / ${SETS.length}</span>
             </div>
           </div>
         </div>
@@ -85,7 +86,7 @@ export function mountBedroomUI() {
       <div class="shelf-case" id="shelf-case">
         <div class="shelf-header">
           <span class="shelf-set-name" id="shelf-set-name"></span>
-          <span class="shelf-counter" id="shelf-counter">1 / 4</span>
+          <span class="shelf-counter" id="shelf-counter">1 / ${SETS.length}</span>
         </div>
         <div class="shelf-grid" id="shelf-grid"></div>
         <div class="shelf-nav">
@@ -157,7 +158,7 @@ export function updatePCStats(state: GameState) {
   if (nights) nights.textContent = String(state.nightsWorked);
   if (money) money.textContent = formatCurrency(state.totalMoneyEarned);
   if (wallet) wallet.textContent = formatCurrency(state.money);
-  if (pulls) pulls.textContent = `${state.ownedItemIds.length} / 25`;
+  if (pulls) pulls.textContent = `${state.ownedItemIds.length} / ${ITEMS.length}`;
 
   let completedSets = 0;
   for (const set of SETS) {

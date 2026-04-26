@@ -1,71 +1,96 @@
 /**
  * sets.ts — Item set definitions for Catchapon.
  *
- * 4 themed sets, each with 6 items (+ 1 secret item in set 4).
+ * 6 themed sets, each with exactly 6 items
+ * (common, uncommon, rare, epic, legendary, mythical).
  */
 
 import type { ItemSet } from './types.js';
 
 export const SETS: readonly ItemSet[] = [
   {
-    id: 'neko-patisserie',
-    name: 'Neko Patisserie',
-    theme: 'Cat-shaped pastries and desserts from a feline bakery',
+    id: 'kitty-cakes',
+    name: 'Kitty Cakes',
+    theme: 'Dessert-themed cats from a late-night feline bakery',
     itemIds: [
-      'neko-macaron',
-      'neko-croissant',
-      'neko-donut',
-      'neko-eclair',
-      'neko-cake',
-      'neko-souffle',
+      'kitty-cupcake-cat',
+      'kitty-tart-tabby',
+      'kitty-mille-feuille',
+      'kitty-chiffon-whiskers',
+      'kitty-royal-velvet',
+      'kitty-celestial-cheesecake',
     ],
-    completionReward:
-      'Unlocks a tiny bakery display shelf for your bedroom wall.',
+    completionReward: 'Unlocks a pastry-cat mini display for your bedroom shelf.',
   },
   {
-    id: 'express-line',
-    name: 'Express Line',
-    theme: 'Anthropomorphic train mascots from every service tier',
+    id: 'if-i-fits-i-sits',
+    name: 'If I Fits I Sits',
+    theme: 'Cats stuffing themselves into increasingly impossible containers',
     itemIds: [
-      'train-local',
-      'train-rapid',
-      'train-express',
-      'train-limited',
-      'train-shinkansen',
-      'train-phantom',
+      'fits-cardboard-box',
+      'fits-basket',
+      'fits-plant-pot',
+      'fits-glass-bowl',
+      'fits-tea-kettle',
+      'fits-quantum-crate',
     ],
-    completionReward:
-      'Unlocks a model railway diorama for your bedroom desk.',
+    completionReward: 'Unlocks a cozy container corner prop beside your PC desk.',
   },
   {
-    id: 'moonlight-garden',
-    name: 'Moonlight Garden',
-    theme: 'Bioluminescent plants that bloom only at night',
+    id: 'cats-vs-cucumbers',
+    name: 'Cats Vs Cucumbers',
+    theme: 'The internet rivalry between cats and suspicious green vegetables',
     itemIds: [
-      'moon-fern',
-      'moon-moss',
-      'moon-lily',
-      'moon-vine',
-      'moon-orchid',
-      'moon-tree',
+      'cucumber-lounge',
+      'cucumber-sniffer',
+      'cucumber-side-eye',
+      'cucumber-terrified',
+      'cucumber-rider',
+      'cucumber-hybrid',
     ],
-    completionReward:
-      'Unlocks a glowing terrarium for your bedroom windowsill.',
+    completionReward: 'Unlocks a cucumber caution sign for the shop backroom.',
   },
   {
-    id: 'pixel-legends',
-    name: 'Pixel Legends',
-    theme: 'Classic RPG character figurines in retro pixel style',
+    id: 'cat-memes',
+    name: 'Cat Memes',
+    theme: 'Classic and chaotic meme-era cats from internet folklore',
     itemIds: [
-      'pixel-knight',
-      'pixel-mage',
-      'pixel-thief',
-      'pixel-healer',
-      'pixel-dragon',
-      'pixel-dev',
+      'meme-keyboard',
+      'meme-grumpy',
+      'meme-ceiling',
+      'meme-nyan',
+      'meme-longcat',
+      'meme-overlord',
     ],
-    completionReward:
-      'Unlocks a CRT monitor prop for your bedroom that plays a tiny game.',
+    completionReward: 'Unlocks a meme poster pack for the bedroom wall.',
+  },
+  {
+    id: 'midnight-zoomies',
+    name: 'Midnight Zoomies',
+    theme: 'High-speed feline chaos from the no-sleep hours',
+    itemIds: [
+      'zoomies-sofa-sprint',
+      'zoomies-curtain-climber',
+      'zoomies-hallway-drift',
+      'zoomies-fridge-parkour',
+      'zoomies-sonic',
+      'zoomies-timewarp',
+    ],
+    completionReward: 'Unlocks a tiny race-track rug by your bedroom bed.',
+  },
+  {
+    id: 'cosmic-cat-club',
+    name: 'Cosmic Cat Club',
+    theme: 'Spacefaring cats, stellar hunters, and void royalty',
+    itemIds: [
+      'cosmic-stardust',
+      'cosmic-orbit',
+      'cosmic-nebula',
+      'cosmic-comet',
+      'cosmic-supernova',
+      'cosmic-void-empress',
+    ],
+    completionReward: 'Unlocks a constellation projector for your ceiling.',
   },
 ] as const;
 

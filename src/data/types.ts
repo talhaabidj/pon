@@ -9,7 +9,13 @@
 // Rarity
 // ————————————————————————————————
 
-export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type Rarity =
+  | 'common'
+  | 'uncommon'
+  | 'rare'
+  | 'epic'
+  | 'legendary'
+  | 'mythical';
 
 // ————————————————————————————————
 // Items & Sets

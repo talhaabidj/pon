@@ -307,6 +307,7 @@ export function showNightEndOverlay(summary: {
       rare: '#60a5fa',
       epic: '#a78bfa',
       legendary: '#fbbf24',
+      mythical: '#f472b6',
     };
 
     const itemsHtml = summary.itemsObtained.length > 0

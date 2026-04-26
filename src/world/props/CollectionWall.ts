@@ -16,6 +16,7 @@ const RARITY_COLORS: Record<string, number> = {
   rare: 0x60a5fa,
   epic: 0xa78bfa,
   legendary: 0xfbbf24,
+  mythical: 0xf472b6,
 };
 
 export function createCollectionWall(): THREE.Group {

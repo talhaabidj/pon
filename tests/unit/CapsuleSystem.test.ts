@@ -12,12 +12,12 @@ const testMachine: MachineDefinition = {
   position: [0, 0, 0],
   rotation: 0,
   itemPoolIds: [
-    'neko-macaron',   // common
-    'neko-croissant',  // common
-    'neko-donut',      // uncommon
-    'neko-eclair',     // uncommon
-    'neko-cake',       // rare
-    'neko-souffle',    // epic
+    'kitty-cupcake-cat',      // common
+    'kitty-tart-tabby',       // uncommon
+    'kitty-mille-feuille',    // rare
+    'kitty-chiffon-whiskers', // epic
+    'kitty-royal-velvet',     // legendary
+    'kitty-celestial-cheesecake', // mythical
   ],
   rarityWeights: {
     common: 40,
@@ -25,6 +25,7 @@ const testMachine: MachineDefinition = {
     rare: 20,
     epic: 9,
     legendary: 1,
+    mythical: 0,
   },
   maintenanceDifficulty: 2,
   quirks: ['generous-when-clean'],
@@ -102,13 +103,13 @@ describe('CapsuleSystem', () => {
     const timeMachine: MachineDefinition = {
       ...testMachine,
       id: 'time-test',
-      itemPoolIds: ['secret-golden-capsule', 'neko-macaron'],
+      itemPoolIds: ['kitty-cupcake-cat', 'cosmic-void-empress'],
     };
 
     // Outside 3 AM — should prefer non-time-locked
     const result = capsule.pull(timeMachine, undefined, 22, () => 0.1);
     expect(result).not.toBeNull();
-    // With low RNG it should hit common (neko-macaron), not the time-locked one
-    expect(result!.item.id).toBe('neko-macaron');
+    // With low RNG it should hit common, not an unavailable time-gated item.
+    expect(result!.item.id).toBe('kitty-cupcake-cat');
   });
 });

@@ -37,7 +37,7 @@ test.describe('Catchapon Smoke Test', () => {
     await expect(startBtn).toContainText(/night shift/i);
   });
 
-  test('enters bedroom start gate without uncaught pointer lock errors', async ({ page }) => {
+  test('enters bedroom directly without showing the old start gate', async ({ page }) => {
     const browserErrors: string[] = [];
     page.on('pageerror', (error) => {
       browserErrors.push(error.message);
@@ -51,12 +51,8 @@ test.describe('Catchapon Smoke Test', () => {
     await bootToDesktop(page);
 
     await page.locator('#btn-start-shift').click();
-    await expect(page.locator('#bedroom-shift-start-overlay')).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.locator('#bedroom-shift-start-overlay').click();
     await expect(page.locator('#bedroom-ui')).toBeAttached({ timeout: 5000 });
+    await expect(page.locator('#bedroom-shift-start-overlay')).toHaveCount(0);
     await expect(page.locator('#interact-prompt-text')).toContainText(
       /Start Night Shift/i,
       { timeout: 5000 },
@@ -69,7 +65,7 @@ test.describe('Catchapon Smoke Test', () => {
     await bootToDesktop(page);
 
     await page.locator('#btn-start-shift').click();
-    await page.locator('#bedroom-shift-start-overlay').click();
+    await expect(page.locator('#bedroom-ui')).toBeAttached({ timeout: 5000 });
     await expect(page.locator('#interact-prompt-text')).toContainText(
       /Start Night Shift/i,
       { timeout: 5000 },
@@ -97,7 +93,6 @@ test.describe('Catchapon Smoke Test', () => {
 
     await bootToDesktop(page);
     await page.locator('#btn-start-shift').click();
-    await page.locator('#bedroom-shift-start-overlay').click();
     await expect(page.locator('#bedroom-ui')).toBeAttached({ timeout: 5000 });
     await page.locator('#canvas-container canvas').click({ position: { x: 640, y: 360 } });
     await page.waitForTimeout(250);

@@ -118,7 +118,7 @@ export class BedroomScene implements Scene {
 
     // Load game state: use passed-in (from shop return) or load from save
     this.gameState = gameState ?? loadGameState() ?? createDefaultGameState();
-    this.showStartGateOnLoad = options?.showStartGateOnLoad ?? gameState === undefined;
+    this.showStartGateOnLoad = options?.showStartGateOnLoad ?? false;
   }
 
   init() {
@@ -147,6 +147,11 @@ export class BedroomScene implements Scene {
     mountPauseUI();
     if (this.showStartGateOnLoad) {
       this.showBedroomStartOverlay();
+    } else {
+      // Only pause/resume should intentionally show the click gate.
+      // Normal scene entry stays playable and attempts to relock cursor
+      // immediately when the browser still considers the transition activated.
+      void requestPointerLockSafely(this.game.canvas);
     }
     // Shop preload is non-critical while the bedroom first appears.
     // Schedule it in idle time so first-look input stays responsive.

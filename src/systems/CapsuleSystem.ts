@@ -9,7 +9,12 @@ import type { Item, Rarity, MachineDefinition, MachineState } from '../data/type
 import { getItemById } from '../data/items.js';
 
 const RARITY_ORDER: Rarity[] = [
-  'common', 'uncommon', 'rare', 'epic', 'legendary',
+  'common',
+  'uncommon',
+  'rare',
+  'epic',
+  'legendary',
+  'mythical',
 ];
 
 export interface PullResult {
@@ -45,6 +50,7 @@ export class CapsuleSystem {
         weights.rare = Math.max(0, weights.rare * 0.7);
         weights.epic = Math.max(0, weights.epic * 0.5);
         weights.legendary = Math.max(0, weights.legendary * 0.3);
+        weights.mythical = Math.max(0, weights.mythical * 0.2);
         weights.common += 15;
         wasModified = true;
       }
@@ -57,13 +63,15 @@ export class CapsuleSystem {
         weights.rare *= 1.3;
         weights.epic *= 1.2;
         weights.legendary *= 1.1;
+        weights.mythical *= 1.05;
         wasModified = true;
       }
     }
 
-    // Time-locked bonus: at 3 AM, boost legendary on compatible machines
+    // Time-locked bonus: at 3 AM, boost high-tier rarity on compatible machines
     if (currentHour === 3) {
       weights.legendary *= 3;
+      weights.mythical *= 3;
       wasModified = true;
     }
 

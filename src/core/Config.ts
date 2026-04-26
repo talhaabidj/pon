@@ -63,7 +63,7 @@ export const TARGET_FPS = 60;
 // ————————————————————————————————
 // Save
 // ————————————————————————————————
-export const SAVE_KEY = 'pon_save_v1';
+export const SAVE_KEY = 'pon_save_v2';
 
 // ————————————————————————————————
 // Default Player Settings

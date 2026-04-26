@@ -48,6 +48,7 @@
   --rarity-rare: #60a5fa;
   --rarity-epic: #a78bfa;
   --rarity-legendary: #fbbf24;
+  --rarity-mythical: #f472b6;
 
   /* Typography */
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

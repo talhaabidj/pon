@@ -16,6 +16,7 @@ import {
 import { sanitizePlayerSettings } from '../core/PlayerSettings.js';
 import type { PlayerSettings } from '../data/types.js';
 import { SETS } from '../data/sets.js';
+import { ITEMS } from '../data/items.js';
 
 const DESKTOP_ID = 'desktop-ui';
 const SETTINGS_UPDATED_EVENT = 'catchapon:settings-updated';
@@ -136,73 +137,67 @@ export function mountDesktopUI(intents: DesktopUIIntents) {
       <button id="btn-close-overlay" style="align-self: flex-start; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; cursor: pointer; border-radius: 4px; margin-bottom: 2rem;">← Back to Desktop</button>
       
       <div id="overlay-profile" style="display: none;">
-        <h2 class="info-heading">Profile</h2>
-        <div class="info-card-list" style="max-width: 560px;">
-          <div class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Nights Worked</span><span id="desktop-stat-nights" class="info-card-mono">0</span></div>
-          <div class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Total Credits Earned</span><span id="desktop-stat-money" class="info-card-mono">${zeroCurrency}</span></div>
-          <div class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Current Credits</span><span id="desktop-stat-wallet" class="info-card-mono">${zeroCurrency}</span></div>
-          <div class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Items Collected</span><span id="desktop-stat-items" class="info-card-mono">0 / 25</span></div>
-          <div class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Sets Completed</span><span id="desktop-stat-sets" class="info-card-mono">0 / 4</span></div>
+        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #f4f7ff; letter-spacing: 0.03em;">Profile</h2>
+        <div style="display: flex; flex-direction: column; gap: 0.7rem; max-width: 560px;">
+          <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:0.8rem 1rem;"><span style="color:#a8b0c4;">Nights Worked</span><span id="desktop-stat-nights" style="color:#7c6ef0; font-family: monospace;">0</span></div>
+          <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:0.8rem 1rem;"><span style="color:#a8b0c4;">Total Credits Earned</span><span id="desktop-stat-money" style="color:#7c6ef0; font-family: monospace;">${zeroCurrency}</span></div>
+          <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:0.8rem 1rem;"><span style="color:#a8b0c4;">Current Credits</span><span id="desktop-stat-wallet" style="color:#7c6ef0; font-family: monospace;">${zeroCurrency}</span></div>
+          <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:0.8rem 1rem;"><span style="color:#a8b0c4;">Items Collected</span><span id="desktop-stat-items" style="color:#7c6ef0; font-family: monospace;">0 / ${ITEMS.length}</span></div>
+          <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:0.8rem 1rem;"><span style="color:#a8b0c4;">Sets Completed</span><span id="desktop-stat-sets" style="color:#7c6ef0; font-family: monospace;">0 / ${SETS.length}</span></div>
         </div>
       </div>
 
       <div id="overlay-collection" style="display: none;">
-        <h2 class="info-heading">Collection</h2>
-        <div class="info-card-list" style="max-width: 640px;">
-          <div class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Total Collected</span><span id="desktop-collection-total" class="info-card-mono">0 / 25</span></div>
-          <div class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Sets Completed</span><span id="desktop-collection-completed" class="info-card-mono">0 / 4</span></div>
-          <div id="desktop-collection-sets" class="info-card-list" style="margin-top: 0.2rem;"></div>
+        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #f4f7ff; letter-spacing: 0.03em;">Collection</h2>
+        <div style="display: flex; flex-direction: column; gap: 0.7rem; max-width: 640px;">
+          <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:0.8rem 1rem;"><span style="color:#a8b0c4;">Total Collected</span><span id="desktop-collection-total" style="color:#7c6ef0; font-family: monospace;">0 / ${ITEMS.length}</span></div>
+          <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:0.8rem 1rem;"><span style="color:#a8b0c4;">Sets Completed</span><span id="desktop-collection-completed" style="color:#7c6ef0; font-family: monospace;">0 / ${SETS.length}</span></div>
+          <div id="desktop-collection-sets" style="display:flex; flex-direction: column; gap: 0.55rem; margin-top: 0.2rem;"></div>
         </div>
       </div>
 
       <div id="overlay-settings" style="display: none;">
-        <h2 class="info-heading">System Settings</h2>
-        <div class="info-card-list" style="max-width: 480px;">
-          <label class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Master Volume</span><input type="range" id="settings-volume" min="0" max="100" value="80" /></label>
-          <label class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Mouse Invert Y</span><input type="checkbox" id="settings-invert" /></label>
-          <label class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Adaptive Resolution</span><input type="checkbox" id="settings-dynamic-resolution" /></label>
-          <label class="info-card info-card--row"><span class="info-card-body" style="line-height:1;">Render Quality</span><select id="settings-render-quality" style="min-width: 170px;"><option value="min">Min</option><option value="medium">Medium</option><option value="high">High</option></select></label>
-          <p class="info-card-body" style="font-size: 0.9rem;">Adaptive resolution stays on by default. Quality controls the adaptive render scale range.</p>
-          <button id="settings-reset-data" class="settings-danger-btn">Reset Player Data</button>
-          <p class="info-card-body" style="font-size: 0.82rem; color: #c7a5a5;">Deletes progress, credits, tokens, collection, secrets, and settings.</p>
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #7c6ef0;">System Settings</h2>
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem;">
+          <label style="display: flex; justify-content: space-between; max-width: 400px;">
+            <span>Master Volume</span>
+            <input type="range" id="settings-volume" min="0" max="100" value="80" />
+          </label>
+          <label style="display: flex; justify-content: space-between; max-width: 400px;">
+            <span>Mouse Invert Y</span>
+            <input type="checkbox" id="settings-invert" />
+          </label>
+          <label style="display: flex; justify-content: space-between; max-width: 400px;">
+            <span>Adaptive Resolution</span>
+            <input type="checkbox" id="settings-dynamic-resolution" />
+          </label>
+          <label style="display: flex; justify-content: space-between; max-width: 400px;">
+            <span>Render Quality</span>
+            <select id="settings-render-quality" style="min-width: 170px;">
+              <option value="min">Min</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <p style="margin-top: 0.6rem; color: #a9b0c7; font-size: 0.9rem; max-width: 480px;">Adaptive resolution stays on by default. Quality controls the adaptive render scale range.</p>
+          <button
+            id="settings-reset-data"
+            style="margin-top: 0.8rem; max-width: 260px; padding: 0.55rem 0.9rem; border-radius: 6px; border: 1px solid rgba(255,120,120,0.52); background: rgba(120,20,20,0.28); color: #ffd2d2; cursor: pointer;"
+          >
+            Reset Player Data
+          </button>
+          <p style="margin-top: 0.2rem; color: #c7a5a5; font-size: 0.82rem; max-width: 520px;">Deletes progress, credits, tokens, collection, secrets, and settings.</p>
         </div>
       </div>
 
       <div id="overlay-faq" style="display: none;">
-        <h2 class="info-heading">Help &amp; FAQ</h2>
-        <div class="info-card-list" style="max-width: 720px;">
-          <div class="info-card">
-            <div class="info-card-title">What am I doing in Catchapon?</div>
-            <p class="info-card-body">You run the night shift at a gacha shop. Service the capsule machines (clean glass, fix jams, restock, rewire) to earn Catcha Credits, then spend them on tokens and pull capsules to fill your collection.</p>
-          </div>
-          <div class="info-card">
-            <div class="info-card-title">What are the controls?</div>
-            <p class="info-card-body">WASD or Arrow Keys to move, Mouse to look. <span class="info-card-key">E</span> interacts with objects, <span class="info-card-key">R</span> services machines, <span class="info-card-key">Q</span> closes the active overlay. Left Ctrl toggles the free cursor; ESC opens the pause menu.</p>
-          </div>
-          <div class="info-card">
-            <div class="info-card-title">How do I earn money?</div>
-            <p class="info-card-body">Each night the shop assigns you a small task list — mopping mud, wiping glass, fixing jams, rewiring power, and restocking. Completing a task pays Catcha Credits. Finish more tasks per night for more pay.</p>
-          </div>
-          <div class="info-card">
-            <div class="info-card-title">How do I pull a capsule?</div>
-            <p class="info-card-body">Walk up to the Token Terminal near the entrance and buy tokens with credits. Then walk to a fully working machine and press <span class="info-card-key">E</span> to crank it. A pull costs one token.</p>
-          </div>
-          <div class="info-card">
-            <div class="info-card-title">A machine looks broken — what do I do?</div>
-            <p class="info-card-body">Stand near it and press <span class="info-card-key">R</span> to service. The same key handles cleaning dirty glass, clearing jams, restocking capsules, and restoring power. Restocking needs a full crate from the storeroom first.</p>
-          </div>
-          <div class="info-card">
-            <div class="info-card-title">What's the Wondertrade?</div>
-            <p class="info-card-body">The gold-trimmed machine swaps a duplicate from your collection for a new item you don't own yet. It only accepts duplicates and only returns a non-owned item.</p>
-          </div>
-          <div class="info-card">
-            <div class="info-card-title">Are there any surprises?</div>
-            <p class="info-card-body">Yes — keep an eye on toasts. Successful service can occasionally drop a free bonus capsule, paid pulls have a small jackpot chance, and once in a while a capsule comes out as a shiny variant. There are also a few hidden things in the shop worth poking at.</p>
-          </div>
-          <div class="info-card">
-            <div class="info-card-title">When does the shift end?</div>
-            <p class="info-card-body">The clock at the top of the shop HUD runs from 10 PM to 6 AM in-game time. When morning hits you'll head home automatically; any unfinished tasks are simply skipped, but earned credits and capsules are saved.</p>
-          </div>
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #7c6ef0;">Catchapon - Help & FAQ</h2>
+        <div style="max-width: 800px; color: #ccc; font-size: 1.1rem; line-height: 1.6;">
+          <p>Welcome to <strong>Catchapon</strong>, a premium browser aesthetic game offering a blend of a virtual gacha pull simulator and a cozy life sim natively built with Three.js and Vite.</p>
+          <h3 style="color: white; margin-top: 2rem;">What is my objective in this aesthetic neon webgl experience?</h3>
+          <p>Your job requires you to tackle the fast-paced challenges of a night shift management simulator. You will clean up dirty floor spots (mop tasks), rewire disconnected plugs, fix mechanical jams, and wipe the glass on broken capsule machines to keep the shop running perfectly.</p>
+          <h3 style="color: white; margin-top: 1.5rem;">How do I become a 3D capsule toy collector?</h3>
+          <p>As you complete your maintenance tasks, you'll earn money efficiently. Spend this money at the Token Exchange machine to grab golden tokens. Insert your tokens into fully functional gacha machines to act as a mystery box unlocker, allowing you to pull and collect rare digital capsule toys!</p>
         </div>
       </div>
     </div>
@@ -402,7 +397,7 @@ function updateDesktopProfileStats() {
   if (nights) nights.textContent = String(state.nightsWorked);
   if (money) money.textContent = formatCurrency(state.totalMoneyEarned);
   if (wallet) wallet.textContent = formatCurrency(state.money);
-  if (items) items.textContent = `${state.ownedItemIds.length} / 25`;
+  if (items) items.textContent = `${state.ownedItemIds.length} / ${ITEMS.length}`;
   if (sets) sets.textContent = `${completedSets} / ${SETS.length}`;
 }
 
@@ -424,7 +419,7 @@ function updateDesktopCollectionStats() {
     );
   }
 
-  if (totalEl) totalEl.textContent = `${state.ownedItemIds.length} / 25`;
+  if (totalEl) totalEl.textContent = `${state.ownedItemIds.length} / ${ITEMS.length}`;
   if (completedEl) completedEl.textContent = `${completedSets} / ${SETS.length}`;
   if (setsEl) setsEl.innerHTML = rows.join('');
 }
