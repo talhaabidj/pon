@@ -436,14 +436,21 @@
 
 .machine-preview-rarity-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(140, 152, 195, 0.28);
   background: rgba(18, 23, 40, 0.72);
-  padding: 4px 8px;
+  padding: 6px 8px;
   font-size: 12px;
+}
+
+.machine-preview-rarity-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 
 .machine-preview-rarity-name {
@@ -457,11 +464,10 @@
   font-family: var(--font-mono);
 }
 
-.machine-preview-item-list {
-  margin-top: var(--space-2);
+.machine-preview-rarity-item-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 
 .machine-preview-item-pill {
@@ -470,9 +476,33 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgba(136, 152, 212, 0.35);
   background: rgba(15, 20, 36, 0.76);
-  padding: 3px 8px;
+  padding: 2px 7px;
   color: #d9e0ff;
-  font-size: 12px;
+  font-size: 11px;
+}
+
+.machine-preview-item-pill.rarity-common {
+  background: rgba(156, 163, 175, 0.14);
+}
+
+.machine-preview-item-pill.rarity-uncommon {
+  background: rgba(52, 211, 153, 0.13);
+}
+
+.machine-preview-item-pill.rarity-rare {
+  background: rgba(96, 165, 250, 0.13);
+}
+
+.machine-preview-item-pill.rarity-epic {
+  background: rgba(167, 139, 250, 0.14);
+}
+
+.machine-preview-item-pill.rarity-legendary {
+  background: rgba(251, 191, 36, 0.14);
+}
+
+.machine-preview-item-pill.rarity-mythical {
+  background: rgba(244, 114, 182, 0.14);
 }
 
 .machine-preview-actions {

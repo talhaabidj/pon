@@ -28,12 +28,12 @@ export interface MachineDropRarityRow {
   rarity: string;
   weight: number;
   chancePct: string;
+  itemNames: readonly string[];
 }
 
 export interface MachineDropPreviewPayload {
   machineName: string;
   rarityRows: readonly MachineDropRarityRow[];
-  itemNames: readonly string[];
 }
 
 export function mountShopHUD() {
@@ -127,8 +127,6 @@ export function mountShopHUD() {
         <div class="machine-preview-title" id="machine-preview-title">Machine Drops</div>
         <div class="machine-preview-subtitle">Rarity odds</div>
         <div class="machine-preview-rarity-list" id="machine-preview-rarity-list"></div>
-        <div class="machine-preview-subtitle">Possible items</div>
-        <div class="machine-preview-item-list" id="machine-preview-item-list"></div>
         <div class="machine-preview-actions">
           <button class="machine-preview-close-btn" id="machine-preview-close">
             <span class="machine-preview-key">Q</span>
@@ -340,18 +338,21 @@ export function showMachinePreview(preview: MachineDropPreviewPayload) {
   const overlay = document.getElementById('machine-preview-overlay');
   const titleEl = document.getElementById('machine-preview-title');
   const rarityListEl = document.getElementById('machine-preview-rarity-list');
-  const itemListEl = document.getElementById('machine-preview-item-list');
-  if (!overlay || !titleEl || !rarityListEl || !itemListEl) return;
+  if (!overlay || !titleEl || !rarityListEl) return;
 
   titleEl.textContent = preview.machineName;
   rarityListEl.innerHTML = preview.rarityRows.map((row) => (
     `<div class="machine-preview-rarity-row rarity-${row.rarity}">
-      <span class="machine-preview-rarity-name">${row.rarity}</span>
-      <span class="machine-preview-rarity-chance">${row.chancePct}</span>
+      <div class="machine-preview-rarity-row-header">
+        <span class="machine-preview-rarity-name">${row.rarity}</span>
+        <span class="machine-preview-rarity-chance">${row.chancePct}</span>
+      </div>
+      <div class="machine-preview-rarity-item-list">
+        ${row.itemNames.map((itemName) => (
+          `<span class="machine-preview-item-pill rarity-${row.rarity}">${itemName}</span>`
+        )).join('')}
+      </div>
     </div>`
-  )).join('');
-  itemListEl.innerHTML = preview.itemNames.map((itemName) => (
-    `<span class="machine-preview-item-pill">${itemName}</span>`
   )).join('');
 
   overlay.classList.remove('hidden');

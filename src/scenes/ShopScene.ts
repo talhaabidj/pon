@@ -1491,17 +1491,16 @@ export class ShopScene implements Scene {
       .map((rarity) => {
         const weight = machineDef.rarityWeights[rarity] ?? 0;
         const chancePct = `${((weight / totalWeight) * 100).toFixed(1)}%`;
-        return { rarity, weight, chancePct };
+        const itemNames = machineDef.itemPoolIds
+          .map((itemId) => getItemById(itemId))
+          .filter((item) => item?.rarity === rarity)
+          .map((item) => item!.name);
+        return { rarity, weight, chancePct, itemNames };
       });
-
-    const itemNames = machineDef.itemPoolIds
-      .map((itemId) => getItemById(itemId)?.name)
-      .filter((itemName): itemName is string => Boolean(itemName));
 
     showMachinePreview({
       machineName: machineDef.name,
       rarityRows,
-      itemNames,
     });
     hideShopPrompt();
     this.previewMachineId = machineId;

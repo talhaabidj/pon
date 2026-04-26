@@ -649,10 +649,6 @@ export function buildShopFloor(
   }
 
   // ————————————————————————————————
-  // Checkout counter (removed for redesign)
-  // ————————————————————————————————
-
-  // ————————————————————————————————
   // Storage crate (back-right, for restock tasks)
   // ————————————————————————————————
   const storageCrate = buildStorageCrate();

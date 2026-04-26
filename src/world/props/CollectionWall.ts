@@ -42,6 +42,12 @@ const RARITY_COL_ORDER: readonly Rarity[] = [
 const ROWS = SETS.length;             // 6 sets, one row each
 const COLS = RARITY_COL_ORDER.length; // 6 rarity tiers
 
+// Every stand variant must put its top platform exactly here (local Y).
+// The sphere position formula (`baseY + STAND_TOP_Y + radius`) relies on
+// this — variants put their decorative rings/spires *below* this plane so
+// the sphere always sits cleanly without clipping or floating.
+const STAND_TOP_Y = 0.010;
+
 type StandVariant = 'simple' | 'legendary' | 'mythical';
 
 function rarityToVariant(rarity: Rarity): StandVariant {
@@ -193,8 +199,14 @@ export function createCollectionWall(): THREE.Group {
 
   const startX = -innerW / 2 + dividerThickness + cellW / 2;
   const startY = innerH / 2 - dividerThickness - cellH / 2;
-  const cellFloorOffset = cellH / 2 - 0.01;
-  const pedestalZ = backPanel.position.z + backThickness / 2 + 0.04;
+  // Cell-floor offset places the stand origin exactly on the cubby floor.
+  // All stand variants build upward from local Y=0 to a shared top-plate
+  // height (STAND_TOP_Y) so the same sphere position works for every tier.
+  const cellFloorOffset = cellH / 2;
+  // Center the pedestal in the cubby's Z extent (was sitting near the back
+  // wall, which made spheres look pushed back). dividerZ is already the
+  // cubby's Z midpoint.
+  const pedestalZ = dividerZ;
   const cubbyBackThickness = 0.01;
   const cubbyBackPanelZ = frameCenterZ + 0.002;
 
@@ -232,7 +244,9 @@ export function createCollectionWall(): THREE.Group {
         slotGroup.add(stand);
       }
 
-      const radius = Math.min(cellW, cellH) * 0.26;
+      // Slightly tighter than before so the sphere clears the divider
+      // walls and the player reads it as "centered in the cubby."
+      const radius = Math.min(cellW, cellH) * 0.22;
       const slotMat = new THREE.MeshStandardMaterial({
         color: 0x1a1a24,
         roughness: 0.2,
@@ -244,7 +258,8 @@ export function createCollectionWall(): THREE.Group {
         new THREE.SphereGeometry(radius, 16, 12),
         slotMat,
       );
-      sphere.position.set(xPos, baseY + 0.012 + radius + 0.003, pedestalZ);
+      // Sphere bottom rests on the shared stand platform (local Y = STAND_TOP_Y).
+      sphere.position.set(xPos, baseY + STAND_TOP_Y + radius, pedestalZ);
       sphere.name = `slot-${row}-${col}`;
       sphere.userData['stands'] = stands;
       sphere.visible = false;
@@ -256,24 +271,30 @@ export function createCollectionWall(): THREE.Group {
   return wall;
 }
 
+// All stand builders below produce a group with bottom at local Y=0 and
+// the load-bearing platform at local Y=STAND_TOP_Y (0.010). Decorative
+// rings/spires live BELOW the platform so the sphere always sits cleanly.
+
 function buildSimpleStand(
   baseMat: THREE.Material,
   topMat: THREE.Material,
 ): THREE.Group {
   const stand = new THREE.Group();
-  const standBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.019, 0.022, 0.008, 16),
+  // Lower silver column: bottom at 0, top at 0.006.
+  const lower = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.019, 0.022, 0.006, 16),
     baseMat,
   );
-  standBase.position.set(0, 0, 0);
-  stand.add(standBase);
+  lower.position.set(0, 0.003, 0);
+  stand.add(lower);
 
-  const standTop = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.0165, 0.0165, 0.004, 16),
+  // Polished platter: top exactly at STAND_TOP_Y = 0.010.
+  const platter = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.0185, 0.0185, 0.004, 16),
     topMat,
   );
-  standTop.position.set(0, 0.006, 0);
-  stand.add(standTop);
+  platter.position.set(0, 0.008, 0);
+  stand.add(platter);
   return stand;
 }
 
@@ -284,29 +305,39 @@ function buildLegendaryStand(
 ): THREE.Group {
   const stand = new THREE.Group();
 
-  // Wider, slightly taller silver base with a step.
-  const lowerBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.026, 0.029, 0.006, 18),
+  // Wider tiered silver base.
+  const lower = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.024, 0.028, 0.006, 18),
     baseMat,
   );
-  lowerBase.position.set(0, 0, 0);
-  stand.add(lowerBase);
+  lower.position.set(0, 0.003, 0);
+  stand.add(lower);
 
-  const upperBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.022, 0.024, 0.006, 18),
-    topMat,
-  );
-  upperBase.position.set(0, 0.006, 0);
-  stand.add(upperBase);
-
-  // Gold accent ring sitting on top of the silver tier.
+  // Gold accent ring around the column, mid-height (decorative, below
+  // the platter so it never clashes with the sphere).
   const goldRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.020, 0.0025, 8, 28),
+    new THREE.TorusGeometry(0.0245, 0.0024, 8, 28),
     goldMat,
   );
   goldRing.rotation.x = Math.PI / 2;
-  goldRing.position.set(0, 0.012, 0);
+  goldRing.position.set(0, 0.0055, 0);
   stand.add(goldRing);
+
+  // Gold-rimmed silver platter, top at STAND_TOP_Y = 0.010.
+  const platter = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.0215, 0.0215, 0.004, 20),
+    topMat,
+  );
+  platter.position.set(0, 0.008, 0);
+  stand.add(platter);
+
+  const platterRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.022, 0.0014, 8, 28),
+    goldMat,
+  );
+  platterRim.rotation.x = Math.PI / 2;
+  platterRim.position.set(0, 0.010, 0);
+  stand.add(platterRim);
 
   return stand;
 }
@@ -319,51 +350,54 @@ function buildMythicalStand(
 ): THREE.Group {
   const stand = new THREE.Group();
 
-  // Three-tier silver base, slightly taller than legendary.
+  // Wider three-tier silver base.
   const tier0 = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.029, 0.032, 0.005, 20),
+    new THREE.CylinderGeometry(0.027, 0.030, 0.004, 20),
     baseMat,
   );
-  tier0.position.set(0, 0, 0);
+  tier0.position.set(0, 0.002, 0);
   stand.add(tier0);
 
   const tier1 = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.025, 0.027, 0.005, 20),
+    new THREE.CylinderGeometry(0.024, 0.026, 0.004, 20),
     topMat,
   );
-  tier1.position.set(0, 0.005, 0);
+  tier1.position.set(0, 0.006, 0);
   stand.add(tier1);
 
-  const tier2 = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.021, 0.022, 0.004, 20),
-    crownMat,
-  );
-  tier2.position.set(0, 0.010, 0);
-  stand.add(tier2);
-
-  // Iridescent magenta halo ring around the rim.
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(0.024, 0.0028, 10, 32),
+  // Iridescent magenta halo ring sitting on the second tier (decorative,
+  // wraps around the column below the platter).
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(0.024, 0.002, 10, 32),
     mythicRingMat,
   );
-  ring.rotation.x = Math.PI / 2;
-  ring.position.set(0, 0.014, 0);
-  stand.add(ring);
+  halo.rotation.x = Math.PI / 2;
+  halo.position.set(0, 0.0072, 0);
+  stand.add(halo);
 
-  // Four small spires evoking a "crown" at the cardinal points.
+  // Four short crown points around the column rim, all kept BELOW the
+  // platter so the sphere doesn't clip them.
   for (let i = 0; i < 4; i += 1) {
     const spire = new THREE.Mesh(
-      new THREE.ConeGeometry(0.0028, 0.008, 6),
+      new THREE.ConeGeometry(0.0024, 0.005, 6),
       crownMat,
     );
     const angle = (i / 4) * Math.PI * 2;
     spire.position.set(
-      Math.cos(angle) * 0.020,
-      0.018,
-      Math.sin(angle) * 0.020,
+      Math.cos(angle) * 0.0245,
+      0.0065,
+      Math.sin(angle) * 0.0245,
     );
     stand.add(spire);
   }
+
+  // Top platter, top at STAND_TOP_Y = 0.010.
+  const platter = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.0215, 0.0215, 0.004, 22),
+    crownMat,
+  );
+  platter.position.set(0, 0.008, 0);
+  stand.add(platter);
 
   return stand;
 }
