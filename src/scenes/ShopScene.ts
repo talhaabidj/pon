@@ -589,11 +589,6 @@ export class ShopScene implements Scene {
   }
 
   private handleServiceInput(type: string, object: THREE.Object3D): boolean {
-    if (type === 'floor-spot') {
-      this.handleFloorSpotMop(object);
-      return true;
-    }
-    
     if (type === 'storage-crate') {
       this.handleStorageCrate();
       return true;
