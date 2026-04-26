@@ -10,7 +10,7 @@ export const TASK_TEMPLATES: readonly TaskTemplate[] = [
   {
     id: 'task-clean-floor',
     type: 'clean_floor',
-    description: 'Mop a dirty floor spot',
+    description: 'Clean a floor mess',
     baseReward: 14,
     timeCost: 10,
     targetType: 'floor',

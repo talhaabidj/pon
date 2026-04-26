@@ -195,7 +195,7 @@ export function mountDesktopUI(intents: DesktopUIIntents) {
         <div style="max-width: 800px; color: #ccc; font-size: 1.1rem; line-height: 1.6;">
           <p>Welcome to <strong>Catchapon</strong>, a premium browser aesthetic game offering a blend of a virtual gacha pull simulator and a cozy life sim natively built with Three.js and Vite.</p>
           <h3 style="color: white; margin-top: 2rem;">What is my objective in this aesthetic neon webgl experience?</h3>
-          <p>Your job requires you to tackle the fast-paced challenges of a night shift management simulator. You will clean up dirty floor spots (mop tasks), rewire disconnected plugs, fix mechanical jams, and wipe the glass on broken capsule machines to keep the shop running perfectly.</p>
+          <p>Your job requires you to tackle the fast-paced challenges of a night shift management simulator. You will clean floor messes (mud splashes and trash), rewire disconnected plugs, fix mechanical jams, and wipe the glass on broken capsule machines to keep the shop running perfectly.</p>
           <h3 style="color: white; margin-top: 1.5rem;">How do I become a 3D capsule toy collector?</h3>
           <p>As you complete your maintenance tasks, you'll earn money efficiently. Spend this money at the Token Exchange machine to grab golden tokens. Insert your tokens into fully functional gacha machines to act as a mystery box unlocker, allowing you to pull and collect rare digital capsule toys!</p>
         </div>

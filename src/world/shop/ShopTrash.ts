@@ -1,7 +1,9 @@
 import * as THREE from 'three';
+import { tagInteractable } from '../../core/InteractionTags.js';
 
 export interface BuiltShopTrash {
   group: THREE.Group;
+  interactables: THREE.Object3D[];
 }
 
 interface TrashSpec {
@@ -102,8 +104,9 @@ function makeCup(tint: number): THREE.Group {
 export function buildShopTrash(): BuiltShopTrash {
   const group = new THREE.Group();
   group.name = 'shop-trash';
+  const interactables: THREE.Object3D[] = [];
 
-  for (const spec of TRASH_SPECS) {
+  TRASH_SPECS.forEach((spec, index) => {
     let prop: THREE.Group;
     switch (spec.kind) {
       case 'paper':
@@ -118,8 +121,17 @@ export function buildShopTrash(): BuiltShopTrash {
     }
     prop.position.set(spec.x, 0, spec.z);
     prop.rotation.y = spec.rotY;
+    const targetId = `trash-spot-${index}`;
+    prop.name = targetId;
+    prop.userData['isAmbientTrash'] = true;
+    tagInteractable(prop, {
+      type: 'floor-spot',
+      prompt: 'Pick up trash',
+      targetId,
+    });
     group.add(prop);
-  }
+    interactables.push(prop);
+  });
 
-  return { group };
+  return { group, interactables };
 }

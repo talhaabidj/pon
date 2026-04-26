@@ -82,6 +82,7 @@ import {
   getContextualPrompt as getShopContextualPrompt,
 } from './shop/ShopPromptRules.js';
 import {
+  INTERACTION_KEYS,
   getMachineId,
   getSecretId,
   getSecretName,
@@ -253,7 +254,7 @@ export class ShopScene implements Scene {
     this.mudSplashTasks = new MudSplashTaskSystem(this.scene3d, this.colliders);
     this.mudSplashTasks.spawn(runtime.curatedTasks, runtimeBinding.interactables);
     // Mud splashes are appended after initial interactable binding, so refresh
-    // the interaction cache to include floor-spot meshes for mop prompts.
+    // the interaction cache to include floor-spot meshes for cleanup prompts.
     this.interaction.setInteractables(runtimeBinding.interactables);
 
     this.controller.attach(this.camera);
@@ -772,6 +773,9 @@ export class ShopScene implements Scene {
       case 'shop-exit':
         this.endNight();
         break;
+      case 'floor-spot':
+        this.handleFloorSpotMop(object);
+        break;
     }
   }
 
@@ -1055,7 +1059,26 @@ export class ShopScene implements Scene {
 
   private handleFloorSpotMop(object: THREE.Object3D) {
     const targetId = getTargetId(object);
-    if (!targetId || !this.mudSplashTasks) return;
+    if (!targetId) return;
+
+    if (targetId.startsWith('trash-spot-')) {
+      if (object.userData[INTERACTION_KEYS.interactable] !== true) return;
+
+      object.userData[INTERACTION_KEYS.interactable] = false;
+      object.visible = false;
+
+      const pickupReward = 2;
+      const pickupTimeCost = 1;
+      this.economy.earnMoney(pickupReward);
+      this.moneyEarnedThisNight += pickupReward;
+      this.time.advance(pickupTimeCost);
+      gameAudio.play('ui');
+      showToast(`Trash picked (${formatCurrencyDelta(pickupReward)})`, 1200);
+      this.updateHUD();
+      return;
+    }
+
+    if (!this.mudSplashTasks) return;
 
     const tasks = this.tasks.getTasks();
     const taskIndex = tasks.findIndex((task) => !task.isCompleted && task.targetId === targetId);

@@ -144,7 +144,7 @@ export function getContextualActions(input: ShopPromptContextInput): ShopPromptA
     return [{ key: 'E', label: 'Buy Tokens' }];
   }
 
-  if (input.type === 'floor-spot') return [{ key: 'R', label: 'Mop' }];
+  if (input.type === 'floor-spot') return [{ key: 'E', label: 'Clean' }];
   if (input.type === 'wondertrade') return [{ key: 'E', label: 'Trade' }];
   if (input.type === 'shop-exit') return [{ key: 'E', label: 'End Shift' }];
   if (input.type === 'secret') return [{ key: 'E', label: 'Inspect' }];

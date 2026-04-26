@@ -702,10 +702,11 @@ export function buildShopFloor(
   interactables.push(...secrets.interactables);
 
   // ————————————————————————————————
-  // Ambient trash props (decorative only — no colliders)
+  // Ambient trash props (pickable cleanup clutter; no colliders)
   // ————————————————————————————————
   const trash = buildShopTrash();
   group.add(trash.group);
+  interactables.push(...trash.interactables);
 
   return { group, machineGroups, interactables, colliders };
 }
