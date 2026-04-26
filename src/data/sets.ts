@@ -52,7 +52,7 @@ export const SETS: readonly ItemSet[] = [
   },
   {
     id: 'cat-memes',
-    name: 'Cat Memes',
+    name: 'Meme Meownia',
     theme: 'Classic and chaotic meme-era cats from internet folklore',
     itemIds: [
       'meme-keyboard',
@@ -66,7 +66,7 @@ export const SETS: readonly ItemSet[] = [
   },
   {
     id: 'midnight-zoomies',
-    name: 'Midnight Zoomies',
+    name: 'Loaf Legends',
     theme: 'High-speed feline chaos from the no-sleep hours',
     itemIds: [
       'zoomies-sofa-sprint',
@@ -80,7 +80,7 @@ export const SETS: readonly ItemSet[] = [
   },
   {
     id: 'cosmic-cat-club',
-    name: 'Cosmic Cat Club',
+    name: 'Astro Whiskers',
     theme: 'Spacefaring cats, stellar hunters, and void royalty',
     itemIds: [
       'cosmic-stardust',

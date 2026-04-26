@@ -20,7 +20,20 @@ export interface ShopPromptAction {
 
 export interface ShopPromptPayload {
   text: string;
+  title?: string;
   actions?: readonly ShopPromptAction[];
+}
+
+export interface MachineDropRarityRow {
+  rarity: string;
+  weight: number;
+  chancePct: string;
+}
+
+export interface MachineDropPreviewPayload {
+  machineName: string;
+  rarityRows: readonly MachineDropRarityRow[];
+  itemNames: readonly string[];
 }
 
 export function mountShopHUD() {
@@ -56,8 +69,11 @@ export function mountShopHUD() {
     </div>
 
     <div class="interact-prompt" id="shop-interact-prompt">
-      <div class="shop-prompt-actions" id="shop-prompt-actions"></div>
-      <span class="shop-prompt-detail" id="shop-interact-text">Interact</span>
+      <div class="shop-prompt-title hidden" id="shop-interact-title"></div>
+      <div class="shop-prompt-main">
+        <div class="shop-prompt-actions" id="shop-prompt-actions"></div>
+        <span class="shop-prompt-detail" id="shop-interact-text">Interact</span>
+      </div>
     </div>
 
     <div class="shop-pull-result hidden" id="pull-result">
@@ -99,6 +115,22 @@ export function mountShopHUD() {
           <button class="night-cancel-btn" id="night-cancel">
             <span class="night-action-key">Q</span>
             <span>Cancel</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="shop-machine-preview hidden" id="machine-preview-overlay">
+      <div class="machine-preview-panel">
+        <div class="machine-preview-title" id="machine-preview-title">Machine Drops</div>
+        <div class="machine-preview-subtitle">Rarity odds</div>
+        <div class="machine-preview-rarity-list" id="machine-preview-rarity-list"></div>
+        <div class="machine-preview-subtitle">Possible items</div>
+        <div class="machine-preview-item-list" id="machine-preview-item-list"></div>
+        <div class="machine-preview-actions">
+          <button class="machine-preview-close-btn" id="machine-preview-close">
+            <span class="machine-preview-key">Q</span>
+            <span>Close</span>
           </button>
         </div>
       </div>
@@ -173,24 +205,36 @@ export function showShopPrompt(prompt: string | ShopPromptPayload, keyLabel = 'E
   const el = document.getElementById('shop-interact-prompt');
   const txt = document.getElementById('shop-interact-text');
   const actionsEl = document.getElementById('shop-prompt-actions');
+  const titleEl = document.getElementById('shop-interact-title');
 
   const payload: ShopPromptPayload = typeof prompt === 'string'
     ? {
       text: prompt,
+      title: '',
       actions: keyLabel.trim().length > 0
         ? [{ key: keyLabel, label: 'Interact' }]
         : [],
     }
     : prompt;
 
+  const title = payload.title?.trim() ?? '';
   const actions = payload.actions ?? [];
-  const signature = `${payload.text}::${actions.map((a) => `${a.key}:${a.label}`).join('|')}`;
+  const signature = `${title}::${payload.text}::${actions.map((a) => `${a.key}:${a.label}`).join('|')}`;
 
   if (el && txt) {
     // Prompt text often repeats every frame while aiming at the same target.
     // Skip DOM rewrites unless content actually changed to reduce INP/jank.
     if (signature !== lastPromptSignature) {
       txt.textContent = payload.text;
+      if (titleEl) {
+        if (title.length > 0) {
+          titleEl.textContent = title;
+          titleEl.classList.remove('hidden');
+        } else {
+          titleEl.textContent = '';
+          titleEl.classList.add('hidden');
+        }
+      }
       if (actionsEl) {
         renderPromptActions(actionsEl, actions);
       }
@@ -287,6 +331,36 @@ export function hideTokenOverlay() {
 
 export function isTokenOverlayVisible(): boolean {
   const el = document.getElementById('token-overlay');
+  return el ? !el.classList.contains('hidden') : false;
+}
+
+export function showMachinePreview(preview: MachineDropPreviewPayload) {
+  const overlay = document.getElementById('machine-preview-overlay');
+  const titleEl = document.getElementById('machine-preview-title');
+  const rarityListEl = document.getElementById('machine-preview-rarity-list');
+  const itemListEl = document.getElementById('machine-preview-item-list');
+  if (!overlay || !titleEl || !rarityListEl || !itemListEl) return;
+
+  titleEl.textContent = preview.machineName;
+  rarityListEl.innerHTML = preview.rarityRows.map((row) => (
+    `<div class="machine-preview-rarity-row rarity-${row.rarity}">
+      <span class="machine-preview-rarity-name">${row.rarity}</span>
+      <span class="machine-preview-rarity-chance">${row.chancePct}</span>
+    </div>`
+  )).join('');
+  itemListEl.innerHTML = preview.itemNames.map((itemName) => (
+    `<span class="machine-preview-item-pill">${itemName}</span>`
+  )).join('');
+
+  overlay.classList.remove('hidden');
+}
+
+export function hideMachinePreview() {
+  document.getElementById('machine-preview-overlay')?.classList.add('hidden');
+}
+
+export function isMachinePreviewVisible(): boolean {
+  const el = document.getElementById('machine-preview-overlay');
   return el ? !el.classList.contains('hidden') : false;
 }
 

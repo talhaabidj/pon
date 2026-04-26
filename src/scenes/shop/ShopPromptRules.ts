@@ -62,8 +62,8 @@ export function getContextualPrompt(input: ShopPromptContextInput): string {
       }
     }
 
-    if (!input.canPullNow) return `${input.defaultPrompt} (need tokens)`;
-    return `Pull — ${input.defaultPrompt}`;
+    if (!input.canPullNow) return 'Need tokens to pull';
+    return 'Ready to pull';
   }
 
   if (input.type === 'storage-crate') {
@@ -114,12 +114,12 @@ export function getContextualActions(input: ShopPromptContextInput): ShopPromptA
     const hasServiceNeed = hasMachineServiceNeed(input.machineState);
 
     if (canPullNow && hasServiceNeed) {
-      return [{ key: 'E', label: 'Pull' }, { key: 'R', label: 'Service' }];
+      return [{ key: 'E', label: 'Pull' }, { key: 'R', label: 'Service' }, { key: 'F', label: 'View Drops' }];
     }
     if (!canPullNow && hasServiceNeed) {
-      return [{ key: 'R', label: 'Service' }];
+      return [{ key: 'R', label: 'Service' }, { key: 'F', label: 'View Drops' }];
     }
-    return [{ key: 'E', label: 'Pull' }];
+    return [{ key: 'E', label: 'Pull' }, { key: 'F', label: 'View Drops' }];
   }
 
   if (input.type === 'token-crate') {

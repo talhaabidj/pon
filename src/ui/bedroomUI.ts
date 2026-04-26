@@ -226,7 +226,7 @@ function renderSetGrid(direction?: -1 | 1) {
         <div class="shelf-grid-item" title="${entry.item.flavorText}">
           <div class="shelf-grid-capsule" style="background: ${color}; box-shadow: 0 0 20px ${color}44;"></div>
           <div class="shelf-grid-name" style="color: ${color};">${entry.item.name}</div>
-          <div class="shelf-grid-rarity">${entry.item.rarity}</div>
+          <div class="shelf-grid-rarity shelf-grid-rarity-${entry.item.rarity}">${entry.item.rarity}</div>
         </div>
       `;
     } else {

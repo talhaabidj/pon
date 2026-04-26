@@ -61,6 +61,12 @@ export class MudSplashTaskSystem {
         prompt: 'Scrub mud splash',
         targetId: task.targetId,
       });
+      marker.name = `${task.targetId}-marker`;
+      tagInteractable(marker, {
+        type: 'floor-spot',
+        prompt: 'Scrub mud splash',
+        targetId: task.targetId,
+      });
 
       splash.position.set(pos.x, MUD_FLOOR_Y, pos.z);
       splash.rotation.y = this.rng() * Math.PI * 2;
@@ -70,6 +76,7 @@ export class MudSplashTaskSystem {
       this.scene3d.add(splash);
       this.scene3d.add(marker);
       interactables.push(splash);
+      interactables.push(marker);
 
       this.mudSpots.set(task.targetId, {
         mesh: splash,
@@ -126,6 +133,7 @@ export class MudSplashTaskSystem {
       spot.mesh.visible = false;
       spot.mesh.userData[INTERACTION_KEYS.interactable] = false;
       spot.marker.visible = false;
+      spot.marker.userData[INTERACTION_KEYS.interactable] = false;
     }
 
     return {

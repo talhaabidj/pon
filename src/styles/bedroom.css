@@ -425,6 +425,13 @@
   color: var(--color-text-dim);
 }
 
+.shelf-grid-rarity-common { color: var(--rarity-common); }
+.shelf-grid-rarity-uncommon { color: var(--rarity-uncommon); }
+.shelf-grid-rarity-rare { color: var(--rarity-rare); }
+.shelf-grid-rarity-epic { color: var(--rarity-epic); }
+.shelf-grid-rarity-legendary { color: var(--rarity-legendary); }
+.shelf-grid-rarity-mythical { color: var(--rarity-mythical); }
+
 .shelf-nav {
   display: flex;
   align-items: center;

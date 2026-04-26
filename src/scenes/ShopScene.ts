@@ -105,6 +105,9 @@ import {
   updateTokenBalance,
   showShopPrompt,
   hideShopPrompt,
+  showMachinePreview,
+  hideMachinePreview,
+  isMachinePreviewVisible,
   showPullResult,
   hidePullResult,
   isPullResultVisible,
@@ -169,6 +172,7 @@ export class ShopScene implements Scene {
   private isReturningHome = false;
   private hasCapsuleRefill = false;
   private hasTokenRefill = false;
+  private previewMachineId: string | null = null;
 
   // Screen shake
   private shakeIntensity = 0;
@@ -289,6 +293,9 @@ export class ShopScene implements Scene {
     document.getElementById('night-cancel')?.addEventListener('click', () => {
       this.dismissNightEndOverlay();
     });
+    document.getElementById('machine-preview-close')?.addEventListener('click', () => {
+      this.closeMachineDropPreview();
+    });
 
     // —— Resize ——
     window.addEventListener('resize', this.onResize);
@@ -342,6 +349,15 @@ export class ShopScene implements Scene {
       if (input.isMenuPressed()) {
         hideTokenOverlay();
         this.controller.setEnabled(true);
+      }
+      this.game.renderer.render(this.scene3d, this.camera);
+      return;
+    }
+
+    // —— Machine drop preview open ——
+    if (isMachinePreviewVisible()) {
+      if (input.isKeyJustPressed('KeyQ')) {
+        this.closeMachineDropPreview();
       }
       this.game.renderer.render(this.scene3d, this.camera);
       return;
@@ -437,7 +453,20 @@ export class ShopScene implements Scene {
         // Build contextual prompt
         const prompt = this.getContextualPrompt(target.type, target.prompt, target.object);
         const promptActions = this.getContextualActions(target.type, target.object);
-        showShopPrompt({ text: prompt, actions: promptActions });
+        showShopPrompt({
+          title: target.type === 'machine' ? target.prompt : undefined,
+          text: prompt,
+          actions: promptActions,
+        });
+
+        if (target.type === 'machine' && input.isKeyJustPressed('KeyF')) {
+          const machineId = getMachineId(target.object);
+          if (machineId) {
+            this.toggleMachineDropPreview(machineId);
+          }
+          this.game.renderer.render(this.scene3d, this.camera);
+          return;
+        }
 
         const serviceHandled = input.isServicePressed()
           ? this.handleServiceInput(target.type, target.object)
@@ -495,6 +524,7 @@ export class ShopScene implements Scene {
     this.mudSplashTasks = null;
     this.tokenStationGroup = null;
     this.pauseController.dispose();
+    hideMachinePreview();
     unmountShopHUD();
     unmountPauseUI();
     window.removeEventListener('resize', this.onResize);
@@ -1348,6 +1378,7 @@ export class ShopScene implements Scene {
   private async returnHome() {
     if (this.isReturningHome) return;
     this.isReturningHome = true;
+    this.closeMachineDropPreview(false);
 
     this.controller.setEnabled(false);
 
@@ -1383,6 +1414,7 @@ export class ShopScene implements Scene {
   }
 
   private openNightEndOverlay() {
+    this.closeMachineDropPreview(false);
     showNightEndOverlay(buildNightEndSummary(
       this.itemsObtainedThisNight,
       this.tasks.getCompletedCount(),
@@ -1403,7 +1435,70 @@ export class ShopScene implements Scene {
   private openPauseMenu() {
     if (isPauseMenuVisible()) return;
     if (this.pauseController.isClickToStartVisible()) return;
+    this.closeMachineDropPreview(false);
     this.pauseController.openPauseMenu();
+  }
+
+  private toggleMachineDropPreview(machineId: string) {
+    if (isMachinePreviewVisible() && this.previewMachineId === machineId) {
+      this.closeMachineDropPreview();
+      return;
+    }
+
+    this.openMachineDropPreview(machineId);
+  }
+
+  private openMachineDropPreview(machineId: string) {
+    const machineDef = this.availableMachines.find((machine) => machine.id === machineId);
+    if (!machineDef) return;
+
+    const rarityOrder: Array<keyof MachineDefinition['rarityWeights']> = [
+      'common',
+      'uncommon',
+      'rare',
+      'epic',
+      'legendary',
+      'mythical',
+    ];
+
+    const totalWeight = rarityOrder.reduce((sum, rarity) => {
+      return sum + (machineDef.rarityWeights[rarity] ?? 0);
+    }, 0);
+    if (totalWeight <= 0) return;
+
+    const rarityRows = rarityOrder
+      .filter((rarity) => (machineDef.rarityWeights[rarity] ?? 0) > 0)
+      .map((rarity) => {
+        const weight = machineDef.rarityWeights[rarity] ?? 0;
+        const chancePct = `${((weight / totalWeight) * 100).toFixed(1)}%`;
+        return { rarity, weight, chancePct };
+      });
+
+    const itemNames = machineDef.itemPoolIds
+      .map((itemId) => getItemById(itemId)?.name)
+      .filter((itemName): itemName is string => Boolean(itemName));
+
+    showMachinePreview({
+      machineName: machineDef.name,
+      rarityRows,
+      itemNames,
+    });
+    hideShopPrompt();
+    this.previewMachineId = machineId;
+    this.controller.setEnabled(false);
+    if (document.pointerLockElement === this.game.canvas) {
+      document.exitPointerLock();
+    }
+  }
+
+  private closeMachineDropPreview(relock = true) {
+    if (!isMachinePreviewVisible()) return;
+    hideMachinePreview();
+    this.previewMachineId = null;
+    this.controller.setEnabled(true);
+    if (relock) {
+      requestPointerLockSafely(this.game.canvas);
+    }
   }
 
   private updateMachineTaskMarkers() {

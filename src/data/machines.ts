@@ -82,7 +82,7 @@ export const MACHINES: readonly MachineDefinition[] = [
   },
   {
     id: 'machine-pixel',
-    name: 'Cat Memes',
+    name: 'Meme Meownia',
     position: [2.4, 0, -4.2],
     rotation: 0,
     itemPoolIds: [
@@ -106,7 +106,7 @@ export const MACHINES: readonly MachineDefinition[] = [
   },
   {
     id: 'machine-mix-a',
-    name: 'Midnight Zoomies',
+    name: 'Loaf Legends',
     position: [-4.8, 0, -1.6],
     rotation: 0,
     itemPoolIds: [
@@ -130,7 +130,7 @@ export const MACHINES: readonly MachineDefinition[] = [
   },
   {
     id: 'machine-mix-b',
-    name: 'Cosmic Cat Club',
+    name: 'Astro Whiskers',
     position: [-2.4, 0, -1.6],
     rotation: 0,
     itemPoolIds: [
